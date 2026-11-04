@@ -15,13 +15,16 @@ import {
   KeyRound,
   Lock,
   MessageSquare,
+  Plus,
   RefreshCw,
+  Trash2,
   User,
 } from 'lucide-react';
 import RetroTicker from '@/components/RetroTicker';
 import GiantFooter from '@/components/GiantFooter';
 import {
   createGallery,
+  deleteGallery,
   fetchAllGalleries,
   fetchSelectionsForGallery,
   isSupabaseConfigured,
@@ -71,6 +74,9 @@ export default function StudioDashboardPage() {
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   );
   const [includeExtension, setIncludeExtension] = useState(false);
+  const [lrSeparator, setLrSeparator] = useState<'comma' | 'space' | 'newline'>(
+    'comma'
+  );
   const [copiedWa, setCopiedWa] = useState(false);
   const [copiedLr, setCopiedLr] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -103,6 +109,21 @@ export default function StudioDashboardPage() {
     if (!isSlugManual) {
       setSlug(slugifyClientName(value));
     }
+  }
+
+  function handleResetNewForm() {
+    setStudioSlug('zeevisual');
+    setClientName('');
+    setSlug('');
+    setIsSlugManual(false);
+    setSessionType('Editorial Pre-Wedding');
+    setGdriveFolderUrl('');
+    setSelectionQuota(50);
+    setOwnerToken(generateOwnerToken(12));
+    setAlbumPin('');
+    setEnablePin(false);
+    setDrivePreviewPhotos([]);
+    setPublishSuccessMsg(null);
   }
 
   const parsedFolderId = useMemo(
@@ -156,7 +177,7 @@ Selamat menikmati momennya`;
     return selectionsMap[activeGallery.id] || [];
   }, [selectionsMap, activeGallery.id]);
 
-  // Formatted comma-separated filenames for Lightroom Filter Exporter
+  // Formatted filenames for Lightroom Filter Exporter
   const lightroomFilterString = useMemo(() => {
     const defaultDemoFiles = [
       'ZV_0488.JPG',
@@ -178,8 +199,10 @@ Selamat menikmati momennya`;
       return name.replace(/\.[a-zA-Z0-9]+$/, '');
     });
 
-    return processed.join(', ');
-  }, [activeSelections, includeExtension]);
+    const sep =
+      lrSeparator === 'comma' ? ', ' : lrSeparator === 'space' ? ' ' : '\n';
+    return processed.join(sep);
+  }, [activeSelections, includeExtension, lrSeparator]);
 
   async function handlePublishGallery(e: React.FormEvent) {
     e.preventDefault();
@@ -207,7 +230,7 @@ Selamat menikmati momennya`;
       setSelectionsMap((prev) => ({ ...prev, [created.id]: sels }));
 
       setPublishSuccessMsg(
-        `Galeri "${created.client_name}" berhasil diterbitkan!`
+        `Galeri "${created.client_name}" berhasil disimpan & siap dibagikan!`
       );
     } finally {
       setIsPublishing(false);
@@ -227,6 +250,15 @@ Selamat menikmati momennya`;
     setDeadlineDate(gal.deadline_date);
     setAlbumPin(gal.album_pin || '');
     setEnablePin(Boolean(gal.album_pin));
+  }
+
+  async function handleDeleteGallery(gal: GalleryRecord) {
+    if (galleries.length <= 1) return;
+    const remaining = await deleteGallery(gal.id);
+    setGalleries(remaining);
+    if (activeGallery.id === gal.id && remaining.length > 0) {
+      handleSelectGalleryFromRow(remaining[0]);
+    }
   }
 
   async function handleCopyWa() {
@@ -365,11 +397,16 @@ Selamat menikmati momennya`;
           <div className="lg:col-span-7 bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden flex flex-col">
             <div className="bg-espresso text-cream px-6 py-3.5 flex items-center justify-between">
               <span className="font-anton text-sm uppercase tracking-wider">
-                Buat Galeri Klien Baru
+                Konfigurasi Galeri Klien
               </span>
-              <span className="font-jakarta text-xs text-cream/80">
-                Studio: {studioSlug}
-              </span>
+              <button
+                type="button"
+                onClick={handleResetNewForm}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-cream text-espresso font-jakarta font-bold text-xs hover:bg-mustard transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Reset Form Baru</span>
+              </button>
             </div>
 
             <form
@@ -542,6 +579,13 @@ Selamat menikmati momennya`;
                           <img
                             src={p.thumbnailUrl}
                             alt={p.name}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (!target.dataset.fallback) {
+                                target.dataset.fallback = '1';
+                                target.src = `https://lh3.googleusercontent.com/d/${p.id}=w800`;
+                              }
+                            }}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -778,26 +822,43 @@ Selamat menikmati momennya`;
               </div>
 
               <div className="p-5 flex flex-col gap-3.5">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-fraunces font-bold text-sm text-espresso">
                     {activeGallery.client_name}
                   </span>
 
-                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={includeExtension}
-                      onChange={(e) => setIncludeExtension(e.target.checked)}
-                      className="w-4 h-4 accent-espresso rounded cursor-pointer"
-                    />
-                    <span className="font-jakarta text-xs font-semibold text-espresso">
-                      Sertakan .JPG
-                    </span>
-                  </label>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={lrSeparator}
+                      onChange={(e) =>
+                        setLrSeparator(
+                          e.target.value as 'comma' | 'space' | 'newline'
+                        )
+                      }
+                      aria-label="Pemisah Filename"
+                      className="bg-cream text-espresso px-2 py-1 rounded border border-espresso/40 font-jakarta text-xs font-semibold focus:outline-none"
+                    >
+                      <option value="comma">Pemisah: Koma (,)</option>
+                      <option value="space">Pemisah: Spasi</option>
+                      <option value="newline">Pemisah: Baris Baru</option>
+                    </select>
+
+                    <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={includeExtension}
+                        onChange={(e) => setIncludeExtension(e.target.checked)}
+                        className="w-4 h-4 accent-espresso rounded cursor-pointer"
+                      />
+                      <span className="font-jakarta text-xs font-semibold text-espresso">
+                        .JPG
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
-                <div className="bg-cream/70 text-espresso p-3.5 rounded-xl border border-espresso/40 font-mono text-xs leading-relaxed select-all overflow-x-auto">
-                  <code>{lightroomFilterString}</code>
+                <div className="bg-cream/70 text-espresso p-3.5 rounded-xl border border-espresso/40 font-mono text-xs leading-relaxed select-all overflow-x-auto max-h-36">
+                  <pre className="whitespace-pre-wrap">{lightroomFilterString}</pre>
                 </div>
 
                 {activeSelections.some((s) => s.note.trim().length > 0) && (
@@ -872,7 +933,7 @@ Selamat menikmati momennya`;
                   <th className="p-3.5">Progres Pilihan</th>
                   <th className="p-3.5">Token Pemilik</th>
                   <th className="p-3.5">PIN</th>
-                  <th className="p-3.5 pr-6 text-right">Buka Halaman</th>
+                  <th className="p-3.5 pr-6 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-espresso/15 font-jakarta text-sm">
@@ -938,6 +999,16 @@ Selamat menikmati momennya`;
                           >
                             Album
                           </Link>
+                          {galleries.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteGallery(gal)}
+                              title="Hapus Galeri"
+                              className="p-1.5 rounded-lg bg-white hover:bg-crimson hover:text-cream text-espresso-muted border border-espresso/30 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

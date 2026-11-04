@@ -336,6 +336,23 @@ export async function createGallery(
   return newGallery;
 }
 
+export async function deleteGallery(galleryId: string): Promise<GalleryRecord[]> {
+  if (supabase) {
+    await supabase.from('galleries').delete().eq('id', galleryId);
+  }
+  const remainingGalleries = getLocalGalleries().filter(
+    (g) => g.id !== galleryId
+  );
+  saveLocalGalleries(remainingGalleries);
+
+  const remainingSelections = getLocalSelections().filter(
+    (s) => s.gallery_id !== galleryId
+  );
+  saveLocalSelections(remainingSelections);
+
+  return remainingGalleries;
+}
+
 export async function updateGallerySettings(
   galleryId: string,
   ownerToken: string,

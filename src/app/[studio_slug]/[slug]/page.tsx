@@ -154,6 +154,17 @@ export default function ClientProofingWorkspacePage({
     );
   }
 
+  function handleImageError(
+    photoId: string,
+    e: React.SyntheticEvent<HTMLImageElement>
+  ) {
+    const target = e.currentTarget;
+    if (!target.dataset.fallback) {
+      target.dataset.fallback = '1';
+      target.src = `https://lh3.googleusercontent.com/d/${photoId}=w1200`;
+    }
+  }
+
   const selectionByPhotoId = useMemo(() => {
     const map = new Map<string, SelectionRecord>();
     selections.forEach((s) => map.set(s.photo_id, s));
@@ -627,6 +638,7 @@ export default function ClientProofingWorkspacePage({
                           alt={photo.caption}
                           loading="lazy"
                           onLoad={(e) => handleImageLoad(photo.id, e)}
+                          onError={(e) => handleImageError(photo.id, e)}
                           onClick={() => handleToggleSelect(photo)}
                           className="w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-[1.03]"
                         />

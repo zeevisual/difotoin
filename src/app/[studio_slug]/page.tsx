@@ -137,6 +137,17 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     );
   }
 
+  function handleImageError(
+    photoId: string,
+    e: React.SyntheticEvent<HTMLImageElement>
+  ) {
+    const target = e.currentTarget;
+    if (!target.dataset.fallback) {
+      target.dataset.fallback = '1';
+      target.src = `https://lh3.googleusercontent.com/d/${photoId}=w1200`;
+    }
+  }
+
   // Determine if current user has valid Owner Token (?t=...)
   const hasValidOwnerToken = Boolean(
     tokenParam && tokenParam === gallery.owner_token
@@ -858,6 +869,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                             alt={photo.caption}
                             loading="lazy"
                             onLoad={(e) => handleImageLoad(photo.id, e)}
+                            onError={(e) => handleImageError(photo.id, e)}
                             onClick={() => setLightboxIndex(index)}
                             className={`w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-[1.03] ${
                               isHidden ? 'opacity-40 blur-[1px]' : ''
