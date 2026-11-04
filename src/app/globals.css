@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-cream: #F5EFE1;
+    --ink-espresso: #1E1916;
+  }
+
+  html,
+  body {
+    background-color: #F5EFE1;
+    color: #1E1916;
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* Subtle archival cardstock paper texture overlay */
+.retro-paper-grain {
+  background-image: radial-gradient(rgba(30, 25, 22, 0.05) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* Custom vintage scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #F5EFE1;
+  border-left: 1.5px solid #1E1916;
+}
+::-webkit-scrollbar-thumb {
+  background: #871F1B;
+  border: 1.5px solid #1E1916;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B85D19;
+}
