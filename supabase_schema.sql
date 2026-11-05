@@ -1,6 +1,6 @@
 -- ============================================================================
 -- DIFOTOIN — Client Photo Proofing & Digital Album Web Application (Zeevisual)
--- Supabase PostgreSQL Schema, Indexes, RLS Policies & Demo Seed Data
+-- Supabase PostgreSQL Schema, Studio Subscriptions, Indexes, RLS & Seed Data
 -- ============================================================================
 
 create extension if not exists "pgcrypto";
@@ -9,6 +9,24 @@ create extension if not exists "pgcrypto";
 -- 1. TABLES
 -- ============================================================================
 
+-- A. STUDIO SUBSCRIPTIONS (Invite-Only / Paid Subscriber Photographers)
+create table if not exists public.studio_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  studio_slug text not null unique,
+  studio_name text not null,
+  owner_name text not null,
+  whatsapp_number text not null default '',
+  access_code text not null check (char_length(access_code) >= 4),
+  plan_name text not null default 'Bulanan (30 Hari)',
+  max_galleries integer not null default 50 check (max_galleries > 0),
+  is_active boolean not null default true,
+  is_super_admin boolean not null default false,
+  expires_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- B. GALLERIES (Client Photo Proofing & Digital Album Sessions)
 create table if not exists public.galleries (
   id uuid primary key default gen_random_uuid(),
   order_code text not null default '#ZV-7910',
@@ -32,6 +50,7 @@ create table if not exists public.galleries (
   updated_at timestamptz not null default now()
 );
 
+-- C. SELECTIONS (Client Photo Choices & Revision Notes)
 create table if not exists public.selections (
   id uuid primary key default gen_random_uuid(),
   gallery_id uuid not null references public.galleries(id) on delete cascade,
@@ -47,6 +66,9 @@ create table if not exists public.selections (
 -- ============================================================================
 -- 2. PERFORMANCE INDEXES
 -- ============================================================================
+
+create index if not exists idx_studio_subscriptions_slug
+  on public.studio_subscriptions (studio_slug);
 
 create index if not exists idx_galleries_slug
   on public.galleries (slug);
@@ -82,6 +104,12 @@ begin
 end;
 $$;
 
+drop trigger if exists set_studio_subscriptions_updated_at on public.studio_subscriptions;
+create trigger set_studio_subscriptions_updated_at
+  before update on public.studio_subscriptions
+  for each row
+  execute function public.handle_updated_at();
+
 drop trigger if exists set_galleries_updated_at on public.galleries;
 create trigger set_galleries_updated_at
   before update on public.galleries
@@ -99,15 +127,32 @@ create trigger set_selections_updated_at
 -- ============================================================================
 
 grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on public.studio_subscriptions to anon, authenticated;
 grant select, insert, update, delete on public.galleries to anon, authenticated;
 grant select, insert, update, delete on public.selections to anon, authenticated;
 
+alter table public.studio_subscriptions enable row level security;
 alter table public.galleries enable row level security;
 alter table public.selections enable row level security;
 
 -- ============================================================================
 -- 5. RLS POLICIES
 -- ============================================================================
+
+drop policy if exists "studio_subscriptions_public_select" on public.studio_subscriptions;
+create policy "studio_subscriptions_public_select"
+  on public.studio_subscriptions
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "studio_subscriptions_admin_write" on public.studio_subscriptions;
+create policy "studio_subscriptions_admin_write"
+  on public.studio_subscriptions
+  for all
+  to anon, authenticated
+  using (true)
+  with check (char_length(studio_slug) > 0 and char_length(access_code) >= 4);
 
 drop policy if exists "galleries_public_select" on public.galleries;
 create policy "galleries_public_select"
@@ -140,6 +185,13 @@ create policy "galleries_token_update"
   with check (
     char_length(owner_token) >= 8
   );
+
+drop policy if exists "galleries_admin_delete" on public.galleries;
+create policy "galleries_admin_delete"
+  on public.galleries
+  for delete
+  to anon, authenticated
+  using (true);
 
 drop policy if exists "selections_public_select" on public.selections;
 create policy "selections_public_select"
@@ -199,8 +251,50 @@ create policy "selections_client_delete"
   );
 
 -- ============================================================================
--- 6. SEED DEMO DATA (Aida Fitri Harahab — Zeevisual)
+-- 6. SEED STUDIO SUBSCRIPTIONS & DEMO DATA
 -- ============================================================================
+
+insert into public.studio_subscriptions (
+  id,
+  studio_slug,
+  studio_name,
+  owner_name,
+  whatsapp_number,
+  access_code,
+  plan_name,
+  max_galleries,
+  is_active,
+  is_super_admin,
+  expires_at
+)
+values
+  (
+    '99999999-9999-4999-8999-999999999991',
+    'zeevisual',
+    'Zeevisual',
+    'Owner Zeevisual (Super Admin)',
+    '6281234567890',
+    'ZV2025',
+    'Super Admin',
+    9999,
+    true,
+    true,
+    null
+  ),
+  (
+    '99999999-9999-4999-8999-999999999992',
+    'kalasenja',
+    'Kalasenja Portrait',
+    'Raka Pratama',
+    '6281298765432',
+    'DFTN-KALA25',
+    'Bulanan (30 Hari)',
+    50,
+    true,
+    false,
+    now() + interval '30 days'
+  )
+on conflict (studio_slug) do nothing;
 
 insert into public.galleries (
   id,

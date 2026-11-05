@@ -1,8 +1,10 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
   CreateGalleryInput,
+  CreateStudioSubscriptionInput,
   GalleryRecord,
   SelectionRecord,
+  StudioSubscription,
 } from '@/types/difotoin';
 import {
   generateOwnerToken,
@@ -25,6 +27,38 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
 
 const STORAGE_GALLERIES_KEY = 'difotoin_galleries_zv_v2';
 const STORAGE_SELECTIONS_KEY = 'difotoin_selections_zv_v2';
+const STORAGE_STUDIOS_KEY = 'difotoin_studio_subs_zv_v1';
+
+export const SEED_STUDIO_SUBSCRIPTIONS: StudioSubscription[] = [
+  {
+    id: '99999999-9999-4999-8999-999999999991',
+    studio_slug: 'zeevisual',
+    studio_name: 'Zeevisual',
+    owner_name: 'Owner Zeevisual (Super Admin)',
+    whatsapp_number: '6281234567890',
+    access_code: 'ZV2025',
+    plan_name: 'Super Admin',
+    max_galleries: 9999,
+    is_active: true,
+    is_super_admin: true,
+    expires_at: null,
+    created_at: '2024-10-01T00:00:00.000Z',
+  },
+  {
+    id: '99999999-9999-4999-8999-999999999992',
+    studio_slug: 'kalasenja',
+    studio_name: 'Kalasenja Portrait',
+    owner_name: 'Raka Pratama',
+    whatsapp_number: '6281298765432',
+    access_code: 'DFTN-KALA25',
+    plan_name: 'Bulanan (30 Hari)',
+    max_galleries: 50,
+    is_active: true,
+    is_super_admin: false,
+    expires_at: new Date(Date.now() + 30 * 86400 * 1000).toISOString(),
+    created_at: '2024-10-12T00:00:00.000Z',
+  },
+];
 
 export const SEED_GALLERIES: GalleryRecord[] = [
   {
@@ -169,6 +203,229 @@ export const SEED_SELECTIONS: SelectionRecord[] = [
     selected_order: 3,
   },
 ];
+
+export function generateLicenseCode(prefix = 'DFTN'): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let part1 = '';
+  let part2 = '';
+  for (let i = 0; i < 4; i++) {
+    part1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    part2 += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `${prefix}-${part1}-${part2}`;
+}
+
+function getLocalStudios(): StudioSubscription[] {
+  if (typeof window === 'undefined') return SEED_STUDIO_SUBSCRIPTIONS;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_STUDIOS_KEY);
+    if (!raw) {
+      window.localStorage.setItem(
+        STORAGE_STUDIOS_KEY,
+        JSON.stringify(SEED_STUDIO_SUBSCRIPTIONS)
+      );
+      return SEED_STUDIO_SUBSCRIPTIONS;
+    }
+    const parsed = JSON.parse(raw) as StudioSubscription[];
+    return Array.isArray(parsed) && parsed.length > 0
+      ? parsed
+      : SEED_STUDIO_SUBSCRIPTIONS;
+  } catch {
+    return SEED_STUDIO_SUBSCRIPTIONS;
+  }
+}
+
+function saveLocalStudios(studios: StudioSubscription[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(STORAGE_STUDIOS_KEY, JSON.stringify(studios));
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+export async function fetchAllStudioSubscriptions(): Promise<
+  StudioSubscription[]
+> {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('studio_subscriptions')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      saveLocalStudios(data as StudioSubscription[]);
+      return data as StudioSubscription[];
+    }
+  }
+  return getLocalStudios();
+}
+
+export async function authenticateStudio(
+  studioSlug: string,
+  accessCode: string
+): Promise<{ ok: boolean; studio?: StudioSubscription; error?: string }> {
+  const cleanSlug = studioSlug.trim().toLowerCase();
+  const cleanCode = accessCode.trim();
+
+  const allStudios = await fetchAllStudioSubscriptions();
+  const match = allStudios.find(
+    (s) => s.studio_slug.toLowerCase() === cleanSlug
+  );
+
+  if (!match) {
+    return {
+      ok: false,
+      error:
+        'Studio belum terdaftar sebagai member berlangganan Difotoin. Silakan hubungi Admin Zeevisual untuk berlangganan.',
+    };
+  }
+
+  if (match.access_code.toLowerCase() !== cleanCode.toLowerCase()) {
+    return {
+      ok: false,
+      error: 'Kode Lisensi / Password Studio tidak sesuai.',
+    };
+  }
+
+  if (!match.is_active) {
+    return {
+      ok: false,
+      error:
+        'Akses langganan studio ini sedang dinonaktifkan. Hubungi Admin Zeevisual untuk mengaktifkan kembali.',
+    };
+  }
+
+  if (match.expires_at) {
+    const expiryTime = new Date(match.expires_at).getTime();
+    if (Date.now() > expiryTime) {
+      return {
+        ok: false,
+        error:
+          'Masa aktif langganan studio Anda telah habis. Silakan perpanjang langganan melalui Admin Zeevisual.',
+      };
+    }
+  }
+
+  return { ok: true, studio: match };
+}
+
+export async function createStudioSubscription(
+  input: CreateStudioSubscriptionInput
+): Promise<StudioSubscription> {
+  const cleanSlug = slugifyClientName(input.studio_slug || input.studio_name);
+  const expiresAt =
+    input.duration_days && input.duration_days > 0
+      ? new Date(Date.now() + input.duration_days * 86400 * 1000).toISOString()
+      : null;
+
+  const newStudio: StudioSubscription = {
+    id:
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `std-${Date.now()}`,
+    studio_slug: cleanSlug,
+    studio_name: input.studio_name.trim(),
+    owner_name: input.owner_name.trim() || input.studio_name.trim(),
+    whatsapp_number: (input.whatsapp_number || '').trim(),
+    access_code: input.access_code.trim() || generateLicenseCode('DFTN'),
+    plan_name: input.plan_name,
+    max_galleries: Number(input.max_galleries) || 50,
+    is_active: true,
+    is_super_admin: cleanSlug === 'zeevisual',
+    expires_at: expiresAt,
+    created_at: new Date().toISOString(),
+  };
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('studio_subscriptions')
+      .upsert(newStudio, { onConflict: 'studio_slug' })
+      .select('*')
+      .single();
+
+    if (!error && data) {
+      const current = getLocalStudios().filter(
+        (s) => s.studio_slug !== data.studio_slug
+      );
+      saveLocalStudios([...current, data as StudioSubscription]);
+      return data as StudioSubscription;
+    }
+  }
+
+  const current = getLocalStudios().filter(
+    (s) => s.studio_slug !== newStudio.studio_slug
+  );
+  const updated = [...current, newStudio];
+  saveLocalStudios(updated);
+  return newStudio;
+}
+
+export async function toggleStudioSubscriptionActive(
+  studioId: string,
+  isActive: boolean
+): Promise<StudioSubscription[]> {
+  if (supabase) {
+    await supabase
+      .from('studio_subscriptions')
+      .update({ is_active: isActive })
+      .eq('id', studioId);
+  }
+  const updated = getLocalStudios().map((s) =>
+    s.id === studioId ? { ...s, is_active: isActive } : s
+  );
+  saveLocalStudios(updated);
+  return updated;
+}
+
+export async function extendStudioSubscription(
+  studioId: string,
+  extraDays: number
+): Promise<StudioSubscription[]> {
+  const current = getLocalStudios();
+  const target = current.find((s) => s.id === studioId);
+  if (!target) return current;
+
+  const baseTime =
+    target.expires_at && new Date(target.expires_at).getTime() > Date.now()
+      ? new Date(target.expires_at).getTime()
+      : Date.now();
+  const nextExpiresAt = new Date(
+    baseTime + extraDays * 86400 * 1000
+  ).toISOString();
+
+  if (supabase) {
+    await supabase
+      .from('studio_subscriptions')
+      .update({ expires_at: nextExpiresAt, is_active: true })
+      .eq('id', studioId);
+  }
+
+  const updated = current.map((s) =>
+    s.id === studioId
+      ? { ...s, expires_at: nextExpiresAt, is_active: true }
+      : s
+  );
+  saveLocalStudios(updated);
+  return updated;
+}
+
+export async function deleteStudioSubscription(
+  studioId: string
+): Promise<StudioSubscription[]> {
+  if (supabase) {
+    await supabase
+      .from('studio_subscriptions')
+      .delete()
+      .eq('id', studioId)
+      .eq('is_super_admin', false);
+  }
+  const updated = getLocalStudios().filter(
+    (s) => s.id !== studioId || s.is_super_admin
+  );
+  saveLocalStudios(updated);
+  return updated;
+}
 
 function getLocalGalleries(): GalleryRecord[] {
   if (typeof window === 'undefined') return SEED_GALLERIES;

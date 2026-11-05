@@ -4,10 +4,12 @@ import {
   ArrowUpRight,
   Camera,
   CheckCircle2,
+  Crown,
   FolderOpen,
   Heart,
   KeyRound,
   Lock,
+  ShieldCheck,
 } from 'lucide-react';
 import RetroTicker from '@/components/RetroTicker';
 import StepPills from '@/components/StepPills';
@@ -19,7 +21,7 @@ export default function HomePage() {
       {/* Clean Top Marquee & Header */}
       <header className="sticky top-0 z-50 w-full bg-crimson border-b-[1.5px] border-espresso">
         <RetroTicker
-          text="DIFOTOIN ★ PILIH FOTO FAVORITMU ★ ABADIKAN SETIAP MOMEN ★ STUDIO ZEEVISUAL ★"
+          text="DIFOTOIN ★ PLATFORM EKSKLUSIF STUDIO BERLANGGANAN ★ CLIENT PHOTO PROOFING & DIGITAL ALBUM ★"
           variant="cream"
         />
 
@@ -29,22 +31,23 @@ export default function HomePage() {
               DIFOTOIN
             </span>
             <span className="hidden sm:inline-block bg-cream/15 text-cream font-jakarta font-semibold text-xs px-2.5 py-0.5 rounded border border-cream/25">
-              Zeevisual
+              by Zeevisual
             </span>
           </div>
 
           <nav className="flex items-center gap-2">
             <Link
               href="/studio/dashboard"
-              className="px-3.5 py-1.5 rounded-lg bg-white text-espresso font-jakarta font-bold text-xs border border-espresso hover:bg-cream transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-mustard text-espresso font-jakarta font-bold text-xs border border-espresso hover:bg-mustard-light transition-colors"
             >
-              Dashboard Studio
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Login Member Studio</span>
             </Link>
             <Link
               href="/zeevisual/aida-fitri-harahab"
-              className="px-3.5 py-1.5 rounded-lg bg-mustard text-espresso font-jakarta font-bold text-xs border border-espresso hover:bg-mustard-light transition-colors"
+              className="px-3.5 py-1.5 rounded-lg bg-white text-espresso font-jakarta font-bold text-xs border border-espresso hover:bg-cream transition-colors"
             >
-              Coba Pilih Foto
+              Demo Pilih Foto
             </Link>
           </nav>
         </div>
@@ -56,9 +59,10 @@ export default function HomePage() {
         <section className="w-full px-4 md:px-10 py-12 md:py-16 border-b-[1.5px] border-espresso bg-white">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <div className="lg:col-span-7 flex flex-col gap-5">
-              <span className="font-jakarta font-bold text-xs uppercase tracking-widest text-crimson">
-                DIFOTOIN × ZEEVISUAL • CLIENT PHOTO PROOFING
-              </span>
+              <div className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-cream border border-espresso font-jakarta font-bold text-xs text-crimson">
+                <Crown className="w-3.5 h-3.5" />
+                <span>KHUSUS STUDIO &amp; FOTOGRAFER BERLANGGANAN</span>
+              </div>
 
               <h1 className="font-anton text-4xl sm:text-5xl md:text-6xl text-espresso uppercase tracking-wide leading-[0.98]">
                 Pilih Foto Favorit &amp; Album Digital{' '}
@@ -68,10 +72,10 @@ export default function HomePage() {
               </h1>
 
               <p className="font-jakarta text-base text-espresso-muted max-w-2xl leading-relaxed">
-                Cukup tempelkan link folder Google Drive di dashboard. Foto
-                portrait maupun landscape langsung tersusun rapi secara
-                otomatis, siap dipilih oleh klien dan diekspor ke Adobe
-                Lightroom.
+                Platform proofing foto eksklusif untuk fotografer terpilih.
+                Cukup tempelkan link folder Google Drive, foto portrait maupun
+                landscape otomatis tersusun rapi, siap dipilih klien dan
+                diekspor ke Adobe Lightroom.
               </p>
 
               <div className="pt-1">
@@ -83,8 +87,8 @@ export default function HomePage() {
                   href="/studio/dashboard"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-mustard hover:bg-mustard-light text-espresso font-anton text-sm md:text-base uppercase tracking-wider border-[1.5px] border-espresso shadow-retro-sm transition-all"
                 >
-                  <Camera className="w-4 h-4" />
-                  <span>Buka Dashboard Zeevisual</span>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Login Dashboard Studio</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </Link>
 
@@ -93,7 +97,7 @@ export default function HomePage() {
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-espresso hover:bg-crimson text-cream font-anton text-sm md:text-base uppercase tracking-wider border-[1.5px] border-espresso transition-all"
                 >
                   <Heart className="w-4 h-4 text-mustard fill-mustard" />
-                  <span>Halaman Pilih Foto Klien</span>
+                  <span>Lihat Contoh Halaman Klien</span>
                 </Link>
               </div>
             </div>
@@ -126,10 +130,10 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto flex flex-col gap-6">
             <div className="flex flex-col gap-1">
               <span className="font-jakarta font-bold text-xs uppercase tracking-widest text-espresso-muted">
-                Navigasi Cepat
+                Ekosistem Difotoin
               </span>
               <h2 className="font-anton text-2xl md:text-3xl text-espresso uppercase tracking-wide">
-                Semua Halaman Aplikasi Difotoin
+                Akses Studio Berlangganan &amp; Pratinjau Klien
               </h2>
             </div>
 
@@ -141,21 +145,21 @@ export default function HomePage() {
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="px-2.5 py-1 rounded bg-cream text-espresso font-mono font-bold text-xs border border-espresso">
-                      /studio/dashboard
+                      /studio/dashboard (Terkunci Lisensi)
                     </span>
                     <FolderOpen className="w-5 h-5 text-espresso" />
                   </div>
                   <h3 className="font-fraunces font-bold text-xl text-espresso group-hover:text-crimson transition-colors">
-                    1. Dashboard Fotografer (Zeevisual)
+                    1. Dashboard Studio &amp; Super Admin Langganan
                   </h3>
                   <p className="font-jakarta text-sm text-espresso-muted">
-                    Input nama klien, tempel link folder Google Drive, salin
-                    pesan WhatsApp otomatis, dan copy filter filename untuk
-                    Adobe Lightroom.
+                    Dilengkapi gerbang Kode Lisensi khusus member fotografer
+                    berlangganan, serta panel Super Admin Zeevisual untuk
+                    menambah/memperpanjang member studio.
                   </p>
                 </div>
                 <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-crimson">
-                  <span>Buka Dashboard</span>
+                  <span>Login Dashboard Studio</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
               </Link>

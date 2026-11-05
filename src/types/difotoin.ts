@@ -61,3 +61,29 @@ export interface CreateGalleryInput {
   album_pin?: string | null;
   watermark_enabled?: boolean;
 }
+
+export interface StudioSubscription {
+  id: string;
+  studio_slug: string;
+  studio_name: string;
+  owner_name: string;
+  whatsapp_number: string;
+  access_code: string;
+  plan_name: 'Bulanan (30 Hari)' | '3 Bulan (90 Hari)' | 'Tahunan (365 Hari)' | 'Lifetime Partner' | 'Super Admin';
+  max_galleries: number;
+  is_active: boolean;
+  is_super_admin: boolean;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface CreateStudioSubscriptionInput {
+  studio_slug: string;
+  studio_name: string;
+  owner_name: string;
+  whatsapp_number?: string;
+  access_code: string;
+  plan_name: StudioSubscription['plan_name'];
+  max_galleries: number;
+  duration_days: number | null;
+}
