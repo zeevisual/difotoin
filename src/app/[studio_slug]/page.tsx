@@ -20,7 +20,6 @@ import {
   Share2,
   X,
 } from 'lucide-react';
-import RetroTicker from '@/components/RetroTicker';
 import GiantFooter from '@/components/GiantFooter';
 import {
   fetchGalleryBySlug,
@@ -44,11 +43,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   const [photos, setPhotos] = useState<DrivePhoto[]>(DEMO_EDITORIAL_PHOTOS);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Track natural orientation for mixed Portrait & Landscape layout
-  const [detectedRatios, setDetectedRatios] = useState<
-    Record<string, 'portrait' | 'landscape' | 'square'>
-  >({});
-
   // Visitor / Owner simulation states
   const [previewAsVisitor, setPreviewAsVisitor] = useState(false);
   const [isPinUnlocked, setIsPinUnlocked] = useState(false);
@@ -64,8 +58,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   const [copiedCleanLink, setCopiedCleanLink] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Gallery Filter, Lightbox & Favorites
-  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  // Lightbox & Favorites
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [guestFavorites, setGuestFavorites] = useState<string[]>(['photo-01']);
 
@@ -118,25 +111,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     }, 2800);
   }
 
-  function handleImageLoad(
-    photoId: string,
-    e: React.SyntheticEvent<HTMLImageElement>
-  ) {
-    const img = e.currentTarget;
-    if (!img.naturalWidth || !img.naturalHeight) return;
-    const ratio: 'portrait' | 'landscape' | 'square' =
-      img.naturalWidth > img.naturalHeight * 1.08
-        ? 'landscape'
-        : Math.abs(img.naturalWidth - img.naturalHeight) <=
-            img.naturalWidth * 0.1
-          ? 'square'
-          : 'portrait';
-
-    setDetectedRatios((prev) =>
-      prev[photoId] === ratio ? prev : { ...prev, [photoId]: ratio }
-    );
-  }
-
   function handleImageError(
     photoId: string,
     e: React.SyntheticEvent<HTMLImageElement>
@@ -175,12 +149,9 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       if (!isOwnerMode && hiddenSet.has(photo.id)) {
         return false;
       }
-      if (categoryFilter !== 'ALL' && photo.category !== categoryFilter) {
-        return false;
-      }
       return true;
     });
-  }, [photos, gallery.hidden_photo_ids, isOwnerMode, categoryFilter]);
+  }, [photos, gallery.hidden_photo_ids, isOwnerMode]);
 
   // Owner Action 1: Set Cover Photo (Ganti Sampul)
   async function handleSetCoverPhoto(photoId: string) {
@@ -300,34 +271,26 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     !isOwnerMode && Boolean(gallery.album_pin) && !isPinUnlocked;
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream text-espresso">
-      {/* Clean Crimson Editorial Header */}
-      <header className="sticky top-0 z-50 w-full bg-crimson border-b-[1.5px] border-espresso">
-        <RetroTicker
-          text="DIFOTOIN ★ PILIH FOTO FAVORITMU ★ ABADIKAN SETIAP MOMEN ★"
-          variant="cream"
-        />
-
+    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-espresso">
+      {/* Clean Minimal Editorial Header */}
+      <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-espresso/15">
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="font-anton text-2xl md:text-3xl text-cream tracking-wider uppercase hover:text-mustard transition-colors"
+              className="font-anton text-2xl text-espresso tracking-wider uppercase hover:text-crimson transition-colors"
             >
               DIFOTOIN
             </Link>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded bg-cream/15 text-cream font-jakarta font-semibold text-xs border border-cream/25">
+            <span className="text-espresso/25">|</span>
+            <span className="font-jakarta font-semibold text-xs text-espresso-muted uppercase tracking-wider">
               {gallery.studio_name || 'Zeevisual'}
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-2 text-cream">
+          <div className="hidden md:flex items-center gap-2 text-espresso">
             <span className="font-fraunces font-bold text-base">
               {gallery.client_name}
-            </span>
-            <span className="text-cream/50">•</span>
-            <span className="font-jakarta text-xs text-cream/80">
-              Digital Album
             </span>
           </div>
 
@@ -336,37 +299,35 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
               <button
                 type="button"
                 onClick={() => setPreviewAsVisitor(false)}
-                className="inline-flex items-center gap-1.5 bg-mustard text-espresso font-jakarta font-bold text-xs px-3.5 py-1.5 rounded-lg border border-espresso"
+                className="inline-flex items-center gap-1.5 bg-mustard text-espresso font-jakarta font-semibold text-xs px-3.5 py-1.5 border border-espresso/30"
               >
                 <KeyRound className="w-3.5 h-3.5" />
-                <span>Kembali ke Mode Pemilik</span>
+                <span>Mode Pemilik</span>
               </button>
             )}
 
             <Link
               href={`/${gallery.studio_slug}/${gallery.slug}`}
-              className="inline-flex items-center gap-1.5 bg-white text-espresso font-jakarta font-bold text-xs px-3.5 py-1.5 rounded-lg border border-espresso hover:bg-mustard transition-colors"
+              className="inline-flex items-center gap-1.5 bg-espresso text-cream font-jakarta font-semibold text-xs px-4 py-2 hover:bg-crimson transition-colors"
             >
-              <span>Pilih Foto</span>
+              <span>Halaman Pilih Foto</span>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* STICKY FLOATING "MODE PEMILIK ALBUM" BAR (Only when ?t === gallery.owner_token) */}
+      {/* STICKY "MODE PEMILIK ALBUM" BAR (Only when ?t === gallery.owner_token) */}
       {isOwnerMode && (
-        <aside className="sticky top-[94px] z-40 w-full bg-espresso text-cream border-b border-espresso px-4 md:px-10 py-2.5 shadow-retro">
+        <aside className="sticky top-16 z-40 w-full bg-espresso text-cream border-b border-espresso/20 px-4 md:px-10 py-2.5">
           <div className="max-w-7xl mx-auto flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Status Badge */}
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-mustard inline-block" />
-                <span className="font-anton text-xs md:text-sm uppercase tracking-wider text-cream">
+                <span className="w-2 h-2 rounded-full bg-mustard inline-block" />
+                <span className="font-jakarta font-bold text-xs uppercase tracking-wider text-cream">
                   Mode Pemilik Album
                 </span>
               </div>
 
-              {/* 4 Required Interactive Owner Controls */}
               <div className="flex flex-wrap items-center gap-2">
                 {/* 1. Ganti Sampul */}
                 <button
@@ -376,10 +337,10 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       activeOwnerTool === 'cover' ? 'none' : 'cover'
                     )
                   }
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-jakarta font-bold text-xs transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-jakarta font-semibold text-xs transition-all ${
                     activeOwnerTool === 'cover'
                       ? 'bg-mustard text-espresso'
-                      : 'bg-cream/10 text-cream hover:bg-cream/20'
+                      : 'bg-white/10 text-cream hover:bg-white/20'
                   }`}
                 >
                   <Camera className="w-3.5 h-3.5" />
@@ -394,15 +355,15 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       activeOwnerTool === 'pin' ? 'none' : 'pin'
                     )
                   }
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-jakarta font-bold text-xs transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-jakarta font-semibold text-xs transition-all ${
                     activeOwnerTool === 'pin'
                       ? 'bg-mustard text-espresso'
-                      : 'bg-cream/10 text-cream hover:bg-cream/20'
+                      : 'bg-white/10 text-cream hover:bg-white/20'
                   }`}
                 >
                   <Lock className="w-3.5 h-3.5" />
                   <span>
-                    Bikin PIN {gallery.album_pin ? `(${gallery.album_pin})` : ''}
+                    PIN {gallery.album_pin ? `(${gallery.album_pin})` : ''}
                   </span>
                 </button>
 
@@ -414,15 +375,15 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       activeOwnerTool === 'visibility' ? 'none' : 'visibility'
                     )
                   }
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-jakarta font-bold text-xs transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-jakarta font-semibold text-xs transition-all ${
                     activeOwnerTool === 'visibility'
                       ? 'bg-mustard text-espresso'
-                      : 'bg-cream/10 text-cream hover:bg-cream/20'
+                      : 'bg-white/10 text-cream hover:bg-white/20'
                   }`}
                 >
                   <EyeOff className="w-3.5 h-3.5" />
                   <span>
-                    Atur Siapa yang Lihat ({gallery.hidden_photo_ids?.length || 0})
+                    Sembunyikan Foto ({gallery.hidden_photo_ids?.length || 0})
                   </span>
                 </button>
 
@@ -434,7 +395,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       activeOwnerTool === 'share' ? 'none' : 'share'
                     )
                   }
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-mustard text-espresso font-jakarta font-bold text-xs hover:bg-mustard-light transition-all"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-mustard text-espresso font-jakarta font-bold text-xs hover:bg-mustard-light transition-all"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>Bagikan Link</span>
@@ -447,17 +408,17 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                     setPreviewAsVisitor(true);
                     setIsPinUnlocked(false);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-espresso font-jakarta font-bold text-xs hover:bg-cream transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-espresso font-jakarta font-semibold text-xs hover:bg-cream transition-colors"
                 >
                   <Eye className="w-3.5 h-3.5" />
-                  <span className="hidden lg:inline">Lihat Sebagai Tamu</span>
+                  <span className="hidden lg:inline">Tampilan Tamu</span>
                 </button>
               </div>
             </div>
 
             {/* Expandable Interactive Owner Control Drawer */}
             {activeOwnerTool !== 'none' && (
-              <div className="bg-white text-espresso p-4 rounded-xl border border-espresso flex flex-col gap-3">
+              <div className="bg-white text-espresso p-4 border border-espresso/20 flex flex-col gap-3">
                 {activeOwnerTool === 'cover' && (
                   <div className="flex flex-col gap-2.5">
                     <div className="flex items-center justify-between">
@@ -473,7 +434,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       <button
                         type="button"
                         onClick={() => setActiveOwnerTool('none')}
-                        className="p-1 rounded bg-cream hover:bg-mustard"
+                        className="p-1 bg-cream hover:bg-mustard"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -487,15 +448,16 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                             type="button"
                             disabled={isSavingOwnerSetting}
                             onClick={() => handleSetCoverPhoto(p.id)}
-                            className={`relative shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                            className={`relative shrink-0 w-20 h-20 overflow-hidden border-2 transition-all ${
                               isCurrentCover
-                                ? 'border-mustard ring-2 ring-espresso'
-                                : 'border-espresso/40 opacity-80 hover:opacity-100'
+                                ? 'border-mustard'
+                                : 'border-transparent opacity-75 hover:opacity-100'
                             }`}
                           >
                             <img
                               src={p.thumbnailUrl}
                               alt={p.name}
+                              onError={(e) => handleImageError(p.id, e)}
                               className="w-full h-full object-cover"
                             />
                             {isCurrentCover && (
@@ -532,13 +494,13 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                           )
                         }
                         placeholder="2408"
-                        className="w-28 bg-cream text-espresso px-3 py-2 rounded-lg border border-espresso font-mono font-bold text-base tracking-[0.25em] text-center focus:outline-none"
+                        className="w-28 bg-[#FAF8F5] text-espresso px-3 py-2 border border-espresso/30 font-mono font-bold text-base tracking-[0.25em] text-center focus:outline-none"
                       />
                       <button
                         type="button"
                         disabled={isSavingOwnerSetting}
                         onClick={() => handleSaveAlbumPin(pinDraft)}
-                        className="px-4 py-2 rounded-lg bg-espresso text-cream font-jakarta font-bold text-xs hover:bg-crimson"
+                        className="px-4 py-2 bg-espresso text-cream font-jakarta font-bold text-xs hover:bg-crimson"
                       >
                         Simpan PIN
                       </button>
@@ -547,7 +509,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                           type="button"
                           disabled={isSavingOwnerSetting}
                           onClick={() => handleSaveAlbumPin(null)}
-                          className="px-3 py-2 rounded-lg bg-cream text-espresso font-jakarta font-bold text-xs border border-espresso"
+                          className="px-3 py-2 bg-[#FAF8F5] text-espresso font-jakarta font-bold text-xs border border-espresso/30"
                         >
                           Hapus PIN
                         </button>
@@ -560,20 +522,20 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <span className="font-jakarta font-bold text-xs uppercase text-espresso">
-                        Atur Siapa yang Lihat ({gallery.hidden_photo_ids?.length || 0} Foto Disembunyikan)
+                        Atur Visibilitas Foto (
+                        {gallery.hidden_photo_ids?.length || 0} Disembunyikan)
                       </span>
                       <p className="font-jakarta text-xs text-espresso-muted">
-                        Klik tombol &ldquo;Sembunyikan / Tampilkan&rdquo; di bawah
-                        masing-masing foto untuk menyembunyikannya dari
-                        pengunjung publik.
+                        Klik ikon mata pada foto di bawah untuk menyembunyikan
+                        atau menampilkan foto bagi pengunjung tamu.
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setActiveOwnerTool('none')}
-                      className="shrink-0 px-3.5 py-1.5 rounded-lg bg-mustard text-espresso border border-espresso font-jakarta font-bold text-xs"
+                      className="shrink-0 px-3.5 py-1.5 bg-espresso text-cream font-jakarta font-bold text-xs"
                     >
-                      Tutup
+                      Selesai
                     </button>
                   </div>
                 )}
@@ -582,9 +544,9 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex flex-col gap-1">
                       <span className="font-jakarta font-bold text-xs uppercase text-espresso">
-                        Bagikan Link Album ke Keluarga &amp; Sahabat
+                        Link Publik Keluarga &amp; Sahabat (Tanpa Token Edit)
                       </span>
-                      <code className="font-mono text-xs font-bold bg-cream px-3 py-1.5 rounded border border-espresso/30 text-espresso select-all">
+                      <code className="font-mono text-xs font-bold bg-[#FAF8F5] px-3 py-1.5 border border-espresso/20 text-espresso select-all">
                         {cleanVisitorUrl}
                       </code>
                     </div>
@@ -592,7 +554,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       <button
                         type="button"
                         onClick={handleCopyCleanLink}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-mustard text-espresso border border-espresso font-jakarta font-bold text-xs"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-mustard text-espresso font-jakarta font-bold text-xs"
                       >
                         {copiedCleanLink ? (
                           <>
@@ -612,7 +574,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-espresso text-cream font-jakarta font-bold text-xs"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-espresso text-cream font-jakarta font-bold text-xs"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                         <span>Share WA</span>
@@ -628,21 +590,21 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
       {/* Clean Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-4 md:right-8 z-50 bg-espresso text-cream px-4 py-2.5 rounded-xl border border-cream/20 shadow-retro flex items-center gap-2 font-jakarta text-xs md:text-sm font-semibold">
+        <div className="fixed bottom-6 right-4 md:right-8 z-50 bg-espresso text-cream px-4 py-2.5 shadow-lg flex items-center gap-2 font-jakarta text-xs md:text-sm font-semibold">
           <CheckCircle2 className="w-4 h-4 text-mustard shrink-0" />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* IF VISITOR MODE AND ALBUM_PIN IS ACTIVE: SHOW CLEAN RETRO PIN ENTRY SCREEN */}
+      {/* PIN GATE */}
       {requiresPinGate ? (
         <main className="flex-1 w-full flex items-center justify-center px-4 py-12">
-          <div className="max-w-md w-full bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro-lg overflow-hidden flex flex-col items-center text-center p-8">
-            <div className="w-14 h-14 rounded-full bg-cream text-espresso border-[1.5px] border-espresso flex items-center justify-center mb-4">
-              <KeyRound className="w-6 h-6 text-crimson" />
+          <div className="max-w-md w-full bg-white border border-espresso/20 shadow-sm flex flex-col items-center text-center p-8">
+            <div className="w-12 h-12 bg-[#FAF8F5] text-espresso border border-espresso/20 flex items-center justify-center mb-4">
+              <KeyRound className="w-5 h-5 text-crimson" />
             </div>
 
-            <h1 className="font-anton text-2xl md:text-3xl text-espresso uppercase tracking-wide">
+            <h1 className="font-fraunces font-bold text-2xl text-espresso">
               Album Terlindungi PIN
             </h1>
             <p className="font-jakarta text-sm text-espresso-muted mt-1.5">
@@ -665,7 +627,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 }}
                 placeholder="••••"
                 autoFocus
-                className="w-48 bg-cream/60 text-espresso px-4 py-3 rounded-xl border-[1.5px] border-espresso font-mono font-bold text-center text-2xl tracking-[0.4em] focus:outline-none focus:bg-white"
+                className="w-48 bg-[#FAF8F5] text-espresso px-4 py-3 border border-espresso/30 font-mono font-bold text-center text-2xl tracking-[0.4em] focus:outline-none focus:bg-white"
               />
 
               {pinError && (
@@ -676,237 +638,163 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
               <button
                 type="submit"
-                className="w-full py-3 px-6 rounded-xl bg-mustard hover:bg-mustard-light text-espresso font-anton text-sm uppercase tracking-wider border-[1.5px] border-espresso shadow-retro-sm transition-all"
+                className="w-full py-3 px-6 bg-espresso hover:bg-crimson text-cream font-jakarta font-bold text-xs uppercase tracking-widest transition-all"
               >
                 Buka Album
               </button>
             </form>
-
-            <div className="mt-6 pt-4 border-t border-espresso/15 w-full flex items-center justify-between text-xs text-espresso-muted font-jakarta">
-              <span>
-                PIN Demo: <strong className="font-mono">{gallery.album_pin}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setPinInput(gallery.album_pin || '2408');
-                  setIsPinUnlocked(true);
-                }}
-                className="font-bold text-espresso underline hover:text-crimson"
-              >
-                Buka Langsung →
-              </button>
-            </div>
           </div>
         </main>
       ) : (
-        /* UNLOCKED DIGITAL ALBUM CONTENT */
+        /* UNLOCKED DIGITAL ALBUM CONTENT — CLEAN EDITORIAL GALLERY */
         <main className="flex-1 w-full">
-          {/* 1. CLEAN EDITORIAL HERO COVER (FRAMED IN MUSTARD #F2B705) */}
-          <section className="w-full bg-white px-4 md:px-10 py-10 md:py-14 border-b-[1.5px] border-espresso">
-            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-10 lg:gap-14">
-              {/* Left: Featured Cover Frame in Mustard (#F2B705) */}
-              <div className="w-full lg:w-5/12 flex flex-col items-center">
-                <div className="relative w-full max-w-md bg-mustard p-3.5 rounded-2xl border-[1.5px] border-espresso shadow-retro-lg">
-                  <div className="relative w-full aspect-[4/5] overflow-hidden rounded-xl border border-espresso bg-cream">
+          {/* 1. CLEAN MINIMAL EDITORIAL HERO COVER (SHARP CORNERS) */}
+          <section className="w-full bg-white px-4 md:px-10 py-10 md:py-16 border-b border-espresso/10">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+              {/* Left: Sharp, Unrounded Editorial Cover Image */}
+              <div className="lg:col-span-5 flex flex-col items-center">
+                <div className="w-full max-w-md bg-[#FAF8F5] p-3 border border-espresso/15">
+                  <div className="relative w-full overflow-hidden bg-cream">
                     <img
                       src={coverPhoto.fullResUrl}
                       alt={coverPhoto.caption}
-                      className="w-full h-full object-cover"
+                      onError={(e) => handleImageError(coverPhoto.id, e)}
+                      className="w-full h-auto max-h-[520px] object-cover block rounded-none"
                     />
-                  </div>
-                  <div className="mt-2.5 flex items-center justify-between text-espresso font-jakarta font-bold text-xs px-1">
-                    <span>{gallery.studio_name.toUpperCase()} ARCHIVE</span>
-                    <span>{coverPhoto.name}</span>
                   </div>
                 </div>
               </div>
 
               {/* Right: Clean Editorial Typography */}
-              <div className="w-full lg:w-7/12 flex flex-col justify-center">
-                <span className="font-jakarta font-bold text-xs uppercase tracking-widest text-crimson mb-2">
-                  DIGITAL PHOTO ALBUM • {gallery.session_type.toUpperCase()}
+              <div className="lg:col-span-7 flex flex-col justify-center">
+                <span className="font-jakarta font-semibold text-xs uppercase tracking-[0.2em] text-espresso-muted mb-3">
+                  {gallery.studio_name} • {gallery.session_type}
                 </span>
 
-                <h1 className="font-fraunces font-black text-4xl sm:text-5xl md:text-6xl text-espresso tracking-tight leading-[1.05]">
+                <h1 className="font-fraunces font-bold text-4xl sm:text-5xl md:text-6xl text-espresso tracking-tight leading-[1.08]">
                   {gallery.client_name}
                 </h1>
 
-                <p className="font-jakarta text-base text-espresso-muted mt-3 max-w-xl leading-relaxed">
-                  Koleksi foto momen spesial yang diabadikan oleh{' '}
+                <p className="font-jakarta text-sm md:text-base text-espresso-muted mt-4 max-w-xl leading-relaxed">
+                  Koleksi dokumentasi foto bersama{' '}
                   <strong className="text-espresso">
                     {gallery.studio_name}
-                  </strong>{' '}
-                  ({gallery.session_date}). Tersedia untuk dilihat dan diunduh
-                  dalam resolusi tinggi.
+                  </strong>
+                  . Klik pada foto untuk melihat ukuran penuh atau mengunduh
+                  file resolusi tinggi.
                 </p>
 
-                <div className="mt-6 flex flex-wrap items-center gap-3">
+                <div className="mt-7 flex flex-wrap items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setLightboxIndex(0)}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-mustard hover:bg-mustard-light text-espresso font-anton text-sm uppercase tracking-wider border-[1.5px] border-espresso shadow-retro-sm transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-espresso hover:bg-crimson text-cream font-jakarta font-bold text-xs uppercase tracking-wider transition-all"
                   >
                     <PlayCircle className="w-4 h-4" />
-                    <span>Buka Layar Penuh</span>
+                    <span>Buka Galeri Layar Penuh</span>
                   </button>
 
                   <a
                     href={coverPhoto.downloadUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-cream hover:bg-cream-dark text-espresso font-jakarta font-bold text-xs uppercase tracking-wider border-[1.5px] border-espresso transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#FAF8F5] hover:bg-cream text-espresso font-jakarta font-bold text-xs uppercase tracking-wider border border-espresso/20 transition-all"
                   >
                     <Download className="w-4 h-4" />
-                    <span>Unduh Foto Sampul</span>
+                    <span>Unduh Sampul</span>
                   </a>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* 2. TERRACOTTA (#B85D19) QUOTE DIVIDER SECTION WITH CLEAN FLOATING PILLS */}
-          <section className="w-full bg-terracotta text-cream py-10 px-4 md:px-10 border-b-[1.5px] border-espresso">
-            <div className="max-w-4xl mx-auto flex flex-col items-center text-center">
-              <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
-                <span className="px-3.5 py-1 rounded-full bg-cream text-espresso font-jakarta font-bold text-xs border border-espresso -rotate-1">
-                  ★ Momen Spesial
-                </span>
-                <span className="px-3.5 py-1 rounded-full bg-mustard text-espresso font-jakarta font-bold text-xs border border-espresso rotate-1">
-                  ✿ Keluarga &amp; Sahabat
-                </span>
-                <span className="px-3.5 py-1 rounded-full bg-cream text-espresso font-jakarta font-bold text-xs border border-espresso -rotate-1">
-                  ✦ {gallery.studio_name}
-                </span>
-              </div>
-
-              <blockquote className="font-fraunces italic font-bold text-xl sm:text-2xl text-cream leading-relaxed">
-                “Setiap jepretan adalah mesin waktu kecil; menyimpan tawa,
-                kehangatan, dan cerita yang tak lekang oleh masa.”
-              </blockquote>
-            </div>
-          </section>
-
-          {/* 3. AUTO-MASONRY PHOTO GRID (PORTRAIT & LANDSCAPE TERSUSUN RAPI OTOMATIS) */}
-          <section className="w-full bg-cream px-4 md:px-10 py-10">
+          {/* 2. SHARP, CLEAN MASONRY PHOTO GRID (ZERO ROUNDED CORNERS) */}
+          <section className="w-full px-4 md:px-10 py-10 md:py-14">
             <div className="max-w-7xl mx-auto">
-              {/* Subheader & Filter Pills */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-espresso/20">
+              {/* Subheader */}
+              <div className="flex items-center justify-between gap-4 pb-5 mb-8 border-b border-espresso/15">
                 <div>
-                  <h2 className="font-anton text-2xl md:text-3xl text-espresso uppercase tracking-wide">
-                    Galeri Foto ({visiblePhotos.length})
+                  <h2 className="font-fraunces font-bold text-2xl text-espresso">
+                    Koleksi Foto ({visiblePhotos.length})
                   </h2>
-                  <p className="font-jakarta text-xs text-espresso-muted">
-                    Foto portrait dan landscape otomatis menyesuaikan ukuran
-                    aslinya. Klik foto untuk memperbesar atau mengunduh.
-                  </p>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {(
-                    ['ALL', 'Outdoor', 'Studio', 'Detail & Cincin'] as const
-                  ).map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setCategoryFilter(cat)}
-                      className={`px-3.5 py-1.5 rounded-full font-jakarta font-bold text-xs border-[1.5px] border-espresso transition-all ${
-                        categoryFilter === cat
-                          ? 'bg-espresso text-cream'
-                          : 'bg-white text-espresso hover:bg-mustard'
-                      }`}
-                    >
-                      {cat === 'ALL' ? 'Semua Foto' : cat}
-                    </button>
-                  ))}
-                </div>
+                <span className="font-jakarta text-xs text-espresso-muted">
+                  Klik foto untuk memperbesar
+                </span>
               </div>
 
-              {/* Mixed Portrait & Landscape Masonry Columns */}
+              {/* True Natural Masonry Columns — Sharp Corners (rounded-none), No Cropping */}
               {isLoading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {Array.from({ length: 6 }).map((_, idx) => (
                     <div
                       key={idx}
-                      className="aspect-[4/5] rounded-2xl bg-white border-[1.5px] border-espresso animate-pulse"
+                      className="aspect-[4/5] bg-white border border-espresso/10 animate-pulse"
                     />
                   ))}
                 </div>
               ) : (
-                <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+                <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
                   {visiblePhotos.map((photo, index) => {
                     const isHidden = (gallery.hidden_photo_ids || []).includes(
                       photo.id
                     );
                     const isCover = photo.id === coverPhoto.id;
                     const isFav = guestFavorites.includes(photo.id);
-                    const orientation =
-                      detectedRatios[photo.id] ||
-                      photo.aspectRatio ||
-                      'portrait';
-
-                    const aspectClass =
-                      orientation === 'landscape'
-                        ? 'aspect-[4/3]'
-                        : orientation === 'square'
-                          ? 'aspect-square'
-                          : 'aspect-[3/4]';
 
                     return (
                       <article
                         key={photo.id}
-                        className={`break-inside-avoid rounded-2xl p-2.5 bg-white border-[1.5px] border-espresso transition-all flex flex-col group ${
+                        className={`break-inside-avoid rounded-none bg-white border transition-all flex flex-col group ${
                           isCover
-                            ? 'ring-2 ring-mustard shadow-retro'
-                            : 'hover:shadow-retro-sm'
+                            ? 'border-espresso ring-1 ring-espresso'
+                            : 'border-espresso/15 hover:border-espresso/40'
                         }`}
                       >
-                        <div
-                          className={`relative w-full ${aspectClass} overflow-hidden rounded-xl bg-cream`}
-                        >
+                        {/* Sharp 90-degree Photo Container — Natural Aspect Ratio */}
+                        <div className="relative w-full overflow-hidden rounded-none bg-[#F3EFE6]">
                           <img
                             src={photo.thumbnailUrl}
                             alt={photo.caption}
                             loading="lazy"
-                            onLoad={(e) => handleImageLoad(photo.id, e)}
                             onError={(e) => handleImageError(photo.id, e)}
                             onClick={() => setLightboxIndex(index)}
-                            className={`w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-[1.03] ${
-                              isHidden ? 'opacity-40 blur-[1px]' : ''
+                            className={`w-full h-auto block rounded-none cursor-pointer transition-opacity duration-300 group-hover:opacity-95 ${
+                              isHidden ? 'opacity-35 grayscale' : ''
                             }`}
                           />
 
                           {isCover && (
-                            <div className="absolute top-2.5 left-2.5 bg-mustard text-espresso font-jakarta font-bold text-[10px] px-2.5 py-0.5 rounded border border-espresso uppercase z-10">
+                            <div className="absolute top-3 left-3 bg-espresso/90 text-cream font-jakarta font-semibold text-[10px] px-2.5 py-1 tracking-wider uppercase z-10">
                               Sampul Album
                             </div>
                           )}
 
                           {/* Hidden Notice Overlay in Owner Mode */}
                           {isOwnerMode && isHidden && (
-                            <div className="absolute inset-0 bg-espresso/80 flex flex-col items-center justify-center text-center p-4 text-cream z-20">
-                              <EyeOff className="w-7 h-7 text-mustard mb-1" />
-                              <span className="font-jakarta font-bold text-xs uppercase text-mustard">
-                                Foto Disembunyikan dari Tamu
+                            <div className="absolute inset-0 bg-espresso/75 flex flex-col items-center justify-center text-center p-4 text-cream z-20">
+                              <EyeOff className="w-6 h-6 text-mustard mb-1" />
+                              <span className="font-jakarta font-semibold text-xs uppercase tracking-wider">
+                                Disembunyikan dari Tamu
                               </span>
                               <button
                                 type="button"
                                 onClick={() => handleToggleHidePhoto(photo.id)}
-                                className="mt-2.5 px-3 py-1 bg-white text-espresso rounded-lg font-jakarta font-bold text-xs"
+                                className="mt-2 px-3 py-1 bg-white text-espresso font-jakarta font-bold text-xs"
                               >
                                 Tampilkan Kembali
                               </button>
                             </div>
                           )}
 
-                          {/* Hover Quick Actions Overlay */}
+                          {/* Subtle Hover Actions Overlay */}
                           {!isHidden && (
-                            <div className="absolute inset-0 bg-espresso/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 z-10">
+                            <div className="absolute inset-0 bg-espresso/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2.5 z-10 pointer-events-none">
                               <button
                                 type="button"
                                 onClick={() => setLightboxIndex(index)}
                                 title="Perbesar"
-                                className="w-9 h-9 rounded-full bg-white text-espresso border border-espresso flex items-center justify-center hover:bg-mustard transition-colors"
+                                className="pointer-events-auto w-9 h-9 bg-white text-espresso flex items-center justify-center hover:bg-mustard transition-colors shadow-sm"
                               >
                                 <Maximize2 className="w-4 h-4" />
                               </button>
@@ -917,7 +805,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                                 rel="noopener noreferrer"
                                 download={photo.name}
                                 title="Unduh HD"
-                                className="w-9 h-9 rounded-full bg-mustard text-espresso border border-espresso flex items-center justify-center hover:bg-white transition-colors"
+                                className="pointer-events-auto w-9 h-9 bg-white text-espresso flex items-center justify-center hover:bg-mustard transition-colors shadow-sm"
                               >
                                 <Download className="w-4 h-4" />
                               </a>
@@ -926,7 +814,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                                 type="button"
                                 onClick={() => toggleGuestFavorite(photo.id)}
                                 title="Favorit"
-                                className="w-9 h-9 rounded-full bg-white text-espresso border border-espresso flex items-center justify-center hover:bg-mustard transition-colors"
+                                className="pointer-events-auto w-9 h-9 bg-white text-espresso flex items-center justify-center hover:bg-mustard transition-colors shadow-sm"
                               >
                                 <Heart
                                   className={`w-4 h-4 ${
@@ -940,67 +828,69 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                           )}
                         </div>
 
-                        {/* Clean Bottom Row */}
-                        <div className="pt-2.5 px-0.5 flex items-center justify-between gap-2">
-                          <span className="font-mono text-xs font-semibold text-espresso truncate">
+                        {/* Minimal Single-Line Bar Under Photo */}
+                        <div className="px-3 py-2.5 bg-white flex items-center justify-between gap-2 border-t border-espresso/10">
+                          <span className="font-mono text-[11px] text-espresso-muted truncate">
                             {photo.name}
                           </span>
 
-                          <a
-                            href={photo.downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download={photo.name}
-                            className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cream hover:bg-mustard text-espresso border border-espresso/40 font-jakarta font-bold text-[11px] transition-colors"
-                          >
-                            <Download className="w-3 h-3" />
-                            <span>Unduh</span>
-                          </a>
-                        </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {isOwnerMode && (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={isCover || isSavingOwnerSetting}
+                                  onClick={() => handleSetCoverPhoto(photo.id)}
+                                  title={
+                                    isCover ? 'Sampul Aktif' : 'Jadikan Sampul'
+                                  }
+                                  className={`px-2 py-1 font-jakarta font-semibold text-[11px] border transition-colors ${
+                                    isCover
+                                      ? 'bg-espresso text-cream border-espresso'
+                                      : 'bg-[#FAF8F5] hover:bg-mustard text-espresso border-espresso/20'
+                                  }`}
+                                >
+                                  {isCover ? 'Sampul' : 'Set Sampul'}
+                                </button>
 
-                        {/* Owner Mode Direct Controls */}
-                        {isOwnerMode && (
-                          <div className="mt-2 pt-2 border-t border-espresso/15 flex items-center gap-2">
-                            <button
-                              type="button"
-                              disabled={isCover || isSavingOwnerSetting}
-                              onClick={() => handleSetCoverPhoto(photo.id)}
-                              className={`flex-1 py-1.5 px-2 rounded-lg font-jakarta font-bold text-[11px] border border-espresso/40 flex items-center justify-center gap-1 transition-colors ${
-                                isCover
-                                  ? 'bg-mustard text-espresso border-espresso'
-                                  : 'bg-cream/60 hover:bg-mustard text-espresso'
-                              }`}
-                            >
-                              <ImageIcon className="w-3 h-3" />
-                              <span>
-                                {isCover ? 'Sampul Aktif' : 'Jadikan Sampul'}
-                              </span>
-                            </button>
+                                <button
+                                  type="button"
+                                  disabled={isSavingOwnerSetting}
+                                  onClick={() =>
+                                    handleToggleHidePhoto(photo.id)
+                                  }
+                                  title={
+                                    isHidden
+                                      ? 'Tampilkan ke Tamu'
+                                      : 'Sembunyikan dari Tamu'
+                                  }
+                                  className={`p-1 border transition-colors ${
+                                    isHidden
+                                      ? 'bg-espresso text-cream border-espresso'
+                                      : 'bg-[#FAF8F5] hover:bg-espresso hover:text-cream text-espresso border-espresso/20'
+                                  }`}
+                                >
+                                  {isHidden ? (
+                                    <Eye className="w-3.5 h-3.5" />
+                                  ) : (
+                                    <EyeOff className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </>
+                            )}
 
-                            <button
-                              type="button"
-                              disabled={isSavingOwnerSetting}
-                              onClick={() => handleToggleHidePhoto(photo.id)}
-                              className={`flex-1 py-1.5 px-2 rounded-lg font-jakarta font-bold text-[11px] border border-espresso/40 flex items-center justify-center gap-1 transition-colors ${
-                                isHidden
-                                  ? 'bg-espresso text-cream'
-                                  : 'bg-cream/60 hover:bg-espresso hover:text-cream text-espresso'
-                              }`}
+                            <a
+                              href={photo.downloadUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download={photo.name}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#FAF8F5] hover:bg-espresso hover:text-cream text-espresso border border-espresso/20 font-jakarta font-semibold text-[11px] transition-colors"
                             >
-                              {isHidden ? (
-                                <>
-                                  <Eye className="w-3 h-3" />
-                                  <span>Tampilkan</span>
-                                </>
-                              ) : (
-                                <>
-                                  <EyeOff className="w-3 h-3" />
-                                  <span>Sembunyikan</span>
-                                </>
-                              )}
-                            </button>
+                              <Download className="w-3 h-3" />
+                              <span>Unduh</span>
+                            </a>
                           </div>
-                        )}
+                        </div>
                       </article>
                     );
                   })}
@@ -1011,15 +901,15 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
         </main>
       )}
 
-      {/* LIGHTBOX ZOOM MODAL WITH HIGH-RES DOWNLOAD */}
+      {/* LIGHTBOX ZOOM MODAL WITH SHARP CORNERS */}
       {lightboxIndex !== null && visiblePhotos[lightboxIndex] && (
         <div
           onClick={() => setLightboxIndex(null)}
-          className="fixed inset-0 z-50 bg-espresso/95 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-espresso/95 backdrop-blur-sm flex items-center justify-center p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white max-w-4xl w-full rounded-2xl border-[1.5px] border-espresso shadow-retro-xl overflow-hidden flex flex-col"
+            className="bg-white max-w-4xl w-full border border-espresso/20 overflow-hidden flex flex-col"
           >
             <div className="bg-espresso text-cream px-5 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -1034,23 +924,26 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
               <button
                 type="button"
                 onClick={() => setLightboxIndex(null)}
-                className="w-8 h-8 rounded-full bg-white text-espresso flex items-center justify-center hover:bg-mustard"
+                className="w-8 h-8 bg-white/10 text-cream flex items-center justify-center hover:bg-white hover:text-espresso"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="relative bg-espresso max-h-[74vh] flex items-center justify-center overflow-hidden">
+            <div className="relative bg-espresso max-h-[76vh] flex items-center justify-center overflow-hidden">
               <img
                 src={visiblePhotos[lightboxIndex].fullResUrl}
                 alt={visiblePhotos[lightboxIndex].caption}
-                className="max-h-[74vh] w-auto object-contain"
+                onError={(e) =>
+                  handleImageError(visiblePhotos[lightboxIndex].id, e)
+                }
+                className="max-h-[76vh] w-auto object-contain rounded-none"
               />
             </div>
 
-            <div className="p-4 bg-white flex flex-wrap items-center justify-between gap-3 border-t border-espresso/20">
+            <div className="p-4 bg-white flex flex-wrap items-center justify-between gap-3 border-t border-espresso/15">
               <span className="font-jakarta text-xs text-espresso-muted">
-                {visiblePhotos[lightboxIndex].caption}
+                {visiblePhotos[lightboxIndex].name}
               </span>
 
               <div className="flex items-center gap-2">
@@ -1062,7 +955,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                         visiblePhotos.length
                     )
                   }
-                  className="px-3.5 py-2 rounded-xl bg-cream text-espresso border border-espresso font-jakarta font-bold text-xs hover:bg-mustard"
+                  className="px-3.5 py-2 bg-[#FAF8F5] text-espresso border border-espresso/20 font-jakarta font-semibold text-xs hover:bg-cream"
                 >
                   ← Sebelumnya
                 </button>
@@ -1071,7 +964,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   onClick={() =>
                     setLightboxIndex((lightboxIndex + 1) % visiblePhotos.length)
                   }
-                  className="px-3.5 py-2 rounded-xl bg-cream text-espresso border border-espresso font-jakarta font-bold text-xs hover:bg-mustard"
+                  className="px-3.5 py-2 bg-[#FAF8F5] text-espresso border border-espresso/20 font-jakarta font-semibold text-xs hover:bg-cream"
                 >
                   Berikutnya →
                 </button>
@@ -1080,7 +973,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   download={visiblePhotos[lightboxIndex].name}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-mustard text-espresso border border-espresso font-jakarta font-bold text-xs hover:bg-mustard-light"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-espresso text-cream font-jakarta font-semibold text-xs hover:bg-crimson"
                 >
                   <Download className="w-4 h-4" />
                   <span>Unduh HD</span>
@@ -1103,7 +996,7 @@ export default function DigitalAlbumPage({ params }: AlbumPageProps) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-cream text-espresso flex items-center justify-center font-anton text-2xl uppercase tracking-wider">
+        <div className="min-h-screen bg-[#FAF8F5] text-espresso flex items-center justify-center font-jakarta text-sm uppercase tracking-widest">
           Memuat Album Digital Difotoin...
         </div>
       }

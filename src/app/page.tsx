@@ -2,7 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 import {
   ArrowUpRight,
-  Camera,
   CheckCircle2,
   Crown,
   FolderOpen,
@@ -11,26 +10,20 @@ import {
   Lock,
   ShieldCheck,
 } from 'lucide-react';
-import RetroTicker from '@/components/RetroTicker';
-import StepPills from '@/components/StepPills';
 import GiantFooter from '@/components/GiantFooter';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-cream text-espresso">
-      {/* Clean Top Marquee & Header */}
-      <header className="sticky top-0 z-50 w-full bg-crimson border-b-[1.5px] border-espresso">
-        <RetroTicker
-          text="DIFOTOIN ★ PLATFORM EKSKLUSIF STUDIO BERLANGGANAN ★ CLIENT PHOTO PROOFING & DIGITAL ALBUM ★"
-          variant="cream"
-        />
-
+    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-espresso">
+      {/* Clean Minimal Top Header */}
+      <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-espresso/15">
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="font-anton text-2xl md:text-3xl text-cream tracking-wider uppercase">
+            <span className="font-anton text-2xl text-espresso tracking-wider uppercase">
               DIFOTOIN
             </span>
-            <span className="hidden sm:inline-block bg-cream/15 text-cream font-jakarta font-semibold text-xs px-2.5 py-0.5 rounded border border-cream/25">
+            <span className="text-espresso/25">|</span>
+            <span className="font-jakarta font-semibold text-xs text-espresso-muted uppercase tracking-wider">
               by Zeevisual
             </span>
           </div>
@@ -38,16 +31,16 @@ export default function HomePage() {
           <nav className="flex items-center gap-2">
             <Link
               href="/studio/dashboard"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-mustard text-espresso font-jakarta font-bold text-xs border border-espresso hover:bg-mustard-light transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-espresso text-cream font-jakarta font-semibold text-xs hover:bg-crimson transition-colors"
             >
               <KeyRound className="w-3.5 h-3.5" />
-              <span>Login Member Studio</span>
+              <span>Login Studio</span>
             </Link>
             <Link
               href="/zeevisual/aida-fitri-harahab"
-              className="px-3.5 py-1.5 rounded-lg bg-white text-espresso font-jakarta font-bold text-xs border border-espresso hover:bg-cream transition-colors"
+              className="px-4 py-2 bg-[#FAF8F5] text-espresso font-jakarta font-semibold text-xs border border-espresso/20 hover:bg-cream transition-colors"
             >
-              Demo Pilih Foto
+              Demo Klien
             </Link>
           </nav>
         </div>
@@ -56,36 +49,31 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1 w-full">
         {/* Clean Editorial Hero Section */}
-        <section className="w-full px-4 md:px-10 py-12 md:py-16 border-b-[1.5px] border-espresso bg-white">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        <section className="w-full px-4 md:px-10 py-14 md:py-20 border-b border-espresso/10 bg-white">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-7 flex flex-col gap-5">
-              <div className="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-cream border border-espresso font-jakarta font-bold text-xs text-crimson">
-                <Crown className="w-3.5 h-3.5" />
-                <span>KHUSUS STUDIO &amp; FOTOGRAFER BERLANGGANAN</span>
+              <div className="inline-flex items-center gap-2 self-start px-3 py-1 bg-[#FAF8F5] border border-espresso/15 font-jakarta font-semibold text-xs text-espresso-muted uppercase tracking-wider">
+                <Crown className="w-3.5 h-3.5 text-crimson" />
+                <span>Platform Eksklusif Studio Berlangganan</span>
               </div>
 
-              <h1 className="font-anton text-4xl sm:text-5xl md:text-6xl text-espresso uppercase tracking-wide leading-[0.98]">
+              <h1 className="font-fraunces font-bold text-4xl sm:text-5xl md:text-6xl text-espresso tracking-tight leading-[1.08]">
                 Pilih Foto Favorit &amp; Album Digital{' '}
-                <span className="font-fraunces italic font-black text-crimson normal-case">
-                  Lebih Rapi &amp; Praktis
+                <span className="italic font-normal text-crimson">
+                  Lebih Bersih &amp; Praktis
                 </span>
               </h1>
 
-              <p className="font-jakarta text-base text-espresso-muted max-w-2xl leading-relaxed">
-                Platform proofing foto eksklusif untuk fotografer terpilih.
-                Cukup tempelkan link folder Google Drive, foto portrait maupun
-                landscape otomatis tersusun rapi, siap dipilih klien dan
-                diekspor ke Adobe Lightroom.
+              <p className="font-jakarta text-base text-espresso-muted max-w-xl leading-relaxed">
+                Cukup tempelkan link folder Google Drive. Foto portrait maupun
+                landscape langsung tersusun rapi tanpa terpotong, siap dipilih
+                klien dan dikirim otomatis ke WhatsApp fotografer.
               </p>
-
-              <div className="pt-1">
-                <StepPills activeStep={1} showCards={false} />
-              </div>
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/studio/dashboard"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-mustard hover:bg-mustard-light text-espresso font-anton text-sm md:text-base uppercase tracking-wider border-[1.5px] border-espresso shadow-retro-sm transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 bg-espresso hover:bg-crimson text-cream font-jakarta font-bold text-xs uppercase tracking-wider transition-all"
                 >
                   <ShieldCheck className="w-4 h-4" />
                   <span>Login Dashboard Studio</span>
@@ -94,25 +82,25 @@ export default function HomePage() {
 
                 <Link
                   href="/zeevisual/aida-fitri-harahab"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-espresso hover:bg-crimson text-cream font-anton text-sm md:text-base uppercase tracking-wider border-[1.5px] border-espresso transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#FAF8F5] hover:bg-cream text-espresso font-jakarta font-bold text-xs uppercase tracking-wider border border-espresso/20 transition-all"
                 >
-                  <Heart className="w-4 h-4 text-mustard fill-mustard" />
+                  <Heart className="w-4 h-4 text-crimson" />
                   <span>Lihat Contoh Halaman Klien</span>
                 </Link>
               </div>
             </div>
 
-            {/* Right Clean Preview Frame */}
+            {/* Right Clean Sharp-Edged Preview Frame */}
             <div className="lg:col-span-5 flex justify-center">
-              <div className="w-full max-w-sm bg-cream p-3.5 rounded-2xl border-[1.5px] border-espresso shadow-retro">
-                <div className="aspect-[4/5] rounded-xl overflow-hidden border border-espresso bg-white relative">
+              <div className="w-full max-w-sm bg-[#FAF8F5] p-3 border border-espresso/15">
+                <div className="aspect-[4/5] overflow-hidden bg-white relative">
                   <img
                     src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85"
                     alt="Zeevisual Editorial Portrait"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-none"
                   />
-                  <div className="absolute bottom-3 left-3 right-3 bg-white/95 text-espresso p-3 rounded-xl border border-espresso">
-                    <div className="font-jakarta font-bold text-[10px] text-crimson uppercase tracking-wider">
+                  <div className="absolute bottom-3 left-3 right-3 bg-white/95 text-espresso p-3 border border-espresso/15">
+                    <div className="font-jakarta font-semibold text-[10px] text-espresso-muted uppercase tracking-widest">
                       ZEEVISUAL ARCHIVE
                     </div>
                     <div className="font-fraunces font-bold text-base text-espresso">
@@ -126,65 +114,64 @@ export default function HomePage() {
         </section>
 
         {/* 4 Clean Route Cards */}
-        <section className="w-full px-4 md:px-10 py-12">
+        <section className="w-full px-4 md:px-10 py-14">
           <div className="max-w-7xl mx-auto flex flex-col gap-6">
             <div className="flex flex-col gap-1">
-              <span className="font-jakarta font-bold text-xs uppercase tracking-widest text-espresso-muted">
+              <span className="font-jakarta font-semibold text-xs uppercase tracking-widest text-espresso-muted">
                 Ekosistem Difotoin
               </span>
-              <h2 className="font-anton text-2xl md:text-3xl text-espresso uppercase tracking-wide">
-                Akses Studio Berlangganan &amp; Pratinjau Klien
+              <h2 className="font-fraunces font-bold text-2xl md:text-3xl text-espresso">
+                Akses Studio &amp; Halaman Klien
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Link
                 href="/studio/dashboard"
-                className="group bg-white p-6 rounded-2xl border-[1.5px] border-espresso shadow-retro-sm hover:shadow-retro transition-all flex flex-col justify-between gap-4"
+                className="group bg-white p-6 border border-espresso/15 hover:border-espresso/40 transition-all flex flex-col justify-between gap-4"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded bg-cream text-espresso font-mono font-bold text-xs border border-espresso">
-                      /studio/dashboard (Terkunci Lisensi)
+                    <span className="px-2.5 py-1 bg-[#FAF8F5] text-espresso font-mono font-semibold text-xs border border-espresso/15">
+                      /studio/dashboard
                     </span>
-                    <FolderOpen className="w-5 h-5 text-espresso" />
+                    <FolderOpen className="w-5 h-5 text-espresso-muted" />
                   </div>
                   <h3 className="font-fraunces font-bold text-xl text-espresso group-hover:text-crimson transition-colors">
-                    1. Dashboard Studio &amp; Super Admin Langganan
+                    1. Dashboard Studio &amp; Member Langganan
                   </h3>
                   <p className="font-jakarta text-sm text-espresso-muted">
-                    Dilengkapi gerbang Kode Lisensi khusus member fotografer
-                    berlangganan, serta panel Super Admin Zeevisual untuk
-                    menambah/memperpanjang member studio.
+                    Khusus fotografer terdaftar. Buat galeri dari link Google
+                    Drive, salin pesan WA klien, dan kelola lisensi member.
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-crimson">
-                  <span>Login Dashboard Studio</span>
+                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-espresso group-hover:text-crimson">
+                  <span>Buka Dashboard Studio</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
               </Link>
 
               <Link
                 href="/zeevisual/aida-fitri-harahab"
-                className="group bg-white p-6 rounded-2xl border-[1.5px] border-espresso shadow-retro-sm hover:shadow-retro transition-all flex flex-col justify-between gap-4"
+                className="group bg-white p-6 border border-espresso/15 hover:border-espresso/40 transition-all flex flex-col justify-between gap-4"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded bg-mustard text-espresso font-mono font-bold text-xs border border-espresso">
+                    <span className="px-2.5 py-1 bg-[#FAF8F5] text-espresso font-mono font-semibold text-xs border border-espresso/15">
                       /zeevisual/aida-fitri-harahab
                     </span>
-                    <CheckCircle2 className="w-5 h-5 text-espresso" />
+                    <CheckCircle2 className="w-5 h-5 text-espresso-muted" />
                   </div>
                   <h3 className="font-fraunces font-bold text-xl text-espresso group-hover:text-crimson transition-colors">
                     2. Halaman Pilih Foto Klien (Proofing)
                   </h3>
                   <p className="font-jakarta text-sm text-espresso-muted">
-                    Susunan foto Portrait &amp; Landscape otomatis rapi,
-                    indikator kuota live, bingkai Mustard 4px saat dipilih, dan
-                    catatan revisi per foto.
+                    Tampilan foto utuh tanpa lekukan sudut, susunan portrait &amp;
+                    landscape rapi, dan kirim daftar file terurut ke WA
+                    fotografer.
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-crimson">
+                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-espresso group-hover:text-crimson">
                   <span>Buka Halaman Pilih Foto</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
@@ -192,25 +179,24 @@ export default function HomePage() {
 
               <Link
                 href="/aida-fitri-harahab?t=mhttesqg7rjx"
-                className="group bg-white p-6 rounded-2xl border-[1.5px] border-espresso shadow-retro-sm hover:shadow-retro transition-all flex flex-col justify-between gap-4"
+                className="group bg-white p-6 border border-espresso/15 hover:border-espresso/40 transition-all flex flex-col justify-between gap-4"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded bg-cream text-espresso font-mono font-bold text-xs border border-espresso">
+                    <span className="px-2.5 py-1 bg-[#FAF8F5] text-espresso font-mono font-semibold text-xs border border-espresso/15">
                       /aida-fitri-harahab?t=mhttesqg7rjx
                     </span>
-                    <KeyRound className="w-5 h-5 text-espresso" />
+                    <KeyRound className="w-5 h-5 text-espresso-muted" />
                   </div>
                   <h3 className="font-fraunces font-bold text-xl text-espresso group-hover:text-crimson transition-colors">
                     3. Album Digital — Mode Pemilik (`?t=`)
                   </h3>
                   <p className="font-jakarta text-sm text-espresso-muted">
                     Dilengkapi bar Mode Pemilik Album: Ganti Sampul, Bikin PIN 4
-                    Digit, Atur Siapa yang Lihat (Sembunyikan Foto), dan Bagikan
-                    Link.
+                    Digit, Sembunyikan Foto Privat, dan Bagikan Link.
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-crimson">
+                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-espresso group-hover:text-crimson">
                   <span>Buka Mode Pemilik</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
@@ -218,25 +204,24 @@ export default function HomePage() {
 
               <Link
                 href="/aida-fitri-harahab"
-                className="group bg-white p-6 rounded-2xl border-[1.5px] border-espresso shadow-retro-sm hover:shadow-retro transition-all flex flex-col justify-between gap-4"
+                className="group bg-white p-6 border border-espresso/15 hover:border-espresso/40 transition-all flex flex-col justify-between gap-4"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-1 rounded bg-cream text-espresso font-mono font-bold text-xs border border-espresso">
+                    <span className="px-2.5 py-1 bg-[#FAF8F5] text-espresso font-mono font-semibold text-xs border border-espresso/15">
                       /aida-fitri-harahab
                     </span>
-                    <Lock className="w-5 h-5 text-espresso" />
+                    <Lock className="w-5 h-5 text-espresso-muted" />
                   </div>
                   <h3 className="font-fraunces font-bold text-xl text-espresso group-hover:text-crimson transition-colors">
                     4. Album Digital — Mode Tamu &amp; Keluarga
                   </h3>
                   <p className="font-jakarta text-sm text-espresso-muted">
-                    Tampilan bersih untuk keluarga &amp; teman tanpa `?t=`.
-                    Mendukung proteksi PIN 4 digit (demo: 2408), Lightbox layar
-                    penuh, dan unduh HD.
+                    Tampilan galeri bersih untuk keluarga &amp; teman tanpa
+                    tombol edit. Mendukung proteksi PIN 4 digit dan unduh HD.
                   </p>
                 </div>
-                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-crimson">
+                <div className="inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase text-espresso group-hover:text-crimson">
                   <span>Buka Mode Tamu</span>
                   <ArrowUpRight className="w-4 h-4" />
                 </div>
