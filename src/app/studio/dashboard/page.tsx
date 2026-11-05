@@ -101,6 +101,7 @@ export default function StudioDashboardPage() {
 
   // Create Gallery Form states
   const [studioSlug, setStudioSlug] = useState('zeevisual');
+  const [studioWhatsapp, setStudioWhatsapp] = useState('');
   const [clientName, setClientName] = useState('Aida Fitri Harahab');
   const [slug, setSlug] = useState('aida-fitri-harahab');
   const [isSlugManual, setIsSlugManual] = useState(false);
@@ -336,10 +337,15 @@ Selamat menikmati momennya`;
       'ZV_0520.JPG',
       'ZV_0525.JPG',
     ];
-    const rawNames =
+    const rawNames = (
       activeSelections.length > 0
         ? activeSelections.map((s) => s.filename)
-        : defaultDemoFiles;
+        : defaultDemoFiles
+    )
+      .slice()
+      .sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+      );
 
     const processed = rawNames.map((name) => {
       if (includeExtension) {
@@ -383,6 +389,8 @@ Selamat menikmati momennya`;
             ? 'Zeevisual'
             : effectiveStudioSlug
           : loggedStudio.studio_name,
+        studio_whatsapp:
+          studioWhatsapp.trim() || loggedStudio.whatsapp_number || '',
         client_name: clientName.trim() || 'Klien Baru',
         slug: slug.trim() || slugifyClientName(clientName),
         session_type: sessionType,
@@ -411,6 +419,7 @@ Selamat menikmati momennya`;
   function handleSelectGalleryFromRow(gal: GalleryRecord) {
     setActiveGallery(gal);
     setStudioSlug(gal.studio_slug);
+    setStudioWhatsapp(gal.studio_whatsapp || '');
     setClientName(gal.client_name);
     setSlug(gal.slug);
     setIsSlugManual(true);
@@ -1422,8 +1431,21 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     </div>
                   </div>
 
-                  {/* Row 5: Session Type, Deadline & Optional PIN */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Row 5: Session Type, Deadline, Optional PIN & Photographer WA */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1">
+                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                        Nomor WA Fotografer (Tujuan Kirim Pilihan Klien)
+                      </label>
+                      <input
+                        type="text"
+                        value={studioWhatsapp}
+                        onChange={(e) => setStudioWhatsapp(e.target.value)}
+                        placeholder="Contoh: 081234567890"
+                        className="w-full bg-white text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-jakarta text-xs font-semibold focus:outline-none"
+                      />
+                    </div>
+
                     <div className="flex flex-col gap-1">
                       <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
                         Kategori Sesi
@@ -1439,7 +1461,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         <option>Family &amp; Engagement</option>
                       </select>
                     </div>
+                  </div>
 
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">
                       <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
                         Batas Waktu

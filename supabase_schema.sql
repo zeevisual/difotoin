@@ -32,6 +32,7 @@ create table if not exists public.galleries (
   order_code text not null default '#ZV-7910',
   studio_slug text not null default 'zeevisual',
   studio_name text not null default 'Zeevisual',
+  studio_whatsapp text not null default '',
   client_name text not null,
   slug text not null unique,
   session_type text not null default 'Editorial Pre-Wedding',

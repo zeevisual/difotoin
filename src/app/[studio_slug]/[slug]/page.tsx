@@ -83,6 +83,7 @@ export default function ClientProofingWorkspacePage({
   // Submit & Lock Confirmation Modal
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
+  const [copiedClientList, setCopiedClientList] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -179,6 +180,63 @@ export default function ClientProofingWorkspacePage({
   );
   const remainingQuota = Math.max(0, quota - selectedCount);
 
+  // Neatly sorted selections by filename (natural numeric order)
+  const sortedSelections = useMemo(() => {
+    return selections
+      .slice()
+      .sort((a, b) =>
+        a.filename.localeCompare(b.filename, undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      );
+  }, [selections]);
+
+  // Neatly formatted Lightroom comma-separated string (without extension)
+  const sortedLightroomNames = useMemo(() => {
+    return sortedSelections
+      .map((s) => s.filename.replace(/\.[a-zA-Z0-9]+$/, ''))
+      .join(', ');
+  }, [sortedSelections]);
+
+  // Complete structured WhatsApp message from Client -> Photographer
+  const clientToStudioWaMessage = useMemo(() => {
+    const numberedFiles = sortedSelections
+      .map(
+        (s, idx) =>
+          `${idx + 1}. ${s.filename}${s.note?.trim() ? ` — (${s.note.trim()})` : ''}`
+      )
+      .join('\n');
+
+    return `Halo *${gallery.studio_name || 'Zeevisual'}*!
+Saya *${gallery.client_name}* sudah selesai memilih *${selectedCount} / ${quota} foto* di Difotoin.
+
+*DAFTAR FILE TERPILIH (TERSUSUN RAPI):*
+${numberedFiles || '-'}
+
+*FORMAT FILTER LIGHTROOM:*
+${sortedLightroomNames || '-'}
+
+Terima kasih!`;
+  }, [
+    gallery.studio_name,
+    gallery.client_name,
+    selectedCount,
+    quota,
+    sortedSelections,
+    sortedLightroomNames,
+  ]);
+
+  const studioWaUrl = useMemo(() => {
+    const cleanPhone = (gallery.studio_whatsapp || '')
+      .replace(/\D/g, '')
+      .replace(/^0/, '62');
+    const encoded = encodeURIComponent(clientToStudioWaMessage);
+    return cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encoded}`
+      : `https://wa.me/?text=${encoded}`;
+  }, [gallery.studio_whatsapp, clientToStudioWaMessage]);
+
   const filteredPhotos = useMemo(() => {
     return photos.filter((photo) => {
       const isSelected = selectionByPhotoId.has(photo.id);
@@ -247,7 +305,7 @@ export default function ClientProofingWorkspacePage({
     }
   }
 
-  async function handleConfirmLockSelections() {
+  async function handleConfirmLockSelections(sendToWhatsapp = true) {
     setIsLocking(true);
     try {
       const updatedGal = await updateGallerySettings(
@@ -265,11 +323,20 @@ export default function ClientProofingWorkspacePage({
       setActiveStep(3);
       setIsSubmitModalOpen(false);
       showToast(
-        `Pilihan (${selectedCount} foto) berhasil dikirim ke ${gallery.studio_name}!`
+        `Pilihan (${selectedCount} foto) berhasil dikunci & siap dikirim ke WhatsApp ${gallery.studio_name}!`
       );
+      if (sendToWhatsapp && typeof window !== 'undefined') {
+        window.open(studioWaUrl, '_blank', 'noopener,noreferrer');
+      }
     } finally {
       setIsLocking(false);
     }
+  }
+
+  async function handleCopySortedFilenames() {
+    await navigator.clipboard.writeText(clientToStudioWaMessage);
+    setCopiedClientList(true);
+    setTimeout(() => setCopiedClientList(false), 2400);
   }
 
   async function handleUnlockGallery() {
@@ -933,13 +1000,13 @@ export default function ClientProofingWorkspacePage({
         </div>
       )}
 
-      {/* MODAL 3: FINAL SUBMIT & LOCK SELECTIONS */}
+      {/* MODAL 3: FINAL SUBMIT, NEATLY SORTED FILENAMES & SEND TO WHATSAPP */}
       {isSubmitModalOpen && (
         <div className="fixed inset-0 z-50 bg-espresso/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-lg rounded-2xl border-[1.5px] border-espresso shadow-retro-xl overflow-hidden">
             <div className="bg-espresso text-cream px-5 py-3.5 flex items-center justify-between">
               <span className="font-anton text-sm uppercase tracking-wider">
-                Kirim &amp; Kunci Pilihan Foto
+                Kirim Pilihan Foto ke WhatsApp {gallery.studio_name}
               </span>
               <button
                 type="button"
@@ -954,7 +1021,7 @@ export default function ClientProofingWorkspacePage({
               <div className="flex items-center justify-between bg-cream p-4 rounded-xl border border-espresso">
                 <div>
                   <span className="font-jakarta font-bold text-xs uppercase text-espresso-muted">
-                    Total Foto Dipilih
+                    Total Foto Dipilih (Tersusun Rapi)
                   </span>
                   <h3 className="font-fraunces font-bold text-lg text-espresso">
                     {gallery.client_name}
@@ -965,38 +1032,66 @@ export default function ClientProofingWorkspacePage({
                 </div>
               </div>
 
-              <p className="font-jakarta text-sm text-espresso-muted leading-relaxed">
-                Daftar{' '}
-                <strong className="text-espresso">
-                  {selectedCount} foto terpilih
-                </strong>{' '}
-                akan dikunci dan dikirim ke{' '}
-                <strong className="text-espresso">{gallery.studio_name}</strong>{' '}
-                untuk proses editing.
-              </p>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    Daftar Nama File Terpilih (Urut Otomatis):
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopySortedFilenames}
+                    className="font-jakarta font-bold text-xs text-crimson hover:underline"
+                  >
+                    {copiedClientList ? '✓ Tersalin!' : 'Salin Daftar File'}
+                  </button>
+                </div>
 
-              <div className="bg-cream/50 p-3 rounded-xl border border-espresso/20 font-mono text-xs text-espresso max-h-28 overflow-y-auto">
-                {selections.length > 0
-                  ? selections.map((s) => s.filename).join(', ')
-                  : 'Belum ada foto yang dipilih.'}
+                <div className="bg-cream/60 p-3.5 rounded-xl border border-espresso/30 font-mono text-xs text-espresso max-h-44 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                  {sortedSelections.length > 0
+                    ? sortedSelections
+                        .map(
+                          (s, idx) =>
+                            `${idx + 1}. ${s.filename}${
+                              s.note?.trim() ? ` (${s.note.trim()})` : ''
+                            }`
+                        )
+                        .join('\n')
+                    : 'Belum ada foto yang dipilih.'}
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-2">
-                <Link
-                  href={`/${gallery.slug}?t=${gallery.owner_token}`}
-                  className="w-full sm:w-auto text-center px-4 py-2.5 rounded-xl bg-cream text-espresso border border-espresso font-jakarta font-bold text-xs"
-                >
-                  Lihat Album Digital
-                </Link>
+              {sortedSelections.length > 0 && (
+                <div className="bg-cream/40 p-3 rounded-xl border border-espresso/20 flex flex-col gap-1">
+                  <span className="font-jakarta font-bold text-[10px] uppercase tracking-wider text-espresso-muted">
+                    Format Filter Lightroom (Otomatis Disertakan di WA):
+                  </span>
+                  <div className="font-mono text-[11px] text-espresso break-words">
+                    {sortedLightroomNames}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-1">
                 <button
                   type="button"
-                  onClick={handleConfirmLockSelections}
+                  onClick={() => handleConfirmLockSelections(false)}
                   disabled={isLocking || selectedCount === 0}
-                  className="w-full sm:flex-1 py-2.5 px-5 rounded-xl bg-mustard hover:bg-mustard-light text-espresso border-[1.5px] border-espresso font-anton text-sm uppercase tracking-wider disabled:opacity-50"
+                  className="w-full sm:w-auto text-center px-4 py-2.5 rounded-xl bg-cream hover:bg-white text-espresso border border-espresso font-jakarta font-bold text-xs disabled:opacity-50"
                 >
-                  {isLocking
-                    ? 'Mengirim...'
-                    : 'Konfirmasi & Kunci Pilihan'}
+                  Simpan Saja
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConfirmLockSelections(true)}
+                  disabled={isLocking || selectedCount === 0}
+                  className="w-full sm:flex-1 py-3 px-5 rounded-xl bg-mustard hover:bg-mustard-light text-espresso border-[1.5px] border-espresso font-anton text-sm uppercase tracking-wider shadow-retro-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>
+                    {isLocking
+                      ? 'Mengirim...'
+                      : `Kunci & Kirim ke WA ${gallery.studio_name}`}
+                  </span>
                 </button>
               </div>
             </div>

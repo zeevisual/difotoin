@@ -18,6 +18,7 @@ export interface GalleryRecord {
   order_code: string;
   studio_slug: string;
   studio_name: string;
+  studio_whatsapp?: string;
   client_name: string;
   slug: string;
   session_type: string;
@@ -50,6 +51,7 @@ export interface SelectionRecord {
 export interface CreateGalleryInput {
   studio_slug: string;
   studio_name?: string;
+  studio_whatsapp?: string;
   client_name: string;
   slug?: string;
   session_type?: string;

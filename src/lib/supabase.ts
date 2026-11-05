@@ -539,6 +539,9 @@ export async function createGallery(
   const gdrive_folder_id = parseGoogleDriveFolderId(input.gdrive_folder_url);
   const orderNumber = Math.floor(7911 + Math.random() * 80);
   const cleanStudioSlug = input.studio_slug.trim() || 'zeevisual';
+  const cleanWhatsapp = (input.studio_whatsapp || '')
+    .replace(/\D/g, '')
+    .replace(/^0/, '62');
 
   const newGallery: GalleryRecord = {
     id:
@@ -550,6 +553,7 @@ export async function createGallery(
     studio_name:
       input.studio_name ||
       (cleanStudioSlug === 'zeevisual' ? 'Zeevisual' : cleanStudioSlug),
+    studio_whatsapp: cleanWhatsapp,
     client_name: input.client_name.trim(),
     slug,
     session_type: input.session_type || 'Editorial Pre-Wedding',
