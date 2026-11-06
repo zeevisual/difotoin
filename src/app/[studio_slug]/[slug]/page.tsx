@@ -52,26 +52,21 @@ export default function ClientProofingWorkspacePage({
   const [selections, setSelections] = useState<SelectionRecord[]>([]);
   const [isLoadingDrive, setIsLoadingDrive] = useState(true);
 
-  // Layout mode: 'masonry' (natural aspect ratio, portrait & landscape) or 'uniform'
   const [layoutMode, setLayoutMode] = useState<'masonry' | 'uniform'>(
     'masonry'
   );
 
-  // Filter & Search States
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'selected' | 'unselected'
   >('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Note Modal State
   const [editingPhoto, setEditingPhoto] = useState<DrivePhoto | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
 
-  // Lightbox Modal State
   const [lightboxPhoto, setLightboxPhoto] = useState<DrivePhoto | null>(null);
 
-  // Submit & Lock Confirmation Modal
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
   const [copiedClientList, setCopiedClientList] = useState(false);
@@ -326,39 +321,37 @@ Terima kasih!`;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-espresso">
-      {/* CLEAN STICKY TOP HEADER */}
-      <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-espresso/15">
+    <div className="min-h-screen flex flex-col bg-[#090C10] text-slate-100">
+      {/* FUTURISTIC GLASSMORPHIC STICKY HEADER */}
+      <header className="sticky top-0 z-50 w-full glass-header">
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center justify-between gap-3">
-          {/* Left: DIFOTOIN Logo & Studio Name */}
           <div className="flex items-center gap-3 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
             <Link
               href="/"
-              className="font-anton text-2xl text-espresso tracking-wider uppercase hover:text-crimson transition-colors shrink-0"
+              className="font-jakarta font-extrabold text-sm md:text-base text-white tracking-[0.22em] uppercase hover:text-cyan-400 transition-colors shrink-0"
             >
               DIFOTOIN
             </Link>
-            <span className="text-espresso/25">|</span>
-            <span className="font-jakarta font-semibold text-xs text-espresso-muted uppercase tracking-wider truncate">
+            <span className="text-white/20">|</span>
+            <span className="font-jakarta font-semibold text-xs text-slate-400 uppercase tracking-widest truncate">
               {gallery.studio_name || 'Zeevisual'}
             </span>
           </div>
 
-          {/* Center: Client Name */}
-          <div className="hidden lg:flex items-center gap-2 text-espresso">
-            <span className="font-fraunces font-bold text-base">
+          <div className="hidden lg:flex items-center gap-2 text-white">
+            <span className="font-jakarta font-bold text-sm uppercase tracking-wider">
               {gallery.client_name}
             </span>
-            <span className="text-espresso/30">•</span>
-            <span className="font-jakarta text-xs text-espresso-muted">
+            <span className="text-white/20">•</span>
+            <span className="font-jakarta text-xs text-slate-400">
               {gallery.session_type}
             </span>
           </div>
 
-          {/* Right: Live Selection Counter & Send Button */}
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="inline-flex items-center gap-2 bg-[#FAF8F5] text-espresso font-jakarta font-bold text-xs px-3.5 py-2 border border-espresso/20">
-              <Heart className="w-3.5 h-3.5 text-crimson fill-crimson" />
+            <div className="inline-flex items-center gap-2 glass-panel text-white font-mono font-bold text-xs px-3.5 py-2">
+              <Heart className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
               <span>
                 {selectedCount} / {quota}
               </span>
@@ -367,7 +360,7 @@ Terima kasih!`;
             <button
               type="button"
               onClick={() => setIsSubmitModalOpen(true)}
-              className="inline-flex items-center gap-2 bg-espresso hover:bg-crimson text-cream font-jakarta font-bold text-xs uppercase tracking-wider px-4 py-2 transition-all"
+              className="inline-flex items-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-xs uppercase tracking-[0.14em] px-4 py-2 transition-all shadow-[0_0_15px_rgba(34,211,238,0.25)]"
             >
               <span>Kirim Pilihan</span>
               <Send className="w-3.5 h-3.5" />
@@ -376,69 +369,70 @@ Terima kasih!`;
         </div>
       </header>
 
-      {/* Clean Toast Notification */}
+      {/* Glass Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-24 right-4 md:right-8 z-50 bg-espresso text-cream px-4 py-2.5 shadow-lg flex items-center gap-2 font-jakarta text-xs md:text-sm font-semibold">
-          <CheckCircle2 className="w-4 h-4 text-mustard shrink-0" />
+        <div className="fixed bottom-24 right-4 md:right-8 z-50 glass-panel-strong text-white px-4 py-2.5 shadow-2xl flex items-center gap-2 font-jakarta text-xs md:text-sm font-semibold">
+          <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* MAIN WORKSPACE */}
       <main className="flex-1 w-full">
-        {/* Clean Minimal Client Header */}
-        <section className="w-full px-4 md:px-10 pt-8 pb-6 bg-white border-b border-espresso/10">
+        {/* Futuristic Client Header & Quota Card */}
+        <section className="w-full px-4 md:px-10 pt-8 pb-6 border-b border-white/10">
           <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="flex flex-col gap-1.5 max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2 text-xs font-jakarta text-espresso-muted">
-                <span className="font-mono font-bold text-espresso">
-                  {gallery.order_code}
-                </span>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1">
+            <div className="flex flex-col gap-2 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-cyan-400">
+                <span>{gallery.order_code}</span>
+                <span>//</span>
+                <span className="inline-flex items-center gap-1 text-slate-400">
                   <Calendar className="w-3.5 h-3.5" />
-                  Batas Seleksi: {gallery.deadline_date}
+                  DEADLINE: {gallery.deadline_date}
                 </span>
               </div>
 
-              <h1 className="font-fraunces font-bold text-3xl md:text-4xl text-espresso tracking-tight leading-tight mt-0.5">
+              <h1 className="font-jakarta font-extrabold text-3xl md:text-4xl text-white uppercase tracking-[0.04em] leading-tight">
                 {gallery.client_name}
               </h1>
 
-              <p className="font-jakarta text-sm text-espresso-muted leading-relaxed">
+              <div className="w-16 h-0.5 bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+
+              <p className="font-jakarta text-sm text-slate-300 leading-relaxed pt-1">
                 Silakan pilih{' '}
-                <strong className="text-espresso">
+                <strong className="text-white">
                   {quota} foto favorit
                 </strong>{' '}
                 untuk diedit oleh{' '}
-                <strong className="text-espresso">
+                <strong className="text-white">
                   {gallery.studio_name}
                 </strong>
-                . Setelah selesai, klik tombol{' '}
-                <strong className="text-espresso">Kirim Pilihan</strong> untuk
-                mengirim daftar nama file ke WhatsApp fotografer.
+                . Setelah selesai, klik{' '}
+                <strong className="text-cyan-400">Kirim Pilihan</strong> agar
+                daftar nama file otomatis tersusun rapi dan terkirim ke WhatsApp
+                fotografer.
               </p>
             </div>
 
-            {/* Clean Quota Progress Box */}
-            <div className="bg-[#FAF8F5] p-4 md:p-5 border border-espresso/15 min-w-[270px] flex flex-col gap-2">
+            {/* Glassmorphic Quota Progress Box */}
+            <div className="glass-panel p-5 min-w-[280px] flex flex-col gap-2.5">
               <div className="flex items-center justify-between">
-                <span className="font-jakarta font-semibold text-xs uppercase tracking-wider text-espresso-muted">
-                  Progres Pilihan
+                <span className="font-mono text-[11px] uppercase tracking-widest text-slate-400">
+                  SELECTION QUOTA
                 </span>
-                <span className="font-jakarta font-bold text-sm text-espresso">
-                  {selectedCount} / {quota} Foto
+                <span className="font-mono font-bold text-sm text-cyan-400">
+                  {selectedCount} / {quota} FOTO
                 </span>
               </div>
 
-              <div className="w-full bg-white h-2 overflow-hidden border border-espresso/15">
+              <div className="w-full bg-white/10 h-1.5 overflow-hidden">
                 <div
-                  className="bg-espresso h-full transition-all duration-300"
+                  className="bg-cyan-400 h-full transition-all duration-300 shadow-[0_0_10px_#22d3ee]"
                   style={{ width: `${quotaPercentage}%` }}
                 />
               </div>
 
-              <div className="flex items-center justify-between font-jakarta text-xs text-espresso-muted">
+              <div className="flex items-center justify-between font-jakarta text-xs text-slate-400">
                 <span>Terpilih {quotaPercentage}%</span>
                 <span>
                   {remainingQuota > 0
@@ -448,9 +442,9 @@ Terima kasih!`;
               </div>
 
               {gallery.is_locked ? (
-                <div className="mt-1 flex items-center justify-between gap-2 bg-espresso text-cream px-3 py-2">
+                <div className="mt-1 flex items-center justify-between gap-2 bg-white/5 border border-white/15 text-white px-3 py-2">
                   <div className="flex items-center gap-1.5 font-jakarta font-semibold text-xs">
-                    <Lock className="w-3.5 h-3.5 text-mustard" />
+                    <Lock className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Terkunci</span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -458,14 +452,14 @@ Terima kasih!`;
                       href={studioWaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-mustard text-espresso px-2 py-0.5 font-jakarta font-bold text-[11px]"
+                      className="bg-cyan-400 text-slate-950 px-2.5 py-0.5 font-jakarta font-bold text-[11px]"
                     >
                       Kirim WA
                     </a>
                     <button
                       type="button"
                       onClick={handleUnlockGallery}
-                      className="inline-flex items-center gap-1 bg-white/15 text-cream px-2 py-0.5 font-jakarta font-semibold text-[11px] hover:bg-white/25"
+                      className="inline-flex items-center gap-1 bg-white/10 text-white px-2 py-0.5 font-jakarta font-semibold text-[11px] hover:bg-white/20"
                     >
                       <Unlock className="w-3 h-3" />
                       Ubah
@@ -476,7 +470,7 @@ Terima kasih!`;
                 <button
                   type="button"
                   onClick={() => setIsSubmitModalOpen(true)}
-                  className="mt-1 w-full inline-flex items-center justify-center gap-2 bg-mustard hover:bg-mustard-light text-espresso font-jakarta font-bold text-xs uppercase tracking-wider py-2.5 px-4 border border-espresso/20 transition-colors"
+                  className="mt-1 w-full inline-flex items-center justify-center gap-2 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-xs uppercase tracking-[0.14em] py-2.5 px-4 transition-colors"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Selesai &amp; Kirim ke WA</span>
@@ -486,18 +480,17 @@ Terima kasih!`;
           </div>
         </section>
 
-        {/* CLEAN FILTER, SEARCH & LAYOUT BAR */}
-        <section className="sticky top-16 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-espresso/15 py-3 px-4 md:px-10">
+        {/* GLASSMORPHIC FILTER, SEARCH & LAYOUT BAR */}
+        <section className="sticky top-16 z-40 glass-header py-3 px-4 md:px-10">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            {/* Left Filter Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
               <button
                 type="button"
                 onClick={() => setStatusFilter('all')}
                 className={`shrink-0 font-jakarta font-semibold text-xs px-3.5 py-1.5 border transition-all ${
                   statusFilter === 'all'
-                    ? 'bg-espresso text-cream border-espresso'
-                    : 'bg-white text-espresso border-espresso/15 hover:border-espresso/40'
+                    ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                    : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/30'
                 }`}
               >
                 Semua ({photos.length})
@@ -508,8 +501,8 @@ Terima kasih!`;
                 onClick={() => setStatusFilter('selected')}
                 className={`shrink-0 font-jakarta font-semibold text-xs px-3.5 py-1.5 border transition-all inline-flex items-center gap-1.5 ${
                   statusFilter === 'selected'
-                    ? 'bg-mustard text-espresso border-espresso'
-                    : 'bg-white text-espresso border-espresso/15 hover:border-espresso/40'
+                    ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                    : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/30'
                 }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
@@ -521,45 +514,44 @@ Terima kasih!`;
                 onClick={() => setStatusFilter('unselected')}
                 className={`shrink-0 font-jakarta font-semibold text-xs px-3.5 py-1.5 border transition-all ${
                   statusFilter === 'unselected'
-                    ? 'bg-espresso text-cream border-espresso'
-                    : 'bg-white text-espresso border-espresso/15 hover:border-espresso/40'
+                    ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                    : 'bg-white/5 text-slate-300 border-white/10 hover:border-white/30'
                 }`}
               >
                 Belum Dipilih ({Math.max(0, photos.length - selectedCount)})
               </button>
             </div>
 
-            {/* Right: Search Input, Masonry/Grid Switcher & Album Link */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:w-56">
-                <Search className="w-4 h-4 text-espresso-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Cari nama file..."
-                  className="w-full bg-white border border-espresso/20 pl-9 pr-7 py-1.5 font-jakarta text-xs text-espresso placeholder:text-espresso-muted/60 focus:outline-none focus:border-espresso"
+                  className="w-full bg-white/5 border border-white/15 pl-9 pr-7 py-1.5 font-jakarta text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-espresso-muted hover:text-espresso"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
 
-              <div className="flex items-center bg-white border border-espresso/20 overflow-hidden shrink-0">
+              <div className="flex items-center bg-white/5 border border-white/15 overflow-hidden shrink-0">
                 <button
                   type="button"
                   onClick={() => setLayoutMode('masonry')}
                   title="Proporsi Asli (Portrait & Landscape)"
                   className={`px-2.5 py-1.5 flex items-center gap-1 font-jakarta font-semibold text-xs transition-colors ${
                     layoutMode === 'masonry'
-                      ? 'bg-espresso text-cream'
-                      : 'text-espresso hover:bg-cream'
+                      ? 'bg-cyan-400 text-slate-950 font-bold'
+                      : 'text-slate-300 hover:bg-white/10'
                   }`}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
@@ -571,8 +563,8 @@ Terima kasih!`;
                   title="Grid Seragam"
                   className={`px-2.5 py-1.5 flex items-center gap-1 font-jakarta font-semibold text-xs transition-colors ${
                     layoutMode === 'uniform'
-                      ? 'bg-espresso text-cream'
-                      : 'text-espresso hover:bg-cream'
+                      ? 'bg-cyan-400 text-slate-950 font-bold'
+                      : 'text-slate-300 hover:bg-white/10'
                   }`}
                 >
                   <Grid className="w-3.5 h-3.5" />
@@ -582,16 +574,16 @@ Terima kasih!`;
 
               <Link
                 href={`/${gallery.slug}?t=${gallery.owner_token}`}
-                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-cream text-espresso border border-espresso/20 font-jakarta font-semibold text-xs transition-colors"
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/15 text-slate-200 border border-white/15 font-jakarta font-semibold text-xs transition-colors"
               >
-                <Eye className="w-3.5 h-3.5" />
+                <Eye className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="hidden sm:inline">Album</span>
               </Link>
             </div>
           </div>
         </section>
 
-        {/* SHARP, CLEAN PHOTO GRID (ZERO ROUNDED CORNERS) */}
+        {/* SHARP, EDGE-TO-EDGE PHOTO GRID (ZERO ROUNDED CORNERS + FUTURISTIC GLOW) */}
         <section className="w-full px-4 md:px-10 py-8">
           <div className="max-w-7xl mx-auto">
             {isLoadingDrive ? (
@@ -599,16 +591,16 @@ Terima kasih!`;
                 {Array.from({ length: 8 }).map((_, idx) => (
                   <div
                     key={idx}
-                    className="aspect-[4/5] bg-white border border-espresso/10 animate-pulse"
+                    className="aspect-[4/5] glass-panel animate-pulse"
                   />
                 ))}
               </div>
             ) : filteredPhotos.length === 0 ? (
-              <div className="bg-white p-12 border border-espresso/15 text-center flex flex-col items-center gap-3">
-                <h3 className="font-fraunces font-bold text-xl text-espresso">
+              <div className="glass-panel p-12 text-center flex flex-col items-center gap-3">
+                <h3 className="font-jakarta font-bold text-xl text-white">
                   Tidak Ada Foto yang Ditemukan
                 </h3>
-                <p className="font-jakarta text-sm text-espresso-muted max-w-md">
+                <p className="font-jakarta text-sm text-slate-400 max-w-md">
                   Coba ubah filter atau hapus kata kunci pencarian nama file.
                 </p>
                 <button
@@ -617,7 +609,7 @@ Terima kasih!`;
                     setStatusFilter('all');
                     setSearchQuery('');
                   }}
-                  className="mt-1 px-4 py-2 bg-espresso text-cream font-jakarta font-semibold text-xs"
+                  className="mt-1 px-4 py-2 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs uppercase tracking-wider"
                 >
                   Tampilkan Semua Foto
                 </button>
@@ -637,15 +629,15 @@ Terima kasih!`;
                   return (
                     <article
                       key={photo.id}
-                      className={`break-inside-avoid flex flex-col rounded-none bg-white transition-all duration-150 ${
+                      className={`break-inside-avoid flex flex-col rounded-none glass-panel transition-all duration-200 ${
                         isSelected
-                          ? 'ring-2 ring-mustard border-2 border-mustard shadow-sm'
-                          : 'border border-espresso/15 hover:border-espresso/40'
+                          ? 'ring-2 ring-cyan-400 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.2)]'
+                          : 'hover:border-white/25'
                       }`}
                     >
                       {/* Sharp 90-degree Photo Container — No Rounded Corners */}
                       <div
-                        className={`relative w-full overflow-hidden rounded-none bg-[#F3EFE6] group ${
+                        className={`relative w-full overflow-hidden rounded-none bg-[#0D1117] group ${
                           layoutMode === 'uniform' ? 'aspect-[4/5]' : ''
                         }`}
                       >
@@ -655,37 +647,34 @@ Terima kasih!`;
                           loading="lazy"
                           onError={(e) => handleImageError(photo.id, e)}
                           onClick={() => handleToggleSelect(photo)}
-                          className={`w-full rounded-none cursor-pointer transition-opacity duration-300 group-hover:opacity-95 ${
+                          className={`w-full rounded-none cursor-pointer transition-transform duration-500 group-hover:scale-[1.02] ${
                             layoutMode === 'uniform'
                               ? 'h-full object-cover'
                               : 'h-auto block'
                           }`}
                         />
 
-                        {/* Optional Subtle Watermark */}
                         {gallery.watermark_enabled && (
                           <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-15 select-none">
-                            <span className="font-anton text-sm uppercase tracking-[0.25em] text-cream -rotate-12">
+                            <span className="font-jakarta font-bold text-sm uppercase tracking-[0.28em] text-white -rotate-12">
                               {gallery.studio_name}
                             </span>
                           </div>
                         )}
 
-                        {/* Top-Left Clean Selection Badge when Selected */}
                         {isSelected && (
-                          <div className="absolute top-2.5 left-2.5 z-10 bg-mustard text-espresso font-jakarta font-bold text-[11px] px-2 py-0.5 flex items-center gap-1 shadow-sm">
+                          <div className="absolute top-2.5 left-2.5 z-10 bg-cyan-400 text-slate-950 font-mono font-bold text-[11px] px-2 py-0.5 flex items-center gap-1 shadow-md">
                             <Check className="w-3 h-3 stroke-[2.5]" />
                             <span>#{sel?.selected_order}</span>
                           </div>
                         )}
 
-                        {/* Top-Right Zoom & Select Buttons */}
                         <div className="absolute top-2.5 right-2.5 z-10 flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => setLightboxPhoto(photo)}
                             title="Perbesar Foto"
-                            className="w-8 h-8 bg-white/90 text-espresso flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+                            className="w-8 h-8 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
                           >
                             <ZoomIn className="w-3.5 h-3.5" />
                           </button>
@@ -696,27 +685,27 @@ Terima kasih!`;
                             title={
                               isSelected ? 'Batalkan Pilihan' : 'Pilih Foto Ini'
                             }
-                            className={`w-8 h-8 flex items-center justify-center transition-colors shadow-sm ${
+                            className={`w-8 h-8 flex items-center justify-center transition-colors ${
                               isSelected
-                                ? 'bg-mustard text-espresso'
-                                : 'bg-white/90 text-espresso hover:bg-mustard'
+                                ? 'bg-cyan-400 text-slate-950'
+                                : 'glass-panel-strong text-white hover:border-cyan-400'
                             }`}
                           >
                             <Heart
                               className={`w-4 h-4 ${
                                 isSelected
-                                  ? 'fill-crimson text-crimson'
-                                  : 'text-espresso'
+                                  ? 'fill-slate-950 text-slate-950'
+                                  : 'text-white'
                               }`}
                             />
                           </button>
                         </div>
                       </div>
 
-                      {/* Clean Minimal Card Footer */}
-                      <div className="px-3 py-2 bg-white flex flex-col gap-1.5 border-t border-espresso/10">
+                      {/* Sleek Glassmorphic Card Footer */}
+                      <div className="px-3 py-2 flex flex-col gap-1.5 border-t border-white/10">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-[11px] text-espresso truncate">
+                          <span className="font-mono text-[11px] text-slate-300 truncate">
                             {photo.name}
                           </span>
 
@@ -724,7 +713,7 @@ Terima kasih!`;
                             <button
                               type="button"
                               onClick={() => handleOpenNoteModal(photo)}
-                              className="shrink-0 inline-flex items-center gap-1 font-jakarta font-semibold text-[11px] text-crimson hover:underline"
+                              className="shrink-0 inline-flex items-center gap-1 font-jakarta font-semibold text-[11px] text-cyan-400 hover:underline"
                             >
                               <MessageSquarePlus className="w-3 h-3" />
                               <span>
@@ -735,7 +724,7 @@ Terima kasih!`;
                             <button
                               type="button"
                               onClick={() => handleToggleSelect(photo)}
-                              className="shrink-0 font-jakarta font-semibold text-[11px] text-espresso-muted hover:text-espresso"
+                              className="shrink-0 font-jakarta font-semibold text-[11px] text-slate-400 hover:text-cyan-400"
                             >
                               + Pilih
                             </button>
@@ -745,10 +734,10 @@ Terima kasih!`;
                         {isSelected && sel?.note && (
                           <div
                             onClick={() => handleOpenNoteModal(photo)}
-                            className="bg-[#FAF8F5] px-2 py-1 border border-espresso/10 flex items-start gap-1.5 cursor-pointer"
+                            className="bg-white/5 px-2 py-1 border border-white/10 flex items-start gap-1.5 cursor-pointer"
                           >
-                            <Edit3 className="w-3 h-3 text-espresso-muted mt-0.5 shrink-0" />
-                            <p className="font-jakarta text-[11px] text-espresso italic line-clamp-2 leading-snug">
+                            <Edit3 className="w-3 h-3 text-cyan-400 mt-0.5 shrink-0" />
+                            <p className="font-jakarta text-[11px] text-slate-200 italic line-clamp-2 leading-snug">
                               “{sel.note}”
                             </p>
                           </div>
@@ -762,18 +751,18 @@ Terima kasih!`;
           </div>
         </section>
 
-        {/* STICKY FLOATING BOTTOM PROOFING SUMMARY BAR */}
+        {/* STICKY FLOATING GLASSMORPHIC BOTTOM SUMMARY BAR */}
         <div className="sticky bottom-4 z-40 px-4 md:px-10 max-w-3xl mx-auto w-full pointer-events-none">
-          <div className="pointer-events-auto bg-espresso text-cream p-3.5 px-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="pointer-events-auto glass-panel-strong text-white p-3.5 px-5 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-mustard text-espresso flex items-center justify-center shrink-0 font-anton text-base">
+              <div className="w-9 h-9 bg-cyan-400 text-slate-950 flex items-center justify-center shrink-0 font-mono font-bold text-sm">
                 {selectedCount}
               </div>
               <div>
-                <div className="font-jakarta font-bold text-xs md:text-sm text-cream uppercase tracking-wider leading-tight">
+                <div className="font-jakarta font-bold text-xs md:text-sm text-white uppercase tracking-wider leading-tight">
                   {selectedCount} dari {quota} Foto Dipilih
                 </div>
-                <div className="font-jakarta text-xs text-cream/70">
+                <div className="font-jakarta text-xs text-slate-400">
                   {gallery.is_locked
                     ? 'Pilihan telah dikunci.'
                     : `Tersisa kuota ${remainingQuota} foto lagi.`}
@@ -789,7 +778,7 @@ Terima kasih!`;
                     statusFilter === 'selected' ? 'all' : 'selected'
                   )
                 }
-                className="flex-1 sm:flex-none font-jakarta font-semibold text-xs px-3.5 py-2 bg-white/10 text-cream hover:bg-white/20 transition-colors"
+                className="flex-1 sm:flex-none font-jakarta font-semibold text-xs px-3.5 py-2 bg-white/10 text-white hover:bg-white/20 transition-colors"
               >
                 {statusFilter === 'selected'
                   ? 'Lihat Semua'
@@ -799,7 +788,7 @@ Terima kasih!`;
               <button
                 type="button"
                 onClick={() => setIsSubmitModalOpen(true)}
-                className="flex-1 sm:flex-none font-jakarta font-bold text-xs uppercase tracking-wider px-4 py-2 bg-mustard text-espresso hover:bg-mustard-light transition-all inline-flex items-center justify-center gap-1.5"
+                className="flex-1 sm:flex-none font-jakarta font-bold text-xs uppercase tracking-wider px-4 py-2 bg-cyan-400 text-slate-950 hover:bg-cyan-300 transition-all inline-flex items-center justify-center gap-1.5"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>Kirim Pilihan</span>
@@ -809,42 +798,42 @@ Terima kasih!`;
         </div>
       </main>
 
-      {/* MODAL 1: COMMENT / REVISION NOTE MODAL */}
+      {/* MODAL 1: REVISION NOTE MODAL */}
       {editingPhoto && (
-        <div className="fixed inset-0 z-50 bg-espresso/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg border border-espresso/20 shadow-xl overflow-hidden">
-            <div className="bg-espresso text-cream px-5 py-3.5 flex items-center justify-between">
-              <span className="font-jakarta font-bold text-xs uppercase tracking-wider">
+        <div className="fixed inset-0 z-50 bg-[#05070A]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass-panel-strong w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
+              <span className="font-jakarta font-bold text-xs uppercase tracking-wider text-white">
                 Catatan Revisi • {editingPhoto.name}
               </span>
               <button
                 type="button"
                 onClick={() => setEditingPhoto(null)}
-                className="w-7 h-7 bg-white/10 text-cream flex items-center justify-center hover:bg-white hover:text-espresso"
+                className="w-7 h-7 bg-white/10 text-white flex items-center justify-center hover:bg-cyan-400 hover:text-slate-950"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveNote} className="p-5 flex flex-col gap-4">
-              <div className="flex items-center gap-3.5 bg-[#FAF8F5] p-3 border border-espresso/15">
+              <div className="flex items-center gap-3.5 bg-white/5 p-3 border border-white/10">
                 <img
                   src={editingPhoto.thumbnailUrl}
                   alt={editingPhoto.name}
-                  className="w-16 h-16 object-cover rounded-none border border-espresso/20 shrink-0"
+                  className="w-16 h-16 object-cover rounded-none border border-white/15 shrink-0"
                 />
                 <div className="flex flex-col">
-                  <span className="font-mono font-bold text-sm text-espresso">
+                  <span className="font-mono font-bold text-sm text-white">
                     {editingPhoto.name}
                   </span>
-                  <span className="font-jakarta text-xs text-espresso-muted">
+                  <span className="font-jakarta text-xs text-slate-400">
                     Tambahkan instruksi edit untuk fotografer
                   </span>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="font-jakarta font-bold text-xs uppercase text-espresso">
+                <label className="font-jakarta font-bold text-xs uppercase text-slate-300">
                   Catatan untuk {gallery.studio_name}
                 </label>
                 <textarea
@@ -852,7 +841,7 @@ Terima kasih!`;
                   value={noteDraft}
                   onChange={(e) => setNoteDraft(e.target.value)}
                   placeholder="Tulis catatan edit (misal: cerahkan sedikit, jadikan hitam putih, atau kandidat foto sampul)..."
-                  className="w-full bg-white text-espresso p-3.5 border border-espresso/25 font-jakarta text-sm focus:outline-none focus:border-espresso"
+                  className="w-full bg-white/5 text-white p-3.5 border border-white/15 font-jakarta text-sm focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
@@ -860,14 +849,14 @@ Terima kasih!`;
                 <button
                   type="button"
                   onClick={() => setEditingPhoto(null)}
-                  className="px-4 py-2 bg-[#FAF8F5] text-espresso border border-espresso/20 font-jakarta font-semibold text-xs"
+                  className="px-4 py-2 bg-white/5 text-slate-300 border border-white/15 font-jakarta font-semibold text-xs"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingNote}
-                  className="px-5 py-2 bg-espresso text-cream font-jakarta font-semibold text-xs hover:bg-crimson"
+                  className="px-5 py-2 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs hover:bg-cyan-300"
                 >
                   {isSavingNote ? 'Menyimpan...' : 'Simpan Catatan'}
                 </button>
@@ -877,30 +866,30 @@ Terima kasih!`;
         </div>
       )}
 
-      {/* MODAL 2: LIGHTBOX PREVIEW (SHARP CORNERS) */}
+      {/* MODAL 2: LIGHTBOX PREVIEW */}
       {lightboxPhoto && (
         <div
           onClick={() => setLightboxPhoto(null)}
-          className="fixed inset-0 z-50 bg-espresso/95 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-[#05070A]/90 backdrop-blur-xl flex items-center justify-center p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white max-w-4xl w-full border border-espresso/20 overflow-hidden flex flex-col"
+            className="glass-panel-strong max-w-4xl w-full overflow-hidden flex flex-col"
           >
-            <div className="bg-espresso text-cream px-5 py-3 flex items-center justify-between">
-              <span className="font-mono font-bold text-sm text-cream">
+            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
+              <span className="font-mono font-bold text-sm text-white">
                 {lightboxPhoto.name}
               </span>
               <button
                 type="button"
                 onClick={() => setLightboxPhoto(null)}
-                className="w-8 h-8 bg-white/10 text-cream flex items-center justify-center hover:bg-white hover:text-espresso"
+                className="w-8 h-8 bg-white/10 text-white flex items-center justify-center hover:bg-cyan-400 hover:text-slate-950"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="relative bg-espresso max-h-[75vh] flex items-center justify-center overflow-hidden">
+            <div className="relative bg-[#05070A] max-h-[75vh] flex items-center justify-center overflow-hidden">
               <img
                 src={lightboxPhoto.fullResUrl}
                 alt={lightboxPhoto.caption}
@@ -909,8 +898,8 @@ Terima kasih!`;
               />
             </div>
 
-            <div className="p-4 bg-white flex flex-wrap items-center justify-between gap-3 border-t border-espresso/15">
-              <span className="font-mono text-xs text-espresso-muted">
+            <div className="p-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10">
+              <span className="font-mono text-xs text-slate-400">
                 {lightboxPhoto.name}
               </span>
               <div className="flex items-center gap-2">
@@ -921,17 +910,17 @@ Terima kasih!`;
                     setLightboxPhoto(null);
                     handleOpenNoteModal(target);
                   }}
-                  className="px-3.5 py-2 bg-[#FAF8F5] text-espresso border border-espresso/20 font-jakarta font-semibold text-xs"
+                  className="px-3.5 py-2 bg-white/5 text-white border border-white/15 font-jakarta font-semibold text-xs"
                 >
                   + Catatan
                 </button>
                 <button
                   type="button"
                   onClick={() => handleToggleSelect(lightboxPhoto)}
-                  className={`px-4 py-2 font-jakarta font-semibold text-xs ${
+                  className={`px-4 py-2 font-jakarta font-bold text-xs ${
                     selectionByPhotoId.has(lightboxPhoto.id)
-                      ? 'bg-espresso text-cream'
-                      : 'bg-mustard text-espresso'
+                      ? 'bg-white/15 text-white border border-white/20'
+                      : 'bg-cyan-400 text-slate-950'
                   }`}
                 >
                   {selectionByPhotoId.has(lightboxPhoto.id)
@@ -946,51 +935,51 @@ Terima kasih!`;
 
       {/* MODAL 3: FINAL SUBMIT, NEATLY SORTED FILENAMES & SEND TO WHATSAPP */}
       {isSubmitModalOpen && (
-        <div className="fixed inset-0 z-50 bg-espresso/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg border border-espresso/20 shadow-xl overflow-hidden">
-            <div className="bg-espresso text-cream px-5 py-3.5 flex items-center justify-between">
-              <span className="font-jakarta font-bold text-xs uppercase tracking-wider">
+        <div className="fixed inset-0 z-50 bg-[#05070A]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glass-panel-strong w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
+              <span className="font-jakarta font-bold text-xs uppercase tracking-wider text-white">
                 Kirim Pilihan Foto ke WhatsApp {gallery.studio_name}
               </span>
               <button
                 type="button"
                 onClick={() => setIsSubmitModalOpen(false)}
-                className="w-7 h-7 bg-white/10 text-cream flex items-center justify-center hover:bg-white hover:text-espresso"
+                className="w-7 h-7 bg-white/10 text-white flex items-center justify-center hover:bg-cyan-400 hover:text-slate-950"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="p-6 flex flex-col gap-4">
-              <div className="flex items-center justify-between bg-[#FAF8F5] p-4 border border-espresso/15">
+              <div className="flex items-center justify-between bg-white/5 p-4 border border-white/10">
                 <div>
-                  <span className="font-jakarta font-semibold text-xs uppercase text-espresso-muted">
-                    Total Foto Dipilih (Tersusun Rapi)
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-slate-400">
+                    TOTAL FOTO DIPILIH (TERSUSUN RAPI)
                   </span>
-                  <h3 className="font-fraunces font-bold text-lg text-espresso">
+                  <h3 className="font-jakarta font-bold text-lg text-white">
                     {gallery.client_name}
                   </h3>
                 </div>
-                <div className="bg-mustard text-espresso px-3.5 py-1 font-anton text-base">
+                <div className="bg-cyan-400 text-slate-950 px-3.5 py-1 font-mono font-bold text-sm">
                   {selectedCount} / {quota}
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                  <span className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                     Daftar Nama File Terpilih (Urut Otomatis):
                   </span>
                   <button
                     type="button"
                     onClick={handleCopySortedFilenames}
-                    className="font-jakarta font-bold text-xs text-crimson hover:underline"
+                    className="font-jakarta font-bold text-xs text-cyan-400 hover:underline"
                   >
                     {copiedClientList ? '✓ Tersalin!' : 'Salin Daftar File'}
                   </button>
                 </div>
 
-                <div className="bg-[#FAF8F5] p-3.5 border border-espresso/20 font-mono text-xs text-espresso max-h-44 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                <div className="bg-white/5 p-3.5 border border-white/10 font-mono text-xs text-slate-200 max-h-44 overflow-y-auto whitespace-pre-wrap leading-relaxed">
                   {sortedSelections.length > 0
                     ? sortedSelections
                         .map(
@@ -1005,11 +994,11 @@ Terima kasih!`;
               </div>
 
               {sortedSelections.length > 0 && (
-                <div className="bg-[#FAF8F5] p-3 border border-espresso/15 flex flex-col gap-1">
-                  <span className="font-jakarta font-bold text-[10px] uppercase tracking-wider text-espresso-muted">
+                <div className="bg-white/5 p-3 border border-white/10 flex flex-col gap-1">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-cyan-400">
                     Format Filter Lightroom (Otomatis Disertakan di WA):
                   </span>
-                  <div className="font-mono text-[11px] text-espresso break-words">
+                  <div className="font-mono text-[11px] text-slate-300 break-words">
                     {sortedLightroomNames}
                   </div>
                 </div>
@@ -1020,7 +1009,7 @@ Terima kasih!`;
                   type="button"
                   onClick={() => handleConfirmLockSelections(false)}
                   disabled={isLocking || selectedCount === 0}
-                  className="w-full sm:w-auto text-center px-4 py-2.5 bg-[#FAF8F5] hover:bg-cream text-espresso border border-espresso/20 font-jakarta font-semibold text-xs disabled:opacity-50"
+                  className="w-full sm:w-auto text-center px-4 py-2.5 bg-white/5 hover:bg-white/10 text-slate-200 border border-white/15 font-jakarta font-semibold text-xs disabled:opacity-50"
                 >
                   Simpan Saja
                 </button>
@@ -1028,7 +1017,7 @@ Terima kasih!`;
                   type="button"
                   onClick={() => handleConfirmLockSelections(true)}
                   disabled={isLocking || selectedCount === 0}
-                  className="w-full sm:flex-1 py-3 px-5 bg-espresso hover:bg-crimson text-cream font-jakarta font-bold text-xs uppercase tracking-wider disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 py-3 px-5 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-xs uppercase tracking-wider disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,211,238,0.25)]"
                 >
                   <Send className="w-4 h-4" />
                   <span>

@@ -4,39 +4,62 @@
 
 @layer base {
   :root {
-    --bg-cream: #F5EFE1;
-    --ink-espresso: #1E1916;
+    --bg-obsidian: #090C10;
+    --text-primary: #F8FAFC;
   }
 
   html,
   body {
-    background-color: #F5EFE1;
-    color: #1E1916;
+    background-color: #090C10;
+    color: #F8FAFC;
     font-family: var(--font-jakarta), system-ui, sans-serif;
     overflow-x: hidden;
   }
 }
 
-/* Subtle archival cardstock paper texture overlay */
-.retro-paper-grain {
-  background-image: radial-gradient(rgba(30, 25, 22, 0.05) 1px, transparent 0);
-  background-size: 20px 20px;
+/* Futuristic subtle ambient grid & radial glow */
+.futuristic-canvas {
+  background-color: #090C10;
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.08), transparent 36%),
+    radial-gradient(circle at 82% 28%, rgba(244, 63, 94, 0.06), transparent 38%),
+    radial-gradient(circle at 50% 85%, rgba(99, 102, 241, 0.07), transparent 42%);
 }
 
-/* Custom vintage scrollbar */
+/* Glassmorphism surfaces */
+.glass-header {
+  background: rgba(9, 12, 16, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-panel-strong {
+  background: rgba(13, 18, 28, 0.84);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Custom sleek dark scrollbar */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #F5EFE1;
-  border-left: 1.5px solid #1E1916;
+  background: #090C10;
 }
 ::-webkit-scrollbar-thumb {
-  background: #871F1B;
-  border: 1.5px solid #1E1916;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #B85D19;
+  background: rgba(255, 255, 255, 0.28);
 }

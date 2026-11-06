@@ -20,11 +20,10 @@ import {
   Plus,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Trash2,
-  User,
   Users,
 } from 'lucide-react';
-import RetroTicker from '@/components/RetroTicker';
 import GiantFooter from '@/components/GiantFooter';
 import {
   authenticateStudio,
@@ -534,40 +533,40 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
   }
 
   // ============================================================================
-  // EXCLUSIVE PHOTOGRAPHER SUBSCRIPTION LOGIN GATE
+  // EXCLUSIVE PHOTOGRAPHER SUBSCRIPTION LOGIN GATE (FUTURISTIC GLASSMORPHISM)
   // ============================================================================
   if (!authChecking && !loggedStudio) {
     return (
-      <div className="min-h-screen flex flex-col bg-cream text-espresso">
-        <header className="w-full bg-crimson border-b-[1.5px] border-espresso">
-          <RetroTicker
-            text="DIFOTOIN ★ AKSES KHUSUS STUDIO BERLANGGANAN ★ CLIENT PHOTO PROOFING & DIGITAL ALBUM ★"
-            variant="cream"
-          />
+      <div className="min-h-screen flex flex-col futuristic-canvas text-slate-100">
+        <header className="w-full glass-header sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center justify-between">
-            <Link
-              href="/"
-              className="font-anton text-2xl md:text-3xl text-cream uppercase tracking-wider"
-            >
-              DIFOTOIN
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-1 h-5 bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
+              <span className="font-anton text-2xl text-white uppercase tracking-widest group-hover:text-cyan-400 transition-colors">
+                DIFOTOIN
+              </span>
             </Link>
-            <span className="inline-flex items-center gap-1.5 bg-cream text-espresso font-jakarta font-bold text-xs px-3 py-1 rounded-full border border-espresso">
-              <Lock className="w-3.5 h-3.5 text-crimson" />
+            <span className="inline-flex items-center gap-1.5 glass-pill text-cyan-300 font-jakarta font-bold text-xs px-3.5 py-1.5 rounded-full">
+              <Lock className="w-3.5 h-3.5 text-cyan-400" />
               Khusus Studio Terdaftar
             </span>
           </div>
         </header>
 
-        <main className="flex-1 w-full flex items-center justify-center px-4 py-12">
-          <div className="w-full max-w-md bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden">
-            <div className="bg-espresso text-cream px-6 py-4 flex items-center justify-between">
+        <main className="flex-1 w-full flex items-center justify-center px-4 py-12 relative overflow-hidden">
+          {/* Ambient Futuristic Glow Orbs */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[520px] h-[320px] bg-cyan-500/15 blur-[130px] rounded-full" />
+          <div className="pointer-events-none absolute bottom-0 right-1/4 w-[380px] h-[260px] bg-indigo-500/10 blur-[120px] rounded-full" />
+
+          <div className="relative z-10 w-full max-w-md glass-panel-strong rounded-2xl overflow-hidden">
+            <div className="bg-white/[0.04] border-b border-white/10 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-mustard" />
-                <span className="font-anton text-sm uppercase tracking-wider">
+                <KeyRound className="w-4 h-4 text-cyan-400" />
+                <span className="font-jakarta font-bold text-xs uppercase tracking-[0.18em] text-white">
                   Login Lisensi Studio Fotografer
                 </span>
               </div>
-              <span className="font-jakarta text-[11px] text-mustard font-semibold">
+              <span className="font-jakarta text-[11px] text-cyan-400 font-semibold">
                 Member Only
               </span>
             </div>
@@ -576,18 +575,18 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
               onSubmit={handleLoginSubmit}
               className="p-6 md:p-8 flex flex-col gap-5"
             >
-              <div className="flex flex-col gap-1">
-                <h1 className="font-fraunces font-bold text-2xl text-espresso">
+              <div className="flex flex-col gap-1.5">
+                <h1 className="font-fraunces font-bold text-2xl text-white">
                   Masuk ke Dashboard Studio
                 </h1>
-                <p className="font-jakarta text-xs text-espresso-muted leading-relaxed">
+                <p className="font-jakarta text-xs text-slate-400 leading-relaxed">
                   Dashboard ini hanya dapat diakses oleh fotografer &amp; studio
                   yang memiliki lisensi berlangganan aktif di Difotoin.
                 </p>
               </div>
 
               {loginError && (
-                <div className="p-3.5 rounded-xl bg-crimson/10 border border-crimson text-crimson font-jakarta text-xs font-semibold leading-relaxed">
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-300 font-jakarta text-xs font-semibold leading-relaxed">
                   {loginError}
                 </div>
               )}
@@ -595,7 +594,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="login-studio-slug"
-                  className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso"
+                  className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300"
                 >
                   Slug Studio Anda
                 </label>
@@ -608,14 +607,14 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   }
                   placeholder="Contoh: zeevisual atau kalasenja"
                   required
-                  className="w-full bg-cream/50 text-espresso px-3.5 py-2.5 rounded-xl border-[1.5px] border-espresso font-jakarta font-semibold text-sm focus:outline-none focus:bg-white"
+                  className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-sm focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="login-access-code"
-                  className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso"
+                  className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300"
                 >
                   Kode Lisensi / Password Akses
                 </label>
@@ -626,24 +625,26 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   onChange={(e) => setLoginCode(e.target.value)}
                   placeholder="Masukkan kode lisensi..."
                   required
-                  className="w-full bg-cream/50 text-espresso px-3.5 py-2.5 rounded-xl border-[1.5px] border-espresso font-mono font-bold text-sm tracking-wider focus:outline-none focus:bg-white"
+                  className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono font-bold text-sm tracking-wider focus:outline-none focus:border-cyan-400"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full bg-mustard hover:bg-mustard-light text-espresso py-3.5 px-5 rounded-xl border-[1.5px] border-espresso font-anton text-base uppercase tracking-wider shadow-retro-sm transition-all flex items-center justify-center gap-2"
+                className="w-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 py-3.5 px-5 rounded-xl font-jakarta font-bold text-xs uppercase tracking-[0.18em] shadow-[0_0_24px_rgba(34,211,238,0.35)] transition-all flex items-center justify-center gap-2"
               >
                 <ShieldCheck className="w-4 h-4" />
                 <span>
-                  {isLoggingIn ? 'Memverifikasi Lisensi...' : 'Buka Dashboard Studio'}
+                  {isLoggingIn
+                    ? 'Memverifikasi Lisensi...'
+                    : 'Buka Dashboard Studio'}
                 </span>
               </button>
 
               {/* Quick Demo Fillers for Owner Testing */}
-              <div className="pt-3 border-t border-espresso/15 flex flex-col gap-2">
-                <span className="font-jakarta font-bold text-[11px] uppercase tracking-wider text-espresso-muted">
+              <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
+                <span className="font-jakarta font-bold text-[11px] uppercase tracking-wider text-slate-400">
                   Akses Cepat (Untuk Testing Owner):
                 </span>
                 <div className="grid grid-cols-2 gap-2">
@@ -653,10 +654,10 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       setLoginSlug('zeevisual');
                       setLoginCode('ZV2025');
                     }}
-                    className="px-3 py-2 rounded-lg bg-cream hover:bg-mustard/50 text-espresso border border-espresso/40 font-jakarta font-bold text-xs text-left transition-colors"
+                    className="px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-cyan-400/15 hover:border-cyan-400/40 text-white border border-white/10 font-jakarta font-bold text-xs text-left transition-all"
                   >
-                    <div>👑 Super Admin</div>
-                    <div className="font-mono text-[10px] text-espresso-muted">
+                    <div className="text-cyan-300">👑 Super Admin</div>
+                    <div className="font-mono text-[10px] text-slate-400 mt-0.5">
                       zeevisual / ZV2025
                     </div>
                   </button>
@@ -666,25 +667,25 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       setLoginSlug('kalasenja');
                       setLoginCode('DFTN-KALA25');
                     }}
-                    className="px-3 py-2 rounded-lg bg-cream hover:bg-mustard/50 text-espresso border border-espresso/40 font-jakarta font-bold text-xs text-left transition-colors"
+                    className="px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-cyan-400/15 hover:border-cyan-400/40 text-white border border-white/10 font-jakarta font-bold text-xs text-left transition-all"
                   >
-                    <div>📸 Contoh Member</div>
-                    <div className="font-mono text-[10px] text-espresso-muted">
+                    <div className="text-slate-200">📸 Contoh Member</div>
+                    <div className="font-mono text-[10px] text-slate-400 mt-0.5">
                       kalasenja / DFTN-KALA25
                     </div>
                   </button>
                 </div>
               </div>
 
-              <div className="bg-cream/60 p-3.5 rounded-xl border border-espresso/20 flex flex-col gap-2 text-center">
-                <span className="font-jakarta text-xs text-espresso-muted">
+              <div className="bg-white/[0.03] p-3.5 rounded-xl border border-white/10 flex flex-col gap-1.5 text-center">
+                <span className="font-jakarta text-xs text-slate-400">
                   Belum berlangganan akses studio Difotoin?
                 </span>
                 <a
                   href="https://wa.me/6281234567890?text=Halo%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20akses%20Studio%20di%20Difotoin."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 font-jakarta font-bold text-xs text-crimson hover:underline"
+                  className="inline-flex items-center justify-center gap-1.5 font-jakarta font-bold text-xs text-cyan-400 hover:text-cyan-300"
                 >
                   <span>Hubungi Zeevisual untuk Berlangganan Lisensi →</span>
                 </a>
@@ -699,29 +700,25 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream text-espresso">
-      {/* Clean Sticky Header */}
-      <header className="sticky top-0 z-50 w-full">
-        <RetroTicker
-          text="DIFOTOIN ★ PILIH FOTO FAVORITMU ★ ABADIKAN SETIAP MOMEN ★ STUDIO ZEEVISUAL ★"
-          variant="cream"
-        />
-        <div className="w-full bg-crimson border-b-[1.5px] border-espresso px-4 md:px-10 h-16 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col futuristic-canvas text-slate-100">
+      {/* Clean Futuristic Glass Sticky Header */}
+      <header className="sticky top-0 z-50 w-full glass-header">
+        <div className="w-full px-4 md:px-10 h-16 flex items-center justify-between">
           <div className="max-w-7xl w-full mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                className="font-anton text-2xl md:text-3xl text-cream uppercase tracking-wider hover:text-mustard transition-colors"
-              >
-                DIFOTOIN
+              <Link href="/" className="flex items-center gap-2.5 group">
+                <div className="w-1 h-5 bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
+                <span className="font-anton text-2xl text-white uppercase tracking-widest group-hover:text-cyan-400 transition-colors">
+                  DIFOTOIN
+                </span>
               </Link>
-              <span className="hidden sm:inline-flex items-center gap-1.5 bg-cream text-espresso font-jakarta font-bold text-xs px-2.5 py-1 rounded border border-espresso">
-                <Camera className="w-3.5 h-3.5 text-crimson" />
+              <span className="hidden sm:inline-flex items-center gap-1.5 bg-white/5 text-slate-200 font-jakarta font-bold text-xs px-2.5 py-1 rounded-lg border border-white/10">
+                <Camera className="w-3.5 h-3.5 text-cyan-400" />
                 {loggedStudio?.studio_slug || studioSlug}
               </span>
               {loggedStudio?.is_super_admin && (
-                <span className="hidden md:inline-flex items-center gap-1 bg-mustard text-espresso font-jakarta font-bold text-[11px] px-2.5 py-0.5 rounded-full border border-espresso">
-                  <Crown className="w-3 h-3" />
+                <span className="hidden md:inline-flex items-center gap-1 bg-cyan-400/15 text-cyan-300 font-jakarta font-bold text-[11px] px-2.5 py-0.5 rounded-full border border-cyan-400/30">
+                  <Crown className="w-3 h-3 text-cyan-400" />
                   Super Admin
                 </span>
               )}
@@ -731,10 +728,10 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
               <button
                 type="button"
                 onClick={() => setActiveTab('galleries')}
-                className={`font-jakarta font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-lg border transition-colors ${
+                className={`font-jakarta font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-lg border transition-all ${
                   activeTab === 'galleries'
-                    ? 'bg-cream text-espresso border-espresso'
-                    : 'text-cream border-transparent hover:bg-cream/15'
+                    ? 'bg-cyan-400 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                    : 'text-slate-300 border-transparent hover:bg-white/5 hover:text-white'
                 }`}
               >
                 Kelola Galeri Klien
@@ -744,10 +741,10 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 <button
                   type="button"
                   onClick={() => setActiveTab('subscriptions')}
-                  className={`inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-lg border transition-colors ${
+                  className={`inline-flex items-center gap-1.5 font-jakarta font-bold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-lg border transition-all ${
                     activeTab === 'subscriptions'
-                      ? 'bg-mustard text-espresso border-espresso'
-                      : 'text-cream border-transparent hover:bg-cream/15'
+                      ? 'bg-cyan-400 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
+                      : 'text-slate-300 border-transparent hover:bg-white/5 hover:text-white'
                   }`}
                 >
                   <Users className="w-3.5 h-3.5" />
@@ -757,7 +754,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
 
               <Link
                 href={`/${studioSlug || 'zeevisual'}/${slug || 'aida-fitri-harahab'}`}
-                className="font-jakarta font-semibold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-lg text-cream hover:bg-cream/15 transition-colors"
+                className="font-jakarta font-semibold text-xs uppercase tracking-wider px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
               >
                 Lihat Pilih Foto
               </Link>
@@ -765,10 +762,10 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
 
             <div className="flex items-center gap-3">
               <div className="hidden md:flex flex-col text-right">
-                <span className="font-jakarta font-bold text-xs text-cream">
+                <span className="font-jakarta font-bold text-xs text-white">
                   {loggedStudio?.studio_name || 'Zeevisual'}
                 </span>
-                <span className="font-jakarta text-[11px] text-cream/75">
+                <span className="font-jakarta text-[11px] text-slate-400">
                   {loggedStudio?.plan_name} •{' '}
                   {isSupabaseConfigured ? 'Supabase Aktif' : 'Mode Lokal'}
                 </span>
@@ -777,7 +774,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 type="button"
                 onClick={handleLogout}
                 title="Keluar dari Dashboard Studio"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cream hover:bg-mustard text-espresso border border-espresso font-jakarta font-bold text-xs transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 hover:border-rose-500/40 text-slate-200 hover:text-rose-200 border border-white/10 font-jakarta font-bold text-xs transition-all"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Keluar</span>
@@ -789,51 +786,56 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
 
       {/* Main Content */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-10 py-8 flex flex-col gap-8">
-        {/* Clean Top Header Card + Tab Switcher */}
-        <section className="w-full bg-white p-6 md:p-8 rounded-2xl border-[1.5px] border-espresso shadow-retro flex flex-col gap-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        {/* Futuristic Glass Top Header Card + Tab Switcher */}
+        <section className="w-full glass-panel p-6 md:p-8 rounded-2xl flex flex-col gap-6 relative overflow-hidden">
+          <div className="pointer-events-none absolute -right-20 -top-20 w-72 h-72 bg-cyan-500/10 blur-[100px] rounded-full" />
+
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
             <div className="flex flex-col gap-1.5 max-w-2xl">
-              <span className="font-jakarta font-bold text-xs uppercase tracking-widest text-crimson">
-                STUDIO PARTNER • {loggedStudio?.studio_name.toUpperCase()} (
-                {loggedStudio?.plan_name})
-              </span>
-              <h1 className="font-anton text-3xl md:text-4xl text-espresso uppercase tracking-wide leading-none">
+              <div className="inline-flex items-center gap-2 text-cyan-400 font-jakarta font-bold text-xs uppercase tracking-[0.2em]">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>
+                  STUDIO PARTNER • {loggedStudio?.studio_name.toUpperCase()} (
+                  {loggedStudio?.plan_name})
+                </span>
+              </div>
+              <h1 className="font-anton text-3xl md:text-4xl text-white uppercase tracking-wider leading-none mt-1">
                 {activeTab === 'subscriptions'
                   ? 'Kelola Member & Lisensi Langganan Fotografer'
                   : 'Dashboard Galeri & Seleksi Foto'}
               </h1>
-              <p className="font-jakarta text-sm text-espresso-muted leading-relaxed">
+              <p className="font-jakarta text-sm text-slate-400 leading-relaxed mt-1">
                 {activeTab === 'subscriptions'
                   ? 'Daftarkan fotografer yang membeli paket langganan, atur masa aktif lisensi, dan salin pesan aktivasi WhatsApp dalam satu klik.'
-                  : 'Tempelkan link folder Google Drive, bagikan link pilih foto ke klien via WhatsApp, dan salin daftar foto terpilih untuk filter Adobe Lightroom.'}
+                  : 'Tempelkan link folder Google Drive, bagikan link pilih foto ke klien via WhatsApp, dan salin daftar foto terpilih yang sudah tersusun rapi untuk filter Adobe Lightroom.'}
               </p>
             </div>
 
             <div className="grid grid-cols-3 gap-3 w-full lg:w-auto shrink-0">
-              <div className="bg-cream p-3.5 px-4 rounded-xl border border-espresso flex flex-col justify-center">
-                <span className="font-jakarta font-semibold text-[11px] text-espresso-muted uppercase">
+              <div className="bg-white/[0.03] p-3.5 px-4 rounded-xl border border-white/10 flex flex-col justify-center">
+                <span className="font-jakarta font-semibold text-[11px] text-slate-400 uppercase tracking-wider">
                   Galeri Studio
                 </span>
-                <span className="font-anton text-2xl text-espresso leading-tight mt-0.5">
+                <span className="font-anton text-2xl text-white leading-tight mt-0.5">
                   {visibleGalleries.length} /{' '}
                   {loggedStudio?.is_super_admin
                     ? '∞'
                     : loggedStudio?.max_galleries}
                 </span>
               </div>
-              <div className="bg-cream p-3.5 px-4 rounded-xl border border-espresso flex flex-col justify-center">
-                <span className="font-jakarta font-semibold text-[11px] text-espresso-muted uppercase">
+              <div className="bg-cyan-400/10 p-3.5 px-4 rounded-xl border border-cyan-400/30 flex flex-col justify-center">
+                <span className="font-jakarta font-semibold text-[11px] text-cyan-300 uppercase tracking-wider">
                   Foto Terpilih
                 </span>
-                <span className="font-anton text-2xl text-crimson leading-tight mt-0.5">
+                <span className="font-anton text-2xl text-cyan-300 leading-tight mt-0.5">
                   {activeSelections.length} File
                 </span>
               </div>
-              <div className="bg-cream p-3.5 px-4 rounded-xl border border-espresso flex flex-col justify-center">
-                <span className="font-jakarta font-semibold text-[11px] text-espresso-muted uppercase">
+              <div className="bg-white/[0.03] p-3.5 px-4 rounded-xl border border-white/10 flex flex-col justify-center">
+                <span className="font-jakarta font-semibold text-[11px] text-slate-400 uppercase tracking-wider">
                   Member Studio
                 </span>
-                <span className="font-anton text-2xl text-espresso leading-tight mt-0.5">
+                <span className="font-anton text-2xl text-white leading-tight mt-0.5">
                   {studioList.length} Akun
                 </span>
               </div>
@@ -842,14 +844,14 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
 
           {/* Mobile & Desktop Quick Mode Switcher for Super Admin */}
           {loggedStudio?.is_super_admin && (
-            <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-espresso/15">
+            <div className="flex flex-wrap items-center gap-2.5 pt-4 border-t border-white/10 relative z-10">
               <button
                 type="button"
                 onClick={() => setActiveTab('galleries')}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-jakarta font-bold text-xs border-[1.5px] border-espresso transition-all ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-jakarta font-bold text-xs border transition-all ${
                   activeTab === 'galleries'
-                    ? 'bg-espresso text-cream shadow-retro-sm'
-                    : 'bg-cream text-espresso hover:bg-mustard/40'
+                    ? 'bg-cyan-400 text-slate-950 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)]'
+                    : 'bg-white/[0.04] text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <Camera className="w-4 h-4" />
@@ -858,13 +860,13 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
               <button
                 type="button"
                 onClick={() => setActiveTab('subscriptions')}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-jakarta font-bold text-xs border-[1.5px] border-espresso transition-all ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-jakarta font-bold text-xs border transition-all ${
                   activeTab === 'subscriptions'
-                    ? 'bg-mustard text-espresso shadow-retro-sm'
-                    : 'bg-cream text-espresso hover:bg-mustard/40'
+                    ? 'bg-cyan-400 text-slate-950 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.3)]'
+                    : 'bg-white/[0.04] text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Crown className="w-4 h-4 text-crimson" />
+                <Crown className="w-4 h-4" />
                 <span>
                   2. Kelola Langganan Fotografer ({studioList.length} Studio)
                 </span>
@@ -879,11 +881,11 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
         {activeTab === 'subscriptions' && loggedStudio?.is_super_admin && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* LEFT: ADD SUBSCRIBER STUDIO FORM */}
-            <div className="lg:col-span-5 bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden flex flex-col">
-              <div className="bg-espresso text-cream px-6 py-3.5 flex items-center justify-between">
+            <div className="lg:col-span-5 glass-panel rounded-2xl overflow-hidden flex flex-col">
+              <div className="bg-white/[0.04] border-b border-white/10 px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-mustard" />
-                  <span className="font-anton text-sm uppercase tracking-wider">
+                  <Crown className="w-4 h-4 text-cyan-400" />
+                  <span className="font-jakarta font-bold text-xs uppercase tracking-[0.18em] text-white">
                     Tambah Member Fotografer Baru
                   </span>
                 </div>
@@ -894,7 +896,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 className="p-6 flex flex-col gap-4"
               >
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                  <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                     Nama Studio Fotografer
                   </label>
                   <input
@@ -906,13 +908,13 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     }}
                     placeholder="Contoh: Lumina Portrait Studio"
                     required
-                    className="w-full bg-white text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-jakarta font-semibold text-sm focus:outline-none"
+                    className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-sm focus:outline-none focus:border-cyan-400"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                       Slug URL Studio
                     </label>
                     <input
@@ -923,12 +925,12 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       }
                       placeholder="lumina-portrait"
                       required
-                      className="w-full bg-cream/60 text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-mono font-bold text-xs focus:outline-none"
+                      className="w-full bg-white/[0.03] text-cyan-300 placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono font-bold text-xs focus:outline-none focus:border-cyan-400"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                       Nama Pemilik
                     </label>
                     <input
@@ -937,14 +939,14 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       onChange={(e) => setNewSubOwnerName(e.target.value)}
                       placeholder="Contoh: Andi Wijaya"
                       required
-                      className="w-full bg-white text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-jakarta text-sm focus:outline-none"
+                      className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta text-sm focus:outline-none focus:border-cyan-400"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                       Paket Langganan
                     </label>
                     <select
@@ -954,7 +956,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           e.target.value as StudioSubscription['plan_name']
                         )
                       }
-                      className="w-full bg-white text-espresso px-3 py-2.5 rounded-lg border-[1.5px] border-espresso font-jakarta font-semibold text-xs focus:outline-none"
+                      className="w-full bg-[#111722] text-white px-3 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-xs focus:outline-none focus:border-cyan-400"
                     >
                       <option value="Bulanan (30 Hari)">
                         Bulanan (30 Hari)
@@ -970,7 +972,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                       Kuota Maks Galeri
                     </label>
                     <input
@@ -983,20 +985,20 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           Math.max(1, Number(e.target.value))
                         )
                       }
-                      className="w-full bg-white text-espresso px-3.5 py-2 rounded-lg border-[1.5px] border-espresso font-jakarta font-bold text-sm focus:outline-none"
+                      className="w-full bg-white/[0.04] text-white px-3.5 py-2 rounded-xl border border-white/15 font-jakarta font-bold text-sm focus:outline-none focus:border-cyan-400"
                     />
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso flex items-center justify-between">
+                  <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between">
                     <span>Kode Lisensi Login</span>
                     <button
                       type="button"
                       onClick={() =>
                         setNewSubAccessCode(generateLicenseCode('DFTN'))
                       }
-                      className="inline-flex items-center gap-1 text-[11px] text-crimson font-semibold hover:underline"
+                      className="inline-flex items-center gap-1 text-[11px] text-cyan-400 font-semibold hover:underline"
                     >
                       <RefreshCw className="w-3 h-3" />
                       Generate Baru
@@ -1007,20 +1009,20 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     value={newSubAccessCode}
                     onChange={(e) => setNewSubAccessCode(e.target.value)}
                     required
-                    className="w-full bg-cream/60 text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-mono font-bold text-sm tracking-wider focus:outline-none"
+                    className="w-full bg-white/[0.03] text-cyan-300 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono font-bold text-sm tracking-wider focus:outline-none focus:border-cyan-400"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="mt-1 w-full bg-mustard hover:bg-mustard-light text-espresso py-3 px-5 rounded-xl border-[1.5px] border-espresso font-anton text-base uppercase tracking-wider shadow-retro-sm transition-all flex items-center justify-center gap-2"
+                  className="mt-1 w-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 py-3 px-5 rounded-xl font-jakarta font-bold text-xs uppercase tracking-[0.18em] shadow-[0_0_24px_rgba(34,211,238,0.3)] transition-all flex items-center justify-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Aktifkan Lisensi Member</span>
                 </button>
 
                 {subSuccessMsg && (
-                  <div className="p-3 rounded-xl bg-cream border border-espresso font-jakarta text-xs font-bold text-espresso">
+                  <div className="p-3 rounded-xl bg-cyan-400/10 border border-cyan-400/30 font-jakarta text-xs font-bold text-cyan-200">
                     ✓ {subSuccessMsg}
                   </div>
                 )}
@@ -1028,17 +1030,17 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
             </div>
 
             {/* RIGHT: LIST OF SUBSCRIBED STUDIOS */}
-            <div className="lg:col-span-7 bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden flex flex-col">
-              <div className="bg-espresso text-cream px-6 py-3.5 flex items-center justify-between">
-                <span className="font-anton text-sm uppercase tracking-wider">
+            <div className="lg:col-span-7 glass-panel rounded-2xl overflow-hidden flex flex-col">
+              <div className="bg-white/[0.04] border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                <span className="font-jakarta font-bold text-xs uppercase tracking-[0.18em] text-white">
                   Daftar Studio Berlangganan ({studioList.length})
                 </span>
-                <span className="font-jakarta text-xs text-cream/80">
+                <span className="font-jakarta text-xs text-slate-400">
                   Salin Lisensi WA atau Bekukan Akses
                 </span>
               </div>
 
-              <div className="divide-y divide-espresso/15">
+              <div className="divide-y divide-white/10">
                 {studioList.map((sub) => {
                   const isExpired =
                     sub.expires_at &&
@@ -1052,37 +1054,37 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   return (
                     <div
                       key={sub.id}
-                      className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-cream/30 transition-colors"
+                      className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
                     >
                       <div className="flex flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-fraunces font-bold text-lg text-espresso">
+                          <span className="font-fraunces font-bold text-lg text-white">
                             {sub.studio_name}
                           </span>
-                          <span className="px-2 py-0.5 rounded bg-cream border border-espresso/40 font-mono font-bold text-xs text-espresso">
+                          <span className="px-2 py-0.5 rounded bg-white/5 border border-white/15 font-mono font-bold text-xs text-cyan-300">
                             /{sub.studio_slug}
                           </span>
                           {sub.is_super_admin ? (
-                            <span className="px-2 py-0.5 rounded-full bg-mustard text-espresso border border-espresso font-jakarta font-bold text-[10px] uppercase">
+                            <span className="px-2.5 py-0.5 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 font-jakarta font-bold text-[10px] uppercase">
                               Owner Utama
                             </span>
                           ) : !sub.is_active || isExpired ? (
-                            <span className="px-2 py-0.5 rounded-full bg-crimson text-cream font-jakarta font-bold text-[10px] uppercase">
+                            <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 font-jakarta font-bold text-[10px] uppercase">
                               {isExpired ? 'Expired' : 'Nonaktif'}
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full bg-teal text-cream font-jakarta font-bold text-[10px] uppercase">
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-jakarta font-bold text-[10px] uppercase">
                               Aktif
                             </span>
                           )}
                         </div>
 
-                        <div className="font-jakarta text-xs text-espresso-muted flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <div className="font-jakarta text-xs text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1">
                           <span>Pemilik: {sub.owner_name}</span>
                           <span>•</span>
                           <span>
                             Kode Lisensi:{' '}
-                            <strong className="font-mono text-espresso">
+                            <strong className="font-mono text-white">
                               {sub.access_code}
                             </strong>
                           </span>
@@ -1093,8 +1095,8 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           </span>
                         </div>
 
-                        <div className="font-jakarta text-[11px] text-espresso-muted">
-                          Paket: <strong>{sub.plan_name}</strong>{' '}
+                        <div className="font-jakarta text-[11px] text-slate-400">
+                          Paket: <strong className="text-slate-200">{sub.plan_name}</strong>{' '}
                           {sub.expires_at
                             ? `• Berlaku s/d ${new Date(
                                 sub.expires_at
@@ -1111,7 +1113,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         <button
                           type="button"
                           onClick={() => handleCopySubscriberWa(sub)}
-                          className="px-3 py-1.5 rounded-lg bg-mustard hover:bg-mustard-light text-espresso border border-espresso font-jakarta font-bold text-xs inline-flex items-center gap-1.5 transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-xs inline-flex items-center gap-1.5 transition-colors"
                         >
                           <Copy className="w-3.5 h-3.5" />
                           <span>
@@ -1132,7 +1134,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                                 );
                                 setStudioList(next);
                               }}
-                              className="px-2.5 py-1.5 rounded-lg bg-cream hover:bg-white text-espresso border border-espresso font-jakarta font-bold text-xs transition-colors"
+                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 border border-white/15 font-jakarta font-bold text-xs transition-colors"
                               title="Perpanjang 30 Hari"
                             >
                               +30 Hari
@@ -1148,7 +1150,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                                   );
                                 setStudioList(next);
                               }}
-                              className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-cream text-espresso border border-espresso font-jakarta font-bold text-xs transition-colors"
+                              className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-200 border border-white/15 font-jakarta font-bold text-xs transition-colors"
                             >
                               {sub.is_active ? 'Bekukan' : 'Aktifkan'}
                             </button>
@@ -1162,7 +1164,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                                 setStudioList(next);
                               }}
                               title="Hapus Member Studio"
-                              className="p-1.5 rounded-lg bg-white hover:bg-crimson hover:text-cream text-espresso-muted border border-espresso/30 transition-colors"
+                              className="p-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 hover:text-rose-300 text-slate-400 border border-white/10 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1185,15 +1187,15 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
             {/* Main 2-Column Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* LEFT COLUMN: CREATE GALLERY FORM (Cols 1-7) */}
-              <div className="lg:col-span-7 bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden flex flex-col">
-                <div className="bg-espresso text-cream px-6 py-3.5 flex items-center justify-between">
-                  <span className="font-anton text-sm uppercase tracking-wider">
+              <div className="lg:col-span-7 glass-panel rounded-2xl overflow-hidden flex flex-col">
+                <div className="bg-white/[0.04] border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                  <span className="font-jakarta font-bold text-xs uppercase tracking-[0.18em] text-white">
                     Konfigurasi Galeri Klien
                   </span>
                   <button
                     type="button"
                     onClick={handleResetNewForm}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-cream text-espresso font-jakarta font-bold text-xs hover:bg-mustard transition-colors"
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-slate-200 border border-white/10 font-jakarta font-bold text-xs transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Reset Form Baru</span>
@@ -1209,7 +1211,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     <div className="sm:col-span-4 flex flex-col gap-1.5">
                       <label
                         htmlFor="studio-slug-input"
-                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso"
+                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300"
                       >
                         Nama Studio (`studio_slug`)
                       </label>
@@ -1229,17 +1231,17 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         }
                         placeholder="zeevisual"
                         required
-                        className="w-full bg-cream/60 text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-jakarta font-semibold text-sm focus:outline-none"
+                        className="w-full bg-white/[0.03] text-cyan-300 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-sm focus:outline-none focus:border-cyan-400"
                       />
                     </div>
 
                     <div className="sm:col-span-8 flex flex-col gap-1.5">
                       <label
                         htmlFor="client-name-input"
-                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso flex items-center justify-between"
+                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
                       >
                         <span>Nama Klien / Pasangan</span>
-                        <span className="text-[11px] text-crimson font-semibold">
+                        <span className="text-[11px] text-cyan-400 font-semibold">
                           *wajib diisi
                         </span>
                       </label>
@@ -1250,7 +1252,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         onChange={(e) => handleClientNameChange(e.target.value)}
                         placeholder="Contoh: Aida Fitri Harahab"
                         required
-                        className="w-full bg-white text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-fraunces font-bold text-base focus:outline-none focus:ring-2 focus:ring-mustard"
+                        className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-fraunces font-bold text-base focus:outline-none focus:border-cyan-400"
                       />
                     </div>
                   </div>
@@ -1260,7 +1262,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     <div className="sm:col-span-6 flex flex-col gap-1.5">
                       <label
                         htmlFor="client-slug-input"
-                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso flex items-center justify-between"
+                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
                       >
                         <span>Slug URL Klien</span>
                         <button
@@ -1269,7 +1271,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                             setIsSlugManual(false);
                             setSlug(slugifyClientName(clientName));
                           }}
-                          className="text-[11px] text-crimson hover:underline font-semibold"
+                          className="text-[11px] text-cyan-400 hover:underline font-semibold"
                         >
                           Otomatis
                         </button>
@@ -1283,27 +1285,27 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           setSlug(slugifyClientName(e.target.value));
                         }}
                         required
-                        className="w-full bg-cream/60 text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-mono text-xs font-bold focus:outline-none focus:bg-white"
+                        className="w-full bg-white/[0.03] text-slate-200 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono text-xs font-bold focus:outline-none focus:border-cyan-400"
                       />
                     </div>
 
                     <div className="sm:col-span-6 flex flex-col gap-1.5">
                       <label
                         htmlFor="owner-token-input"
-                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso flex items-center justify-between"
+                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
                       >
                         <span>Token Pemilik (`owner_token`)</span>
                         <button
                           type="button"
                           onClick={() => setOwnerToken(generateOwnerToken(12))}
-                          className="inline-flex items-center gap-1 text-[11px] text-crimson font-semibold hover:underline"
+                          className="inline-flex items-center gap-1 text-[11px] text-cyan-400 font-semibold hover:underline"
                         >
                           <RefreshCw className="w-3 h-3" />
                           Acak Baru
                         </button>
                       </label>
-                      <div className="flex items-center gap-2 bg-cream/60 px-3.5 py-2 rounded-lg border-[1.5px] border-espresso">
-                        <KeyRound className="w-4 h-4 text-espresso-muted shrink-0" />
+                      <div className="flex items-center gap-2 bg-white/[0.03] px-3.5 py-2 rounded-xl border border-white/15">
+                        <KeyRound className="w-4 h-4 text-cyan-400 shrink-0" />
                         <input
                           id="owner-token-input"
                           type="text"
@@ -1311,7 +1313,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           onChange={(e) => setOwnerToken(e.target.value)}
                           maxLength={24}
                           required
-                          className="w-full bg-transparent text-espresso font-mono font-bold text-sm tracking-wider focus:outline-none"
+                          className="w-full bg-transparent text-white font-mono font-bold text-sm tracking-wider focus:outline-none"
                         />
                       </div>
                     </div>
@@ -1321,16 +1323,16 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   <div className="flex flex-col gap-2">
                     <label
                       htmlFor="gdrive-url-input"
-                      className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso flex flex-wrap items-center justify-between gap-1"
+                      className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex flex-wrap items-center justify-between gap-1"
                     >
                       <span>Link Folder Google Drive</span>
-                      <span className="font-mono text-[11px] text-espresso-muted bg-cream px-2 py-0.5 rounded border border-espresso/30">
+                      <span className="font-mono text-[11px] text-cyan-300 bg-white/5 px-2.5 py-0.5 rounded border border-white/10">
                         ID: {parsedFolderId}
                       </span>
                     </label>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      <div className="flex-1 flex items-center gap-2.5 bg-white px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso focus-within:ring-2 focus-within:ring-mustard">
-                        <FolderOpen className="w-4 h-4 text-espresso-muted shrink-0" />
+                      <div className="flex-1 flex items-center gap-2.5 bg-white/[0.04] px-3.5 py-2.5 rounded-xl border border-white/15 focus-within:border-cyan-400">
+                        <FolderOpen className="w-4 h-4 text-cyan-400 shrink-0" />
                         <input
                           id="gdrive-url-input"
                           type="text"
@@ -1338,29 +1340,29 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           onChange={(e) => setGdriveFolderUrl(e.target.value)}
                           placeholder="Tempel link folder Google Drive di sini..."
                           required
-                          className="w-full bg-transparent text-espresso font-jakarta text-sm focus:outline-none"
+                          className="w-full bg-transparent text-white placeholder:text-slate-500 font-jakarta text-sm focus:outline-none"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleTestDriveFolder}
                         disabled={isTestingDrive}
-                        className="shrink-0 px-4 py-2.5 rounded-lg bg-cream hover:bg-mustard text-espresso border-[1.5px] border-espresso font-jakarta font-bold text-xs transition-colors"
+                        className="shrink-0 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-slate-200 border border-white/15 font-jakarta font-bold text-xs transition-all"
                       >
                         {isTestingDrive ? 'Memuat...' : 'Cek Isi Folder'}
                       </button>
                     </div>
 
                     {drivePreviewPhotos.length > 0 && (
-                      <div className="mt-1 p-3 rounded-xl bg-cream/70 border border-espresso/30 flex flex-col gap-2">
+                      <div className="mt-1 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col gap-2.5">
                         <div className="flex items-center justify-between text-xs font-jakarta">
-                          <span className="font-bold text-espresso">
+                          <span className="font-bold text-cyan-300">
                             ✓ {driveSourceLabel}
                           </span>
                           <button
                             type="button"
                             onClick={() => setDrivePreviewPhotos([])}
-                            className="text-espresso-muted hover:text-espresso underline text-[11px]"
+                            className="text-slate-400 hover:text-white underline text-[11px]"
                           >
                             Tutup Pratinjau
                           </button>
@@ -1369,7 +1371,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           {drivePreviewPhotos.slice(0, 8).map((p) => (
                             <div
                               key={p.id}
-                              className={`shrink-0 h-16 rounded border border-espresso overflow-hidden bg-white ${
+                              className={`shrink-0 h-16 rounded-none border border-white/15 overflow-hidden bg-slate-950 ${
                                 p.aspectRatio === 'landscape' ? 'w-24' : 'w-12'
                               }`}
                             >
@@ -1383,7 +1385,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                                     target.src = `https://lh3.googleusercontent.com/d/${p.id}=w800`;
                                   }
                                 }}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover rounded-none"
                               />
                             </div>
                           ))}
@@ -1395,10 +1397,10 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   {/* Row 4: Selection Quota Presets + Custom Input */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                         Kuota Pilih Foto (`selection_quota`)
                       </label>
-                      <span className="font-jakarta font-bold text-xs text-espresso-muted">
+                      <span className="font-jakarta font-bold text-xs text-cyan-300">
                         Maksimal {selectionQuota} Foto
                       </span>
                     </div>
@@ -1408,10 +1410,10 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           key={preset}
                           type="button"
                           onClick={() => setSelectionQuota(preset)}
-                          className={`py-2 rounded-lg font-jakarta font-bold text-xs border-[1.5px] border-espresso transition-all ${
+                          className={`py-2 rounded-xl font-jakarta font-bold text-xs border transition-all ${
                             selectionQuota === preset
-                              ? 'bg-mustard text-espresso shadow-retro-sm'
-                              : 'bg-cream/60 text-espresso hover:bg-cream'
+                              ? 'bg-cyan-400 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.25)]'
+                              : 'bg-white/[0.03] text-slate-300 border-white/10 hover:bg-white/10 hover:text-white'
                           }`}
                         >
                           {preset} Foto
@@ -1426,15 +1428,15 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           setSelectionQuota(Math.max(1, Number(e.target.value)))
                         }
                         aria-label="Kuota Kustom"
-                        className="w-full bg-white text-center font-jakarta font-bold text-sm text-espresso rounded-lg border-[1.5px] border-espresso focus:outline-none"
+                        className="w-full bg-white/[0.04] text-center font-jakarta font-bold text-sm text-white rounded-xl border border-white/15 focus:outline-none focus:border-cyan-400"
                       />
                     </div>
                   </div>
 
                   {/* Row 5: Session Type, Deadline, Optional PIN & Photographer WA */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                         Nomor WA Fotografer (Tujuan Kirim Pilihan Klien)
                       </label>
                       <input
@@ -1442,18 +1444,18 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         value={studioWhatsapp}
                         onChange={(e) => setStudioWhatsapp(e.target.value)}
                         placeholder="Contoh: 081234567890"
-                        className="w-full bg-white text-espresso px-3.5 py-2.5 rounded-lg border-[1.5px] border-espresso font-jakarta text-xs font-semibold focus:outline-none"
+                        className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta text-xs font-semibold focus:outline-none focus:border-cyan-400"
                       />
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                         Kategori Sesi
                       </label>
                       <select
                         value={sessionType}
                         onChange={(e) => setSessionType(e.target.value)}
-                        className="w-full bg-white text-espresso px-3 py-2.5 rounded-lg border-[1.5px] border-espresso font-jakarta text-xs font-semibold focus:outline-none"
+                        className="w-full bg-[#111722] text-white px-3 py-2.5 rounded-xl border border-white/15 font-jakarta text-xs font-semibold focus:outline-none focus:border-cyan-400"
                       >
                         <option>Editorial Pre-Wedding</option>
                         <option>Wedding Documentation</option>
@@ -1464,27 +1466,27 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1">
-                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                         Batas Waktu
                       </label>
-                      <div className="flex items-center bg-white px-3 py-2 rounded-lg border-[1.5px] border-espresso">
-                        <Calendar className="w-4 h-4 text-espresso-muted mr-2 shrink-0" />
+                      <div className="flex items-center bg-white/[0.04] px-3 py-2 rounded-xl border border-white/15">
+                        <Calendar className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
                         <input
                           type="text"
                           value={deadlineDate}
                           onChange={(e) => setDeadlineDate(e.target.value)}
-                          className="w-full bg-transparent text-espresso font-jakarta text-xs font-semibold focus:outline-none"
+                          className="w-full bg-transparent text-white font-jakarta text-xs font-semibold focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-espresso">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
                         PIN Album (Opsional)
                       </label>
-                      <div className="flex items-center bg-white px-3 py-2 rounded-lg border-[1.5px] border-espresso">
-                        <Lock className="w-4 h-4 text-espresso-muted mr-2 shrink-0" />
+                      <div className="flex items-center bg-white/[0.04] px-3 py-2 rounded-xl border border-white/15">
+                        <Lock className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
                         <input
                           type="text"
                           maxLength={4}
@@ -1495,7 +1497,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                             )
                           }
                           placeholder="2408"
-                          className="w-full bg-transparent text-espresso font-mono font-bold text-sm tracking-widest focus:outline-none"
+                          className="w-full bg-transparent text-white placeholder:text-slate-500 font-mono font-bold text-sm tracking-widest focus:outline-none"
                         />
                       </div>
                     </div>
@@ -1508,9 +1510,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         type="checkbox"
                         checked={enablePin}
                         onChange={(e) => setEnablePin(e.target.checked)}
-                        className="w-4 h-4 accent-espresso rounded cursor-pointer"
+                        className="w-4 h-4 accent-cyan-400 rounded cursor-pointer"
                       />
-                      <span className="font-jakarta text-xs md:text-sm text-espresso">
+                      <span className="font-jakarta text-xs md:text-sm text-slate-300">
                         Aktifkan PIN 4 digit untuk pengunjung publik
                       </span>
                     </label>
@@ -1519,9 +1521,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         type="checkbox"
                         checked={enableWatermark}
                         onChange={(e) => setEnableWatermark(e.target.checked)}
-                        className="w-4 h-4 accent-espresso rounded cursor-pointer"
+                        className="w-4 h-4 accent-cyan-400 rounded cursor-pointer"
                       />
-                      <span className="font-jakarta text-xs md:text-sm text-espresso">
+                      <span className="font-jakarta text-xs md:text-sm text-slate-300">
                         Tampilkan watermark tipis pada foto preview
                       </span>
                     </label>
@@ -1531,9 +1533,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   <button
                     type="submit"
                     disabled={isPublishing}
-                    className="mt-1 w-full bg-mustard hover:bg-mustard-light text-espresso py-3.5 px-6 rounded-xl border-[1.5px] border-espresso font-anton text-base md:text-lg uppercase tracking-wider shadow-retro transition-all flex items-center justify-center gap-2"
+                    className="mt-1 w-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 py-3.5 px-6 rounded-xl font-jakarta font-bold text-xs md:text-sm uppercase tracking-[0.18em] shadow-[0_0_24px_rgba(34,211,238,0.35)] transition-all flex items-center justify-center gap-2"
                   >
-                    <Bolt className="w-4 h-4 fill-espresso" />
+                    <Bolt className="w-4 h-4 fill-slate-950" />
                     <span>
                       {isPublishing
                         ? 'Menyimpan Galeri...'
@@ -1542,21 +1544,21 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   </button>
 
                   {publishSuccessMsg && (
-                    <div className="p-3.5 rounded-xl bg-cream border-[1.5px] border-espresso flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 font-jakarta text-xs font-bold text-espresso">
-                        <CheckCircle2 className="w-4 h-4 text-crimson shrink-0" />
+                    <div className="p-3.5 rounded-xl bg-cyan-400/10 border border-cyan-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 font-jakarta text-xs font-bold text-cyan-200">
+                        <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
                         <span>{publishSuccessMsg}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <Link
                           href={`/${loggedStudio && !loggedStudio.is_super_admin ? loggedStudio.studio_slug : studioSlug}/${slug}`}
-                          className="px-3 py-1 rounded-lg bg-mustard text-espresso font-jakarta font-bold text-xs border border-espresso"
+                          className="px-3 py-1.5 rounded-lg bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs"
                         >
                           Buka Pilih Foto →
                         </Link>
                         <Link
                           href={`/${slug}?t=${ownerToken}`}
-                          className="px-3 py-1 rounded-lg bg-white text-espresso font-jakarta font-bold text-xs border border-espresso"
+                          className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-jakarta font-bold text-xs border border-white/15"
                         >
                           Buka Album →
                         </Link>
@@ -1569,22 +1571,22 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
               {/* RIGHT COLUMN: AUTO-WHATSAPP COPY BOX & LIGHTROOM FILTER EXPORTER (Cols 8-12) */}
               <div className="lg:col-span-5 flex flex-col gap-6">
                 {/* CARD 1: AUTO-WHATSAPP COPY BOX */}
-                <div className="bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden flex flex-col">
-                  <div className="bg-espresso text-cream px-5 py-3 flex items-center justify-between">
+                <div className="glass-panel rounded-2xl overflow-hidden flex flex-col">
+                  <div className="bg-white/[0.04] border-b border-white/10 px-5 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-mustard" />
-                      <span className="font-anton text-sm uppercase tracking-wider">
+                      <MessageSquare className="w-4 h-4 text-cyan-400" />
+                      <span className="font-jakarta font-bold text-xs uppercase tracking-[0.18em] text-white">
                         Pesan WhatsApp Otomatis
                       </span>
                     </div>
-                    <span className="font-jakarta text-[11px] text-cream/80">
+                    <span className="font-jakarta text-[11px] text-cyan-300 font-semibold">
                       Siap Salin
                     </span>
                   </div>
 
                   <div className="p-5 flex flex-col gap-3.5">
-                    <div className="bg-cream/60 p-4 rounded-xl border border-espresso/30">
-                      <pre className="font-jakarta text-xs md:text-[13px] text-espresso whitespace-pre-wrap leading-relaxed select-all overflow-x-auto">
+                    <div className="bg-white/[0.03] p-4 rounded-xl border border-white/10">
+                      <pre className="font-jakarta text-xs md:text-[13px] text-slate-200 whitespace-pre-wrap leading-relaxed select-all overflow-x-auto">
                         {whatsappMessage}
                       </pre>
                     </div>
@@ -1593,11 +1595,11 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       <button
                         type="button"
                         onClick={handleCopyWa}
-                        className="w-full sm:flex-1 bg-mustard hover:bg-mustard-light text-espresso py-2.5 px-4 rounded-xl border-[1.5px] border-espresso font-anton text-sm uppercase tracking-wider shadow-retro-sm transition-all flex items-center justify-center gap-2"
+                        className="w-full sm:flex-1 bg-cyan-400 hover:bg-cyan-300 text-slate-950 py-2.5 px-4 rounded-xl font-jakarta font-bold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.25)] transition-all flex items-center justify-center gap-2"
                       >
                         {copiedWa ? (
                           <>
-                            <CheckCircle2 className="w-4 h-4 text-crimson" />
+                            <CheckCircle2 className="w-4 h-4 text-slate-950" />
                             <span>Tersalin!</span>
                           </>
                         ) : (
@@ -1612,9 +1614,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         href={`https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full sm:w-auto bg-white hover:bg-cream text-espresso py-2.5 px-4 rounded-xl border-[1.5px] border-espresso font-jakarta font-bold text-xs transition-all flex items-center justify-center gap-1.5"
+                        className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white py-2.5 px-4 rounded-xl border border-white/15 font-jakarta font-bold text-xs transition-all flex items-center justify-center gap-1.5"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
                         <span>Kirim WA</span>
                       </a>
                     </div>
@@ -1622,15 +1624,15 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 </div>
 
                 {/* CARD 2: LIGHTROOM FILTER EXPORTER */}
-                <div className="bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden flex flex-col">
-                  <div className="bg-espresso text-cream px-5 py-3 flex items-center justify-between">
+                <div className="glass-panel rounded-2xl overflow-hidden flex flex-col">
+                  <div className="bg-white/[0.04] border-b border-white/10 px-5 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-mustard" />
-                      <span className="font-anton text-sm uppercase tracking-wider">
+                      <FileText className="w-4 h-4 text-cyan-400" />
+                      <span className="font-jakarta font-bold text-xs uppercase tracking-[0.18em] text-white">
                         Export Filter Lightroom
                       </span>
                     </div>
-                    <span className="font-jakarta text-[11px] text-cream/80">
+                    <span className="font-jakarta text-[11px] text-cyan-300 font-semibold">
                       {activeSelections.length} /{' '}
                       {activeGallery.selection_quota} Dipilih
                     </span>
@@ -1638,7 +1640,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
 
                   <div className="p-5 flex flex-col gap-3.5">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-fraunces font-bold text-sm text-espresso">
+                      <span className="font-fraunces font-bold text-sm text-white">
                         {activeGallery.client_name}
                       </span>
 
@@ -1651,7 +1653,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                             )
                           }
                           aria-label="Pemisah Filename"
-                          className="bg-cream text-espresso px-2 py-1 rounded border border-espresso/40 font-jakarta text-xs font-semibold focus:outline-none"
+                          className="bg-[#111722] text-slate-200 px-2.5 py-1 rounded-lg border border-white/15 font-jakarta text-xs font-semibold focus:outline-none focus:border-cyan-400"
                         >
                           <option value="comma">Pemisah: Koma (,)</option>
                           <option value="space">Pemisah: Spasi</option>
@@ -1665,16 +1667,16 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                             onChange={(e) =>
                               setIncludeExtension(e.target.checked)
                             }
-                            className="w-4 h-4 accent-espresso rounded cursor-pointer"
+                            className="w-4 h-4 accent-cyan-400 rounded cursor-pointer"
                           />
-                          <span className="font-jakarta text-xs font-semibold text-espresso">
+                          <span className="font-jakarta text-xs font-semibold text-slate-300">
                             .JPG
                           </span>
                         </label>
                       </div>
                     </div>
 
-                    <div className="bg-cream/70 text-espresso p-3.5 rounded-xl border border-espresso/40 font-mono text-xs leading-relaxed select-all overflow-x-auto max-h-36">
+                    <div className="bg-white/[0.03] text-cyan-300 p-3.5 rounded-xl border border-white/10 font-mono text-xs leading-relaxed select-all overflow-x-auto max-h-36">
                       <pre className="whitespace-pre-wrap">
                         {lightroomFilterString}
                       </pre>
@@ -1683,8 +1685,8 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     {activeSelections.some(
                       (s) => s.note.trim().length > 0
                     ) && (
-                      <div className="bg-cream/40 p-3 rounded-xl border border-espresso/20 flex flex-col gap-1.5 max-h-36 overflow-y-auto">
-                        <span className="font-jakarta font-bold text-[11px] uppercase tracking-wider text-espresso-muted">
+                      <div className="bg-white/[0.02] p-3 rounded-xl border border-white/10 flex flex-col gap-1.5 max-h-36 overflow-y-auto">
+                        <span className="font-jakarta font-bold text-[11px] uppercase tracking-wider text-slate-400">
                           Catatan Revisi Klien:
                         </span>
                         {activeSelections
@@ -1692,9 +1694,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           .map((s) => (
                             <div
                               key={s.photo_id}
-                              className="font-jakarta text-xs text-espresso leading-snug"
+                              className="font-jakarta text-xs text-slate-200 leading-snug"
                             >
-                              <strong className="font-mono">
+                              <strong className="font-mono text-cyan-300">
                                 {s.filename}:
                               </strong>{' '}
                               “{s.note}”
@@ -1707,11 +1709,11 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       <button
                         type="button"
                         onClick={handleCopyLightroom}
-                        className="w-full sm:flex-1 bg-mustard hover:bg-mustard-light text-espresso py-2.5 px-4 rounded-xl border-[1.5px] border-espresso font-anton text-sm uppercase tracking-wider shadow-retro-sm transition-all flex items-center justify-center gap-2"
+                        className="w-full sm:flex-1 bg-cyan-400 hover:bg-cyan-300 text-slate-950 py-2.5 px-4 rounded-xl font-jakarta font-bold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.25)] transition-all flex items-center justify-center gap-2"
                       >
                         {copiedLr ? (
                           <>
-                            <CheckCircle2 className="w-4 h-4 text-crimson" />
+                            <CheckCircle2 className="w-4 h-4 text-slate-950" />
                             <span>Tersalin!</span>
                           </>
                         ) : (
@@ -1725,9 +1727,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       <button
                         type="button"
                         onClick={handleDownloadLightroomTxt}
-                        className="w-full sm:w-auto bg-white hover:bg-cream text-espresso py-2.5 px-4 rounded-xl border-[1.5px] border-espresso font-jakarta font-bold text-xs transition-all flex items-center justify-center gap-1.5"
+                        className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white py-2.5 px-4 rounded-xl border border-white/15 font-jakarta font-bold text-xs transition-all flex items-center justify-center gap-1.5"
                       >
-                        <Download className="w-3.5 h-3.5" />
+                        <Download className="w-3.5 h-3.5 text-cyan-400" />
                         <span>.TXT</span>
                       </button>
                     </div>
@@ -1737,12 +1739,12 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
             </div>
 
             {/* BOTTOM TABLE: RECENT CLIENT GALLERIES */}
-            <section className="w-full bg-white rounded-2xl border-[1.5px] border-espresso shadow-retro overflow-hidden flex flex-col">
-              <div className="bg-espresso text-cream px-6 py-3.5 flex flex-wrap items-center justify-between gap-2">
-                <span className="font-anton text-base uppercase tracking-wider">
+            <section className="w-full glass-panel rounded-2xl overflow-hidden flex flex-col">
+              <div className="bg-white/[0.04] border-b border-white/10 px-6 py-4 flex flex-wrap items-center justify-between gap-2">
+                <span className="font-jakarta font-bold text-xs uppercase tracking-[0.18em] text-white">
                   Daftar Galeri Klien ({loggedStudio?.studio_name})
                 </span>
-                <span className="font-jakarta text-xs text-cream/80">
+                <span className="font-jakarta text-xs text-slate-400">
                   Klik baris untuk memuat link WA &amp; Lightroom
                 </span>
               </div>
@@ -1750,7 +1752,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
               <div className="w-full overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-cream text-espresso font-jakarta font-bold text-xs uppercase border-b-[1.5px] border-espresso">
+                    <tr className="bg-white/[0.02] text-slate-400 font-jakarta font-bold text-[11px] uppercase tracking-wider border-b border-white/10">
                       <th className="p-3.5 pl-6">Kode</th>
                       <th className="p-3.5">Klien &amp; Link</th>
                       <th className="p-3.5">Progres Pilihan</th>
@@ -1759,7 +1761,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       <th className="p-3.5 pr-6 text-right">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-espresso/15 font-jakarta text-sm">
+                  <tbody className="divide-y divide-white/10 font-jakarta text-sm">
                     {visibleGalleries.map((gal) => {
                       const galSels = selectionsMap[gal.id] || [];
                       const isRowActive = activeGallery.id === gal.id;
@@ -1770,41 +1772,41 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           onClick={() => handleSelectGalleryFromRow(gal)}
                           className={`cursor-pointer transition-colors ${
                             isRowActive
-                              ? 'bg-cream/80'
-                              : 'bg-white hover:bg-cream/40'
+                              ? 'bg-cyan-400/[0.08]'
+                              : 'hover:bg-white/[0.03]'
                           }`}
                         >
-                          <td className="p-3.5 pl-6 font-mono font-bold text-xs text-espresso">
+                          <td className="p-3.5 pl-6 font-mono font-bold text-xs text-cyan-300">
                             {gal.order_code}
                           </td>
                           <td className="p-3.5">
                             <div className="flex flex-col">
-                              <span className="font-fraunces font-bold text-espresso">
+                              <span className="font-fraunces font-bold text-white">
                                 {gal.client_name}
                               </span>
-                              <span className="font-mono text-xs text-espresso-muted">
+                              <span className="font-mono text-xs text-slate-400">
                                 /{gal.studio_slug}/{gal.slug}
                               </span>
                             </div>
                           </td>
                           <td className="p-3.5">
                             <span
-                              className={`inline-flex items-center gap-1.5 font-jakarta font-bold text-xs px-2.5 py-1 rounded-full border border-espresso ${
+                              className={`inline-flex items-center gap-1.5 font-jakarta font-bold text-xs px-2.5 py-1 rounded-full border ${
                                 gal.is_locked
-                                  ? 'bg-espresso text-cream'
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                                   : galSels.length > 0
-                                    ? 'bg-mustard text-espresso'
-                                    : 'bg-cream text-espresso'
+                                    ? 'bg-cyan-400/15 text-cyan-300 border-cyan-400/30'
+                                    : 'bg-white/5 text-slate-300 border-white/10'
                               }`}
                             >
                               {galSels.length} / {gal.selection_quota} Foto{' '}
                               {gal.is_locked ? '(Terkunci)' : ''}
                             </span>
                           </td>
-                          <td className="p-3.5 font-mono text-xs text-espresso-muted">
+                          <td className="p-3.5 font-mono text-xs text-slate-400">
                             {gal.owner_token}
                           </td>
-                          <td className="p-3.5 font-mono text-xs font-bold text-espresso">
+                          <td className="p-3.5 font-mono text-xs font-bold text-slate-200">
                             {gal.album_pin || '—'}
                           </td>
                           <td
@@ -1814,13 +1816,13 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                             <div className="inline-flex items-center gap-2">
                               <Link
                                 href={`/${gal.studio_slug}/${gal.slug}`}
-                                className="px-3 py-1 rounded-lg bg-cream hover:bg-mustard border border-espresso font-jakarta font-bold text-xs transition-colors"
+                                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-slate-200 border border-white/15 font-jakarta font-bold text-xs transition-colors"
                               >
                                 Pilih Foto
                               </Link>
                               <Link
                                 href={`/${gal.slug}?t=${gal.owner_token}`}
-                                className="px-3 py-1 rounded-lg bg-espresso text-cream hover:bg-crimson border border-espresso font-jakarta font-bold text-xs transition-colors"
+                                className="px-3 py-1.5 rounded-lg bg-cyan-400/15 text-cyan-300 hover:bg-cyan-400 hover:text-slate-950 border border-cyan-400/30 font-jakarta font-bold text-xs transition-colors"
                               >
                                 Album
                               </Link>
@@ -1829,7 +1831,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                                   type="button"
                                   onClick={() => handleDeleteGallery(gal)}
                                   title="Hapus Galeri"
-                                  className="p-1.5 rounded-lg bg-white hover:bg-crimson hover:text-cream text-espresso-muted border border-espresso/30 transition-colors"
+                                  className="p-1.5 rounded-lg bg-white/5 hover:bg-rose-500/20 hover:text-rose-300 text-slate-400 border border-white/10 transition-colors"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>

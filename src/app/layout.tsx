@@ -23,9 +23,9 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'DIFOTOIN — Client Photo Proofing & Digital Album Editorial',
+  title: 'DIFOTOIN — Futuristic Client Photo Proofing & Digital Album',
   description:
-    'Platform pilih foto favorit klien & album digital bergaya retro vintage 70s editorial untuk fotografer profesional.',
+    'Platform pilih foto favorit klien & album digital futuristik minimalis untuk studio fotografi profesional.',
 };
 
 export default function RootLayout({
@@ -38,7 +38,7 @@ export default function RootLayout({
       lang="id"
       className={`${anton.variable} ${fraunces.variable} ${jakarta.variable}`}
     >
-      <body className="bg-cream text-espresso font-jakarta antialiased min-h-screen flex flex-col retro-paper-grain">
+      <body className="futuristic-canvas text-slate-100 font-jakarta antialiased min-h-screen flex flex-col">
         {children}
       </body>
     </html>
