@@ -84,7 +84,7 @@ export default function SpaceBackdrop() {
         ))}
       </div>
 
-      {/* 3. Crisp Vector Crescent Moon in High Orbit (Matches Reference Composition) */}
+      {/* 3. Crisp Vector Crescent Moon in High Orbit */}
       <div
         className="absolute top-[14%] left-[46%] w-5 h-5 md:w-6 md:h-6 rounded-full opacity-85"
         style={{
@@ -94,55 +94,57 @@ export default function SpaceBackdrop() {
         }}
       />
 
-      {/* 4. SUPER-HD 4K SPHERICAL EARTH IN BOTTOM-RIGHT (1:1 Perfect Circle, Razor-Sharp Vector Rim) */}
+      {/* 4. SUPER-HD 4K SPHERICAL EARTH IN BOTTOM-RIGHT (100% Filled Edge-to-Edge with Atmosphere & Clouds) */}
       <div className="absolute -bottom-[34vmin] -right-[18vmin] w-[96vmin] h-[96vmin] md:w-[108vmin] md:h-[108vmin] rounded-full">
         {/* Outer Atmospheric Cyan-Blue Halo radiating into space */}
         <div
-          className="absolute -inset-2 rounded-full pointer-events-none"
+          className="absolute -inset-3 rounded-full pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 28% 28%, rgba(56, 189, 248, 0.32) 0%, rgba(14, 165, 233, 0.12) 36%, transparent 65%)',
-            filter: 'blur(26px)',
+              'radial-gradient(circle at 26% 24%, rgba(56, 189, 248, 0.35) 0%, rgba(14, 165, 233, 0.14) 38%, transparent 66%)',
+            filter: 'blur(28px)',
           }}
         />
 
-        {/* Main 1:1 Spherical Planet Body */}
+        {/* Main 1:1 Spherical Planet Body — Rich Ocean & Atmosphere Base so ZERO black gap at top */}
         <div
-          className="relative w-full h-full rounded-full overflow-hidden bg-[#01040A]"
+          className="relative w-full h-full rounded-full overflow-hidden"
           style={{
+            background:
+              'radial-gradient(circle at 25% 22%, #1e4b6b 0%, #0c2b47 32%, #051324 58%, #010409 85%)',
             boxShadow:
-              '-10px -10px 48px rgba(56, 189, 248, 0.36), -2px -2px 14px rgba(186, 230, 253, 0.5), inset 14px 14px 42px rgba(56, 189, 248, 0.38), inset 2px 2px 8px rgba(224, 242, 254, 0.65)',
+              '-10px -10px 48px rgba(56, 189, 248, 0.36), -2px -2px 14px rgba(186, 230, 253, 0.5), inset 18px 18px 52px rgba(56, 189, 248, 0.48), inset 3px 3px 12px rgba(224, 242, 254, 0.72)',
           }}
         >
-          {/* Layer A: 4K Ultra-HD NASA Orbital Earth Clouds & Ocean Texture (Darkened for moody space look) */}
+          {/* Layer A: Full-Frame 4K Satellite Cloud & Cyclone Swirl Texture (Covers 100% of Top Rim, No Black Sky) */}
+          <img
+            src="https://images.unsplash.com/photo-1527482797697-8795b05a13fe?auto=format&fit=crop&w=3840&q=100"
+            alt=""
+            className="w-full h-full object-cover object-center scale-110 opacity-60 brightness-[0.68] contrast-125 saturate-90"
+          />
+
+          {/* Layer B: 4K NASA Earth Continents & Clouds shifted up so clouds fill the top curve */}
           <img
             src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=3840&q=100"
             alt=""
-            className="w-full h-full object-cover object-center scale-110 opacity-55 brightness-[0.62] contrast-125 saturate-90"
+            className="absolute inset-0 w-full h-full object-cover object-bottom scale-[1.65] translate-y-[-14%] opacity-45 brightness-[0.65] contrast-125 mix-blend-lighten"
           />
 
-          {/* Layer B: Subtle 4K Night City Lights glimmering near the shadow terminator */}
-          <img
-            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=3840&q=100"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen opacity-25 brightness-75"
-          />
-
-          {/* Layer C: 3D Spherical Atmospheric Blue Tint on Sunlit Top-Left Limb */}
+          {/* Layer C: 3D Spherical Atmospheric Cyan-Blue Scattering right up to the top-left curve */}
           <div
             className="absolute inset-0 rounded-full mix-blend-screen"
             style={{
               background:
-                'radial-gradient(circle at 20% 18%, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0.1) 28%, transparent 52%)',
+                'radial-gradient(circle at 20% 18%, rgba(125, 211, 252, 0.42) 0%, rgba(56, 189, 248, 0.22) 26%, rgba(14, 165, 233, 0.08) 46%, transparent 65%)',
             }}
           />
 
-          {/* Layer D: Deeper Day-to-Night Terminator Shadow (Darkens Globe Surface) */}
+          {/* Layer D: Deep Day-to-Night Terminator Shadow (Darkens Bottom-Right of Globe smoothly) */}
           <div
             className="absolute inset-0 rounded-full"
             style={{
               background:
-                'radial-gradient(circle at 18% 16%, rgba(1, 4, 10, 0.22) 0%, rgba(2, 6, 15, 0.62) 28%, rgba(1, 3, 8, 0.92) 54%, #010307 76%)',
+                'radial-gradient(circle at 20% 18%, rgba(1, 5, 14, 0.15) 0%, rgba(2, 6, 15, 0.58) 34%, rgba(1, 3, 8, 0.92) 60%, #010307 80%)',
             }}
           />
         </div>
@@ -151,12 +153,12 @@ export default function SpaceBackdrop() {
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
           style={{
-            borderTop: '1.5px solid rgba(186, 230, 253, 0.6)',
-            borderLeft: '1.5px solid rgba(125, 211, 252, 0.5)',
+            borderTop: '1.5px solid rgba(186, 230, 253, 0.68)',
+            borderLeft: '1.5px solid rgba(125, 211, 252, 0.58)',
             maskImage:
-              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 28%, transparent 52%)',
+              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.68) 30%, transparent 54%)',
             WebkitMaskImage:
-              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 28%, transparent 52%)',
+              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.68) 30%, transparent 54%)',
           }}
         />
       </div>

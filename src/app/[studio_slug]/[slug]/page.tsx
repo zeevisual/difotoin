@@ -889,19 +889,51 @@ Terima kasih!`;
               </button>
             </div>
 
-            <div className="relative bg-[#05070A] max-h-[75vh] flex items-center justify-center overflow-hidden">
+            <div className="relative bg-[#05070A] max-h-[72vh] sm:max-h-[75vh] flex items-center justify-center overflow-hidden">
               <img
+                key={lightboxPhoto.id}
                 src={lightboxPhoto.fullResUrl}
                 alt={lightboxPhoto.caption}
                 onError={(e) => handleImageError(lightboxPhoto.id, e)}
-                className="max-h-[75vh] w-auto object-contain rounded-none"
+                className="max-h-[72vh] sm:max-h-[75vh] w-auto object-contain rounded-none animate-lightbox-photo"
               />
             </div>
 
-            <div className="p-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10">
-              <span className="font-mono text-xs text-slate-400">
-                {lightboxPhoto.name}
-              </span>
+            <div className="p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-white/10">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const curIdx = filteredPhotos.findIndex(
+                      (p) => p.id === lightboxPhoto.id
+                    );
+                    if (curIdx !== -1 && filteredPhotos.length > 0) {
+                      const prevIdx =
+                        (curIdx - 1 + filteredPhotos.length) %
+                        filteredPhotos.length;
+                      setLightboxPhoto(filteredPhotos[prevIdx]);
+                    }
+                  }}
+                  className="px-3 py-2 bg-white/5 hover:bg-white/15 text-white border border-white/15 font-jakarta font-semibold text-xs transition-colors"
+                >
+                  ← Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const curIdx = filteredPhotos.findIndex(
+                      (p) => p.id === lightboxPhoto.id
+                    );
+                    if (curIdx !== -1 && filteredPhotos.length > 0) {
+                      const nextIdx = (curIdx + 1) % filteredPhotos.length;
+                      setLightboxPhoto(filteredPhotos[nextIdx]);
+                    }
+                  }}
+                  className="px-3 py-2 bg-white/5 hover:bg-white/15 text-white border border-white/15 font-jakarta font-semibold text-xs transition-colors"
+                >
+                  Next →
+                </button>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
