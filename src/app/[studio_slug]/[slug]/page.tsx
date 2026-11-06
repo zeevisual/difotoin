@@ -321,7 +321,7 @@ Terima kasih!`;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090C10] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-transparent text-slate-100">
       {/* FUTURISTIC GLASSMORPHIC STICKY HEADER */}
       <header className="sticky top-0 z-50 w-full glass-header">
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center justify-between gap-3">

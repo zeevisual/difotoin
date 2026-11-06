@@ -272,7 +272,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     !isOwnerMode && Boolean(gallery.album_pin) && !isPinUnlocked;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090C10] text-slate-100">
+    <div className="min-h-screen flex flex-col bg-transparent text-slate-100">
       {/* Futuristic Glassmorphic Top Header */}
       <header className="sticky top-0 z-50 w-full glass-header">
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center justify-between gap-4">
@@ -664,10 +664,10 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 src={coverPhoto.fullResUrl}
                 alt={coverPhoto.caption}
                 onError={(e) => handleImageError(coverPhoto.id, e)}
-                className="w-full h-full object-cover object-center opacity-55 scale-[1.02]"
+                className="w-full h-full object-cover object-center opacity-50 scale-[1.02]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#090C10] via-[#090C10]/45 to-[#090C10]/60" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#090C10]/85 via-transparent to-[#090C10]/50" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#05070B]/95 via-[#05070B]/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#05070B]/80 via-transparent to-[#05070B]/45" />
             </div>
 
             <div className="relative z-10 max-w-7xl w-full mx-auto px-4 md:px-10 py-14 md:py-20 flex flex-col md:flex-row items-start md:items-end justify-between gap-8">

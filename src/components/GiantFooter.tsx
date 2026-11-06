@@ -11,7 +11,7 @@ export function GiantFooter({
   studioSlug = 'zeevisual',
 }: GiantFooterProps) {
   return (
-    <footer className="w-full bg-[#07090D]/90 backdrop-blur-xl border-t border-white/10 pt-12 pb-8 px-4 md:px-10 mt-20 relative overflow-hidden select-none">
+    <footer className="w-full bg-[#05070B]/65 backdrop-blur-xl border-t border-white/10 pt-12 pb-8 px-4 md:px-10 mt-20 relative overflow-hidden select-none">
       {/* Subtle top ambient glow line */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
 

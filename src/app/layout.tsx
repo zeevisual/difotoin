@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Anton, Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+import SpaceBackdrop from '@/components/SpaceBackdrop';
 
 const anton = Anton({
   weight: '400',
@@ -38,8 +39,11 @@ export default function RootLayout({
       lang="id"
       className={`${anton.variable} ${fraunces.variable} ${jakarta.variable}`}
     >
-      <body className="futuristic-canvas text-slate-100 font-jakarta antialiased min-h-screen flex flex-col">
-        {children}
+      <body className="futuristic-canvas text-slate-100 font-jakarta antialiased min-h-screen flex flex-col relative">
+        <SpaceBackdrop />
+        <div className="relative z-10 min-h-screen flex flex-col">
+          {children}
+        </div>
       </body>
     </html>
   );

@@ -13,18 +13,12 @@ import GiantFooter from '@/components/GiantFooter';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#090C10] text-slate-100">
-      {/* FULL-BLEED CINEMATIC HERO WITH GLASSMORPHISM NAVIGATION (Inspired by Ref Images 2 & 3) */}
+    <div className="min-h-screen flex flex-col bg-transparent text-slate-100">
+      {/* FULL-BLEED COSMIC EARTH-FROM-SPACE HERO WITH GLASSMORPHISM NAVIGATION */}
       <section className="relative w-full min-h-[82vh] flex flex-col justify-between overflow-hidden">
-        {/* Background Hero Image + Dark Gradient Fade */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85"
-            alt="Zeevisual Futuristic Hero"
-            className="w-full h-full object-cover object-center scale-105 opacity-45"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#090C10]/80 via-[#090C10]/55 to-[#090C10]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#090C10]/90 via-transparent to-[#090C10]/70" />
+        {/* Subtle Cosmic Atmospheric Overlay */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#05070B]/30 to-[#05070B]/80" />
         </div>
 
         {/* Top Glassmorphic Navigation Bar */}
