@@ -46,7 +46,7 @@ export default function SpaceBackdrop() {
       className="fixed inset-0 z-0 pointer-events-none overflow-hidden select-none bg-[#010307]"
     >
       {/* 1. Deep Space Ambient Gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_68%_62%,rgba(14,165,233,0.16)_0%,rgba(3,7,18,0.85)_52%,rgba(1,3,7,1)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_68%_62%,rgba(14,165,233,0.10)_0%,rgba(2,5,13,0.92)_48%,rgba(1,2,5,1)_100%)]" />
 
       {/* 2. Twinkling Tiny Starfield (115+ Crisp Vector/CSS Stars) */}
       <div className="absolute inset-0">
@@ -101,31 +101,31 @@ export default function SpaceBackdrop() {
           className="absolute -inset-2 rounded-full pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 28% 28%, rgba(56, 189, 248, 0.45) 0%, rgba(14, 165, 233, 0.18) 38%, transparent 68%)',
+              'radial-gradient(circle at 28% 28%, rgba(56, 189, 248, 0.32) 0%, rgba(14, 165, 233, 0.12) 36%, transparent 65%)',
             filter: 'blur(26px)',
           }}
         />
 
         {/* Main 1:1 Spherical Planet Body */}
         <div
-          className="relative w-full h-full rounded-full overflow-hidden bg-[#020813]"
+          className="relative w-full h-full rounded-full overflow-hidden bg-[#01040A]"
           style={{
             boxShadow:
-              '-12px -12px 55px rgba(56, 189, 248, 0.48), -3px -3px 16px rgba(186, 230, 253, 0.65), inset 16px 16px 48px rgba(56, 189, 248, 0.55), inset 3px 3px 10px rgba(224, 242, 254, 0.85)',
+              '-10px -10px 48px rgba(56, 189, 248, 0.36), -2px -2px 14px rgba(186, 230, 253, 0.5), inset 14px 14px 42px rgba(56, 189, 248, 0.38), inset 2px 2px 8px rgba(224, 242, 254, 0.65)',
           }}
         >
-          {/* Layer A: 4K Ultra-HD NASA Orbital Earth Clouds & Ocean Texture (3840px) */}
+          {/* Layer A: 4K Ultra-HD NASA Orbital Earth Clouds & Ocean Texture (Darkened for moody space look) */}
           <img
             src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=3840&q=100"
             alt=""
-            className="w-full h-full object-cover object-center scale-110 contrast-125 saturate-110"
+            className="w-full h-full object-cover object-center scale-110 opacity-55 brightness-[0.62] contrast-125 saturate-90"
           />
 
           {/* Layer B: Subtle 4K Night City Lights glimmering near the shadow terminator */}
           <img
             src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=3840&q=100"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen opacity-40"
+            className="absolute inset-0 w-full h-full object-cover object-center mix-blend-screen opacity-25 brightness-75"
           />
 
           {/* Layer C: 3D Spherical Atmospheric Blue Tint on Sunlit Top-Left Limb */}
@@ -133,16 +133,16 @@ export default function SpaceBackdrop() {
             className="absolute inset-0 rounded-full mix-blend-screen"
             style={{
               background:
-                'radial-gradient(circle at 22% 20%, rgba(125, 211, 252, 0.42) 0%, rgba(14, 165, 233, 0.18) 32%, transparent 60%)',
+                'radial-gradient(circle at 20% 18%, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0.1) 28%, transparent 52%)',
             }}
           />
 
-          {/* Layer D: Realistic Day-to-Night Terminator Shadow (Darkens Bottom-Right of Globe) */}
+          {/* Layer D: Deeper Day-to-Night Terminator Shadow (Darkens Globe Surface) */}
           <div
             className="absolute inset-0 rounded-full"
             style={{
               background:
-                'radial-gradient(circle at 22% 20%, transparent 0%, rgba(2, 6, 15, 0.35) 36%, rgba(1, 3, 8, 0.88) 64%, #010307 86%)',
+                'radial-gradient(circle at 18% 16%, rgba(1, 4, 10, 0.22) 0%, rgba(2, 6, 15, 0.62) 28%, rgba(1, 3, 8, 0.92) 54%, #010307 76%)',
             }}
           />
         </div>
@@ -151,12 +151,12 @@ export default function SpaceBackdrop() {
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
           style={{
-            borderTop: '1.5px solid rgba(186, 230, 253, 0.75)',
-            borderLeft: '1.5px solid rgba(125, 211, 252, 0.65)',
+            borderTop: '1.5px solid rgba(186, 230, 253, 0.6)',
+            borderLeft: '1.5px solid rgba(125, 211, 252, 0.5)',
             maskImage:
-              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 32%, transparent 58%)',
+              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 28%, transparent 52%)',
             WebkitMaskImage:
-              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 32%, transparent 58%)',
+              'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 28%, transparent 52%)',
           }}
         />
       </div>
