@@ -18,7 +18,7 @@ export default function HomePage() {
       <section className="relative w-full min-h-[82vh] flex flex-col justify-between overflow-hidden">
         {/* Subtle Cosmic Atmospheric Overlay */}
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#05070B]/30 to-[#05070B]/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#02050A]/50 via-transparent to-transparent" />
         </div>
 
         {/* Top Glassmorphic Navigation Bar */}
