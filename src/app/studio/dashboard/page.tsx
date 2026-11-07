@@ -99,22 +99,26 @@ export default function StudioDashboardPage() {
   const [copiedSubId, setCopiedSubId] = useState<string | null>(null);
   const [subSuccessMsg, setSubSuccessMsg] = useState<string | null>(null);
 
-  // Create Gallery Form states
+  // Create Gallery Form states (Start clean & empty for new client entry)
   const [studioSlug, setStudioSlug] = useState('zeevisual');
   const [studioBrandName, setStudioBrandName] = useState('Zeevisual');
   const [studioWhatsapp, setStudioWhatsapp] = useState('');
-  const [clientName, setClientName] = useState('Aida Fitri Harahab');
-  const [slug, setSlug] = useState('aida-fitri-harahab');
+  const [clientName, setClientName] = useState('');
+  const [slug, setSlug] = useState('');
   const [isSlugManual, setIsSlugManual] = useState(false);
   const [sessionType, setSessionType] = useState('Editorial Pre-Wedding');
-  const [gdriveFolderUrl, setGdriveFolderUrl] = useState(
-    'https://drive.google.com/drive/folders/1x9BAidaFauziRAW74Editorial'
-  );
+  const [gdriveFolderUrl, setGdriveFolderUrl] = useState('');
   const [selectionQuota, setSelectionQuota] = useState<number>(50);
-  const [ownerToken, setOwnerToken] = useState('mhttesqg7rjx');
-  const [deadlineDate, setDeadlineDate] = useState('28 Oktober 2024');
-  const [albumPin, setAlbumPin] = useState('2408');
-  const [enablePin, setEnablePin] = useState(true);
+  const [ownerToken, setOwnerToken] = useState(() => generateOwnerToken(12));
+  const [deadlineDate, setDeadlineDate] = useState(() =>
+    new Date(Date.now() + 14 * 86400 * 1000).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+  );
+  const [albumPin, setAlbumPin] = useState('');
+  const [enablePin, setEnablePin] = useState(false);
   const [enableWatermark, setEnableWatermark] = useState(false);
 
   // Live Drive Folder Preview state
@@ -1302,7 +1306,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         htmlFor="studio-slug-input"
                         className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
                       >
-                        <span>ID Studio (`studio_slug`)</span>
+                        <span>ID Studio</span>
                         {!loggedStudio?.is_super_admin && (
                           <span className="text-[10px] text-slate-400">
                             Terkunci
@@ -1382,7 +1386,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       type="text"
                       value={clientName}
                       onChange={(e) => handleClientNameChange(e.target.value)}
-                      placeholder="Contoh: Zeevisual"
+                      placeholder="Masukkan nama client"
                       required
                       className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-fraunces font-bold text-base focus:outline-none focus:border-cyan-400"
                     />
@@ -1415,8 +1419,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           setIsSlugManual(true);
                           setSlug(slugifyClientName(e.target.value));
                         }}
+                        placeholder="otomatis-dari-nama-client"
                         required
-                        className="w-full bg-white/[0.03] text-slate-200 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono text-xs font-bold focus:outline-none focus:border-cyan-400"
+                        className="w-full bg-white/[0.03] text-slate-200 placeholder:text-slate-600 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono text-xs font-bold focus:outline-none focus:border-cyan-400"
                       />
                     </div>
 
@@ -1425,7 +1430,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         htmlFor="owner-token-input"
                         className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
                       >
-                        <span>Token Pemilik (`owner_token`)</span>
+                        <span>Token Pemilik Album</span>
                         <button
                           type="button"
                           onClick={() => setOwnerToken(generateOwnerToken(12))}
@@ -1447,19 +1452,24 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           className="w-full bg-transparent text-white font-mono font-bold text-sm tracking-wider focus:outline-none"
                         />
                       </div>
+                      <span className="font-jakarta text-[11px] text-slate-400 leading-snug">
+                        Kunci khusus klien utama (`?t=...`) untuk ganti sampul, sembunyikan foto &amp; atur PIN.
+                      </span>
                     </div>
                   </div>
 
                   {/* Row 3: Google Drive Folder URL + Live Preview Button */}
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor="gdrive-url-input"
                       className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex flex-wrap items-center justify-between gap-1"
                     >
                       <span>Link Folder Google Drive</span>
-                      <span className="font-mono text-[11px] text-cyan-300 bg-white/5 px-2.5 py-0.5 rounded border border-white/10">
-                        ID: {parsedFolderId}
-                      </span>
+                      {gdriveFolderUrl.trim() && (
+                        <span className="font-mono text-[11px] text-cyan-300 bg-white/5 px-2.5 py-0.5 rounded border border-white/10">
+                          ID: {parsedFolderId}
+                        </span>
+                      )}
                     </label>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                       <div className="flex-1 flex items-center gap-2.5 bg-white/[0.04] px-3.5 py-2.5 rounded-xl border border-white/15 focus-within:border-cyan-400">
@@ -1469,7 +1479,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           type="text"
                           value={gdriveFolderUrl}
                           onChange={(e) => setGdriveFolderUrl(e.target.value)}
-                          placeholder="Tempel link folder Google Drive di sini..."
+                          placeholder="Paste link Google Drive"
                           required
                           className="w-full bg-transparent text-white placeholder:text-slate-500 font-jakarta text-sm focus:outline-none"
                         />
@@ -1483,6 +1493,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         {isTestingDrive ? 'Memuat...' : 'Cek Isi Folder'}
                       </button>
                     </div>
+                    <span className="font-jakarta text-[11px] text-amber-300/90 leading-snug">
+                      *Pastikan link folder Google Drive sudah diberi akses Publik (&ldquo;Siapa saja yang memiliki link / Anyone with the link&rdquo;).
+                    </span>
 
                     {drivePreviewPhotos.length > 0 && (
                       <div className="mt-1 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col gap-2.5">
@@ -1529,7 +1542,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
-                        Kuota Pilih Foto (`selection_quota`)
+                        Kuota Pilih Foto
                       </label>
                       <span className="font-jakarta font-bold text-xs text-cyan-300">
                         Maksimal {selectionQuota} Foto
@@ -1614,7 +1627,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
 
                     <div className="flex flex-col gap-1.5">
                       <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
-                        PIN Album (Opsional)
+                        PIN Album 4 Digit (Opsional)
                       </label>
                       <div className="flex items-center bg-white/[0.04] px-3 py-2 rounded-xl border border-white/15">
                         <Lock className="w-4 h-4 text-cyan-400 mr-2 shrink-0" />
@@ -1622,15 +1635,20 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                           type="text"
                           maxLength={4}
                           value={albumPin}
-                          onChange={(e) =>
-                            setAlbumPin(
-                              e.target.value.replace(/\D/g, '').slice(0, 4)
-                            )
-                          }
-                          placeholder="2408"
+                          onChange={(e) => {
+                            const val = e.target.value
+                              .replace(/\D/g, '')
+                              .slice(0, 4);
+                            setAlbumPin(val);
+                            setEnablePin(val.length === 4);
+                          }}
+                          placeholder="Kosongkan jika publik"
                           className="w-full bg-transparent text-white placeholder:text-slate-500 font-mono font-bold text-sm tracking-widest focus:outline-none"
                         />
                       </div>
+                      <span className="font-jakarta text-[11px] text-slate-400 leading-snug">
+                        Sandi privasi 4 angka jika tamu publik membuka link album biasa.
+                      </span>
                     </div>
                   </div>
 

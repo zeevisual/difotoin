@@ -40,7 +40,7 @@ interface DemoSessionState {
 export default function PhotographerDemoPage() {
   // Form & Demo Session State (Tab-isolated sessionStorage ONLY — never shareable via URL!)
   const [studioName, setStudioName] = useState('Zeevisual');
-  const [clientName, setClientName] = useState('Zeevisual');
+  const [clientName, setClientName] = useState('');
   const [gdriveUrl, setGdriveUrl] = useState('');
   const [quota, setQuota] = useState(30);
   const [viewMode, setViewMode] = useState<'proofing' | 'album'>('proofing');
@@ -402,13 +402,13 @@ export default function PhotographerDemoPage() {
 
               <div className="md:col-span-3 flex flex-col gap-1">
                 <label className="font-jakarta font-bold text-[11px] uppercase tracking-wider text-slate-300">
-                  Judul Sesi / Klien Simulasi
+                  Nama Klien Simulasi
                 </label>
                 <input
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Contoh: Zeevisual"
+                  placeholder="Masukkan nama client"
                   className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-xs focus:outline-none focus:border-cyan-400 select-text"
                 />
               </div>
@@ -424,7 +424,7 @@ export default function PhotographerDemoPage() {
                       type="text"
                       value={gdriveUrl}
                       onChange={(e) => setGdriveUrl(e.target.value)}
-                      placeholder="Tempel link folder Google Drive foto Anda di sini..."
+                      placeholder="Paste link Google Drive"
                       className="w-full bg-transparent text-white placeholder:text-slate-500 font-jakarta text-xs focus:outline-none select-text"
                     />
                   </div>
@@ -441,6 +441,9 @@ export default function PhotographerDemoPage() {
                     </span>
                   </button>
                 </div>
+                <span className="font-jakarta text-[11px] text-amber-300/90 mt-0.5">
+                  *Pastikan link diberi akses Publik (&ldquo;Siapa saja yang memiliki link / Anyone with the link&rdquo;).
+                </span>
               </div>
             </div>
 
