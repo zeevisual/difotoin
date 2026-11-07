@@ -18,8 +18,11 @@ import {
   Lock,
   Maximize2,
   Move,
+  Pause,
+  Play,
   PlayCircle,
   Share2,
+  Sparkles,
   X,
 } from 'lucide-react';
 import GiantFooter from '@/components/GiantFooter';
@@ -41,9 +44,11 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   const searchParams = useSearchParams();
   const tokenParam = searchParams.get('t');
 
-  const [gallery, setGallery] = useState<GalleryRecord>(SEED_GALLERIES[0]);
-  const [photos, setPhotos] = useState<DrivePhoto[]>(DEMO_EDITORIAL_PHOTOS);
+  // IMPORTANT: Initialized as null / empty so NO wrong demo cover ever flashes while loading!
+  const [gallery, setGallery] = useState<GalleryRecord | null>(null);
+  const [photos, setPhotos] = useState<DrivePhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHeroImgLoaded, setIsHeroImgLoaded] = useState(false);
 
   // Visitor / Owner simulation states
   const [previewAsVisitor, setPreviewAsVisitor] = useState(false);
@@ -61,36 +66,42 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Cover Photo Focal Position & Repositioning State ("Geser Sampul")
-  // Default posY = 22% so faces in portrait/group photos are framed nicely right away
   const [coverPosX, setCoverPosX] = useState<number>(50);
   const [coverPosY, setCoverPosY] = useState<number>(22);
   const [coverFitMode, setCoverFitMode] = useState<'cover' | 'contain'>('cover');
   const [isAdjustingCover, setIsAdjustingCover] = useState(false);
   const isDraggingCoverRef = useRef(false);
-  const dragStartRef = useRef<{ x: number; y: number; posX: number; posY: number }>({
+  const dragStartRef = useRef<{
+    x: number;
+    y: number;
+    posX: number;
+    posY: number;
+  }>({
     x: 0,
     y: 0,
     posX: 50,
     posY: 22,
   });
 
-  // Featured Showcase Carousel State ("REVIEW PHOTO") + Smooth Animation Direction
+  // 3D Fluid Coverflow Showcase Carousel State ("REVIEW PHOTO")
   const [featuredCenterIdx, setFeaturedCenterIdx] = useState(0);
-  const [carouselDirection, setCarouselDirection] = useState<'next' | 'prev'>(
-    'next'
-  );
-  const [carouselAnimKey, setCarouselAnimKey] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [isHoveringCarousel, setIsHoveringCarousel] = useState(false);
+  const [centerTilt, setCenterTilt] = useState<{ rx: number; ry: number }>({
+    rx: 0,
+    ry: 0,
+  });
   const touchStartXRef = useRef<number | null>(null);
 
   // Lightbox & Favorites
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [guestFavorites, setGuestFavorites] = useState<string[]>(['photo-01']);
+  const [guestFavorites, setGuestFavorites] = useState<string[]>([]);
 
   const [baseUrl, setBaseUrl] = useState(
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
   );
 
-  // Load saved cover focal position from localStorage
+  // Load saved cover focal position + fetch real gallery & Google Drive photos BEFORE rendering cover
   useEffect(() => {
     if (typeof window !== 'undefined') {
       if (window.location.origin) {
@@ -116,28 +127,37 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     let isMounted = true;
     async function loadAlbum() {
       setIsLoading(true);
+      setIsHeroImgLoaded(false);
+
       const found = await fetchGalleryBySlug(slug);
       const activeGal = found || { ...SEED_GALLERIES[0], slug };
       if (!isMounted) return;
 
-      setGallery(activeGal);
-      setPinDraft(activeGal.album_pin || '');
-
+      let loadedPhotos: DrivePhoto[] = [];
       try {
         const res = await fetch(
           `/api/drive/${encodeURIComponent(activeGal.gdrive_folder_id)}`
         );
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && Array.isArray(data.photos) && data.photos.length > 0) {
-            setPhotos(data.photos);
+          if (Array.isArray(data.photos) && data.photos.length > 0) {
+            loadedPhotos = data.photos;
           }
         }
       } catch {
-        // Fallback photos already present
-      } finally {
-        if (isMounted) setIsLoading(false);
+        // Fallback if network error
       }
+
+      if (!isMounted) return;
+
+      if (loadedPhotos.length === 0) {
+        loadedPhotos = DEMO_EDITORIAL_PHOTOS;
+      }
+
+      setGallery(activeGal);
+      setPinDraft(activeGal.album_pin || '');
+      setPhotos(loadedPhotos);
+      setIsLoading(false);
     }
 
     loadAlbum();
@@ -145,6 +165,49 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       isMounted = false;
     };
   }, [slug]);
+
+  const visiblePhotos = useMemo(() => {
+    if (!gallery) return photos;
+    const hiddenSet = new Set(gallery.hidden_photo_ids || []);
+    const hasValidOwner = Boolean(
+      tokenParam && tokenParam === gallery.owner_token
+    );
+    const ownerActive = hasValidOwner && !previewAsVisitor;
+    return photos.filter((photo) => {
+      if (!ownerActive && hiddenSet.has(photo.id)) {
+        return false;
+      }
+      return true;
+    });
+  }, [photos, gallery, tokenParam, previewAsVisitor]);
+
+  const coverPhoto = useMemo(() => {
+    if (photos.length === 0) return null;
+    if (gallery?.cover_photo_id) {
+      const matched = photos.find((p) => p.id === gallery.cover_photo_id);
+      if (matched) return matched;
+    }
+    return photos[0];
+  }, [photos, gallery?.cover_photo_id]);
+
+  // Reset hero fade when cover photo changes, with safety fallback timer
+  useEffect(() => {
+    if (!coverPhoto) return;
+    setIsHeroImgLoaded(false);
+    const timer = setTimeout(() => setIsHeroImgLoaded(true), 600);
+    return () => clearTimeout(timer);
+  }, [coverPhoto?.id]);
+
+  // Optional Auto-Orbit Carousel Timer
+  useEffect(() => {
+    if (!isAutoPlaying || isHoveringCarousel || visiblePhotos.length < 3) {
+      return;
+    }
+    const id = setInterval(() => {
+      setFeaturedCenterIdx((prev) => (prev + 1) % visiblePhotos.length);
+    }, 3400);
+    return () => clearInterval(id);
+  }, [isAutoPlaying, isHoveringCarousel, visiblePhotos.length]);
 
   function saveCoverPosition(
     nextX: number,
@@ -168,7 +231,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     }
   }
 
-  // Pointer drag handlers for interactive cover repositioning
   function handleCoverPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     if (!isAdjustingCover) return;
     isDraggingCoverRef.current = true;
@@ -185,7 +247,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     if (!isAdjustingCover || !isDraggingCoverRef.current) return;
     const deltaX = e.clientX - dragStartRef.current.x;
     const deltaY = e.clientY - dragStartRef.current.y;
-    // Dragging down moves the image down (decreases object-position Y%)
     const nextX = dragStartRef.current.posX - deltaX * 0.18;
     const nextY = dragStartRef.current.posY - deltaY * 0.18;
     saveCoverPosition(nextX, nextY);
@@ -213,39 +274,10 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     }
   }
 
-  const hasValidOwnerToken = Boolean(
-    tokenParam && tokenParam === gallery.owner_token
-  );
-  const isOwnerMode = hasValidOwnerToken && !previewAsVisitor;
-
-  const cleanVisitorUrl = `${baseUrl}/${gallery.slug}`;
-  const whatsappVisitorShareText = `Halo keluarga & sahabat! Berikut link album digital momen spesial ${gallery.client_name} di Difotoin:\n${cleanVisitorUrl}${
-    gallery.album_pin ? `\n(PIN Akses Album: ${gallery.album_pin})` : ''
-  }`;
-
-  const coverPhoto = useMemo(() => {
-    return (
-      photos.find((p) => p.id === gallery.cover_photo_id) ||
-      photos[0] ||
-      DEMO_EDITORIAL_PHOTOS[0]
-    );
-  }, [photos, gallery.cover_photo_id]);
-
-  const visiblePhotos = useMemo(() => {
-    const hiddenSet = new Set(gallery.hidden_photo_ids || []);
-    return photos.filter((photo) => {
-      if (!isOwnerMode && hiddenSet.has(photo.id)) {
-        return false;
-      }
-      return true;
-    });
-  }, [photos, gallery.hidden_photo_ids, isOwnerMode]);
-
-  // Smooth Carousel Navigation Helpers
+  // Smooth 3D Carousel Navigation Helpers
   function handlePrevCarousel() {
     if (visiblePhotos.length === 0) return;
-    setCarouselDirection('prev');
-    setCarouselAnimKey((k) => k + 1);
+    setCenterTilt({ rx: 0, ry: 0 });
     setFeaturedCenterIdx(
       (prev) => (prev - 1 + visiblePhotos.length) % visiblePhotos.length
     );
@@ -253,23 +285,55 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   function handleNextCarousel() {
     if (visiblePhotos.length === 0) return;
-    setCarouselDirection('next');
-    setCarouselAnimKey((k) => k + 1);
+    setCenterTilt({ rx: 0, ry: 0 });
     setFeaturedCenterIdx((prev) => (prev + 1) % visiblePhotos.length);
   }
 
-  function handleSelectCarouselOffset(offset: number, idx: number) {
-    if (offset === 0) {
-      setLightboxIndex(idx);
-      return;
-    }
-    setCarouselDirection(offset > 0 ? 'next' : 'prev');
-    setCarouselAnimKey((k) => k + 1);
-    setFeaturedCenterIdx(idx);
+  // Compute shortest circular signed offset in [-N/2, +N/2] so every card glides smoothly!
+  function getCircularOffset(index: number, center: number, total: number) {
+    if (total === 0) return 0;
+    let diff = index - center;
+    const half = total / 2;
+    if (diff > half) diff -= total;
+    if (diff < -half) diff += total;
+    return diff;
   }
+
+  // ============================================================================
+  // FUTURISTIC ORBITAL SCANNER LOADER (Prevents Wrong Cover Photo Flash!)
+  // ============================================================================
+  if (isLoading || !gallery || !coverPhoto) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center select-none">
+        <div className="relative w-24 h-24 flex items-center justify-center mb-6">
+          <span className="absolute inset-0 rounded-full border border-cyan-400/30 animate-ping" />
+          <span className="absolute inset-1 rounded-full border border-dashed border-cyan-300/60 animate-spin-slow" />
+          <span className="absolute inset-4 rounded-full border border-sky-400/40 animate-pulse" />
+          <Sparkles className="w-6 h-6 text-cyan-300 animate-pulse" />
+        </div>
+        <div className="font-mono text-xs uppercase tracking-[0.32em] text-cyan-300">
+          SYNCHRONIZING DIGITAL ARCHIVE
+        </div>
+        <p className="font-jakarta text-xs text-slate-400 mt-2">
+          Memuat foto resolusi tinggi langsung dari folder galeri...
+        </p>
+      </div>
+    );
+  }
+
+  const hasValidOwnerToken = Boolean(
+    tokenParam && tokenParam === gallery.owner_token
+  );
+  const isOwnerMode = hasValidOwnerToken && !previewAsVisitor;
+
+  const cleanVisitorUrl = `${baseUrl}/${gallery.slug}`;
+  const whatsappVisitorShareText = `Halo keluarga & sahabat! Berikut link album digital momen spesial ${gallery.client_name} dari ${gallery.studio_name}:\n${cleanVisitorUrl}${
+    gallery.album_pin ? `\n(PIN Akses Album: ${gallery.album_pin})` : ''
+  }`;
 
   // Owner Action 1: Set Cover Photo (Ganti Sampul)
   async function handleSetCoverPhoto(photoId: string) {
+    if (!gallery) return;
     setIsSavingOwnerSetting(true);
     try {
       const updated = await updateGallerySettings(
@@ -282,7 +346,9 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       if (updated) {
         setGallery(updated);
       } else {
-        setGallery((prev) => ({ ...prev, cover_photo_id: photoId }));
+        setGallery((prev) =>
+          prev ? { ...prev, cover_photo_id: photoId } : prev
+        );
       }
       showToast('Foto sampul album berhasil diperbarui.');
     } finally {
@@ -292,6 +358,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   // Owner Action 2: Save or Clear 4-Digit PIN (Bikin PIN)
   async function handleSaveAlbumPin(newPin: string | null) {
+    if (!gallery) return;
     if (newPin !== null && newPin.length !== 4) {
       showToast('PIN harus terdiri dari tepat 4 angka.');
       return;
@@ -308,7 +375,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       if (updated) {
         setGallery(updated);
       } else {
-        setGallery((prev) => ({ ...prev, album_pin: newPin }));
+        setGallery((prev) => (prev ? { ...prev, album_pin: newPin } : prev));
       }
       setPinDraft(newPin || '');
       showToast(
@@ -324,6 +391,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   // Owner Action 3: Toggle Photo Visibility
   async function handleToggleHidePhoto(photoId: string) {
+    if (!gallery) return;
     const currentHidden = gallery.hidden_photo_ids || [];
     const isHidden = currentHidden.includes(photoId);
     const nextHidden = isHidden
@@ -342,7 +410,9 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       if (updated) {
         setGallery(updated);
       } else {
-        setGallery((prev) => ({ ...prev, hidden_photo_ids: nextHidden }));
+        setGallery((prev) =>
+          prev ? { ...prev, hidden_photo_ids: nextHidden } : prev
+        );
       }
       showToast(
         isHidden
@@ -364,7 +434,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   function handleVerifyVisitorPin(e: React.FormEvent) {
     e.preventDefault();
-    if (pinInput.trim() === gallery.album_pin) {
+    if (pinInput.trim() === gallery?.album_pin) {
       setIsPinUnlocked(true);
       setPinError(null);
       showToast('Akses album dibuka.');
@@ -386,7 +456,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-transparent text-slate-100">
-      {/* Futuristic Glassmorphic Top Header */}
+      {/* Futuristic Glassmorphic Top Header — Dynamically Displays Photographer Brand */}
       <header className="sticky top-0 z-50 w-full glass-header">
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-14 md:h-16 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -397,6 +467,11 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             >
               {gallery.studio_name || 'ZEEVISUAL'}
             </Link>
+            {gallery.studio_slug.toLowerCase() !== 'zeevisual' && (
+              <span className="hidden lg:inline-block font-mono text-[9px] tracking-[0.18em] text-slate-400 uppercase border-l border-white/15 pl-2.5">
+                by Zeevisual
+              </span>
+            )}
           </div>
 
           <nav className="hidden md:flex items-center gap-7 text-[11px] font-jakarta font-semibold uppercase tracking-[0.2em] text-slate-400">
@@ -583,7 +658,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       </button>
                     </div>
 
-                    {/* Cover Position Sliders inside Owner Drawer */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-white/[0.03] border border-white/10">
                       <div className="flex flex-col gap-1">
                         <div className="flex justify-between text-[11px] font-jakarta text-slate-300">
@@ -811,7 +885,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
       {/* Clean Glass Toast Notification */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-4 md:right-8 z-50 glass-panel-strong text-white px-4 py-2.5 shadow-2xl flex items-center gap-2 font-jakarta text-xs md:text-sm font-semibold">
+        <div className="fixed bottom-14 sm:bottom-6 right-4 md:right-8 z-50 glass-panel-strong text-white px-4 py-2.5 shadow-2xl flex items-center gap-2 font-jakarta text-xs md:text-sm font-semibold">
           <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>{toastMsg}</span>
         </div>
@@ -820,7 +894,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       {/* GLASSMORPHIC PIN GATE */}
       {requiresPinGate ? (
         <main className="flex-1 w-full flex items-center justify-center px-4 py-12">
-          <div className="max-w-md w-full glass-panel-strong flex flex-col items-center text-center p-8">
+          <div className="max-w-md w-full glass-panel-strong flex flex-col items-center text-center p-8 animate-fade-up">
             <div className="w-12 h-12 bg-white/5 text-cyan-400 border border-white/15 flex items-center justify-center mb-4">
               <KeyRound className="w-5 h-5" />
             </div>
@@ -830,7 +904,8 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             </h1>
             <p className="font-jakarta text-sm text-slate-400 mt-1.5">
               Masukkan 4 digit PIN untuk membuka album{' '}
-              <strong className="text-white">{gallery.client_name}</strong>.
+              <strong className="text-white">{gallery.client_name}</strong> dari{' '}
+              <strong className="text-cyan-300">{gallery.studio_name}</strong>.
             </p>
 
             <form
@@ -859,7 +934,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
               <button
                 type="submit"
-                className="w-full py-3 px-6 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-xs uppercase tracking-[0.2em] transition-all"
+                className="w-full py-3 px-6 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-xs uppercase tracking-[0.2em] btn-futuristic"
               >
                 Buka Album
               </button>
@@ -869,9 +944,10 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       ) : (
         /* UNLOCKED DIGITAL ALBUM — FUTURISTIC GLASSMORPHISM THEME */
         <main className="flex-1 w-full">
-          {/* 1. OPAQUE HERO COVER (Blocks background Earth completely + Interactive Pan/Reposition + Mobile-Friendly Proportion) */}
+          {/* 1. OPAQUE HERO COVER (Zero Flash, Blocks Background Earth, Interactive Pan) */}
           <section
             id="hero-album"
+            data-cursor={isAdjustingCover ? 'GESER' : undefined}
             onPointerDown={handleCoverPointerDown}
             onPointerMove={handleCoverPointerMove}
             onPointerUp={handleCoverPointerUp}
@@ -880,19 +956,26 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
               isAdjustingCover ? 'cursor-grab active:cursor-grabbing' : ''
             }`}
           >
-            {/* Opaque Base + High-Opacity Cover Image so Space Earth NEVER bleeds through */}
+            {/* Opaque Base + Smooth Fade-In Real Cover Image */}
             <div className="absolute inset-0 z-0 bg-[#02050A]">
               <img
+                key={coverPhoto.id}
                 src={coverPhoto.fullResUrl}
                 alt={coverPhoto.caption}
-                onError={(e) => handleImageError(coverPhoto.id, e)}
+                onLoad={() => setIsHeroImgLoaded(true)}
+                onError={(e) => {
+                  handleImageError(coverPhoto.id, e);
+                  setIsHeroImgLoaded(true);
+                }}
                 draggable={false}
                 style={{
                   objectPosition: `${coverPosX}% ${coverPosY}%`,
                 }}
                 className={`w-full h-full ${
                   coverFitMode === 'contain' ? 'object-contain' : 'object-cover'
-                } opacity-90 transition-[object-position] duration-75`}
+                } transition-opacity duration-700 ease-out ${
+                  isHeroImgLoaded ? 'opacity-90' : 'opacity-0'
+                }`}
               />
               {/* Bottom & Left dark vignette for crisp text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#02050A] via-[#02050A]/25 to-[#02050A]/30" />
@@ -903,7 +986,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             {isAdjustingCover && (
               <div
                 onPointerDown={(e) => e.stopPropagation()}
-                className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-xl glass-panel-strong p-3.5 sm:p-4 shadow-2xl border border-cyan-400/50 flex flex-col gap-3"
+                className="absolute top-3 left-1/2 -translate-x-1/2 z-30 w-[92%] max-w-xl glass-panel-strong p-3.5 sm:p-4 shadow-2xl border border-cyan-400/50 flex flex-col gap-3 animate-fade-up"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 text-cyan-300 font-jakarta font-bold text-xs uppercase tracking-wider">
@@ -1012,7 +1095,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
               </div>
             )}
 
-            <div className="relative z-10 max-w-7xl w-full mx-auto px-4 md:px-10 py-8 sm:py-14 md:py-20 flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-8">
+            <div className="relative z-10 max-w-7xl w-full mx-auto px-4 md:px-10 py-8 sm:py-14 md:py-20 flex flex-col md:flex-row items-start md:items-end justify-between gap-5 md:gap-8 animate-fade-up">
               <div className="flex flex-col gap-2 sm:gap-3 max-w-2xl">
                 <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] text-cyan-400">
                   {gallery.studio_name.toUpperCase()} //{' '}
@@ -1034,7 +1117,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(0)}
-                  className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-[11px] sm:text-xs uppercase tracking-[0.16em] transition-all shadow-[0_0_20px_rgba(34,211,238,0.25)]"
+                  className="btn-futuristic inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-[11px] sm:text-xs uppercase tracking-[0.16em] shadow-[0_0_20px_rgba(34,211,238,0.25)]"
                 >
                   <PlayCircle className="w-4 h-4" />
                   <span>Buka Layar Penuh</span>
@@ -1043,7 +1126,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 <button
                   type="button"
                   onClick={() => setIsAdjustingCover((prev) => !prev)}
-                  className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 glass-panel hover:bg-white/15 text-white font-jakarta font-semibold text-[11px] sm:text-xs uppercase tracking-[0.14em] transition-all"
+                  className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 glass-panel hover:bg-white/15 text-white font-jakarta font-semibold text-[11px] sm:text-xs uppercase tracking-[0.14em]"
                 >
                   <Move className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Geser Sampul</span>
@@ -1053,7 +1136,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   href={coverPhoto.downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3 glass-panel hover:bg-white/10 text-white font-jakarta font-semibold text-[11px] sm:text-xs uppercase tracking-[0.16em] transition-all"
+                  className="inline-flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3 glass-panel hover:bg-white/10 text-white font-jakarta font-semibold text-[11px] sm:text-xs uppercase tracking-[0.16em]"
                 >
                   <Download className="w-4 h-4 text-cyan-400" />
                   <span>Unduh Sampul</span>
@@ -1062,10 +1145,15 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             </div>
           </section>
 
-          {/* 2. INTERACTIVE "REVIEW PHOTO" SHOWCASE CAROUSEL WITH SMOOTH GLIDE ANIMATION & SWIPE */}
+          {/* 2. FLUID 3D PERSPECTIVE COVERFLOW "REVIEW PHOTO" STAGE (Zero Stiffness!) */}
           {visiblePhotos.length >= 3 && (
             <section
               id="review-strip"
+              onMouseEnter={() => setIsHoveringCarousel(true)}
+              onMouseLeave={() => {
+                setIsHoveringCarousel(false);
+                setCenterTilt({ rx: 0, ry: 0 });
+              }}
               onTouchStart={(e) => {
                 touchStartXRef.current = e.touches[0]?.clientX ?? null;
               }}
@@ -1073,69 +1161,178 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 if (touchStartXRef.current === null) return;
                 const diff =
                   (e.changedTouches[0]?.clientX ?? 0) - touchStartXRef.current;
-                if (diff > 40) handlePrevCarousel();
-                else if (diff < -40) handleNextCarousel();
+                if (diff > 36) handlePrevCarousel();
+                else if (diff < -36) handleNextCarousel();
                 touchStartXRef.current = null;
               }}
-              className="w-full py-10 md:py-14 px-3 sm:px-6 md:px-10 border-b border-white/10 overflow-hidden"
+              className="w-full py-12 md:py-16 px-3 sm:px-6 md:px-10 border-b border-white/10 overflow-hidden select-none"
             >
               <div className="max-w-6xl mx-auto flex flex-col items-center gap-6 md:gap-8">
-                <div className="flex flex-col items-center gap-1.5 text-center">
-                  <h2 className="font-jakarta font-bold text-xs sm:text-sm md:text-base uppercase tracking-[0.28em] text-white">
-                    REVIEW PHOTO
-                  </h2>
+                {/* Section Header + Auto-Slide Toggle */}
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="inline-flex items-center gap-3">
+                    <h2 className="font-jakarta font-bold text-xs sm:text-sm md:text-base uppercase tracking-[0.28em] text-white">
+                      REVIEW PHOTO
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setIsAutoPlaying((p) => !p)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border transition-all ${
+                        isAutoPlaying
+                          ? 'bg-cyan-400/20 text-cyan-300 border-cyan-400/50 shadow-[0_0_12px_rgba(34,211,238,0.25)]'
+                          : 'bg-white/5 text-slate-400 border-white/10 hover:text-white'
+                      }`}
+                    >
+                      {isAutoPlaying ? (
+                        <>
+                          <Pause className="w-2.5 h-2.5" />
+                          <span>Auto On</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-2.5 h-2.5" />
+                          <span>Auto Slide</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <span className="font-mono text-[10px] text-slate-400">
-                    Geser atau klik kartu samping untuk berpindah • Klik foto
-                    tengah untuk memperbesar
+                    Geser atau klik foto samping untuk memutar orbit 3D • Klik
+                    foto tengah untuk layar penuh
                   </span>
                 </div>
 
-                <div className="relative w-full flex items-center justify-center gap-2 sm:gap-4 md:gap-5">
+                {/* Continuous 3D Perspective Stage */}
+                <div className="relative w-full flex items-center justify-center">
                   <button
                     type="button"
                     onClick={handlePrevCarousel}
-                    className="w-9 h-9 sm:w-11 sm:h-11 glass-panel hover:border-cyan-400 hover:bg-cyan-400/15 text-white flex items-center justify-center shrink-0 transition-all active:scale-90 z-20"
+                    className="w-9 h-9 sm:w-11 sm:h-11 glass-panel hover:border-cyan-400 hover:bg-cyan-400/15 text-white flex items-center justify-center shrink-0 transition-all active:scale-90 z-30"
                     aria-label="Sebelumnya"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
 
-                  {/* 3 Cards on Mobile (No Over-Zoom!), 5 Cards on Desktop with Smooth Animation */}
+                  {/* 3D Track Container — Cards stay mounted by photo.id and glide via GPU translate3d + rotateY */}
                   <div
-                    key={carouselAnimKey}
-                    className={`grid grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3.5 md:gap-4 items-center w-full ${
-                      carouselDirection === 'next'
-                        ? 'animate-carousel-next'
-                        : 'animate-carousel-prev'
-                    }`}
+                    className="relative flex-1 h-[250px] sm:h-[340px] md:h-[400px]"
+                    style={{
+                      perspective: '1400px',
+                      transformStyle: 'preserve-3d',
+                    }}
                   >
-                    {[-2, -1, 0, 1, 2].map((offset) => {
-                      const idx =
-                        (featuredCenterIdx + offset + visiblePhotos.length) %
-                        visiblePhotos.length;
-                      const item = visiblePhotos[idx];
+                    {visiblePhotos.map((item, idx) => {
+                      const offset = getCircularOffset(
+                        idx,
+                        featuredCenterIdx,
+                        visiblePhotos.length
+                      );
+                      const absOffset = Math.abs(offset);
+
+                      // Only render cards near the visible 3D arc (-3..+3) for silky 60fps performance
+                      if (absOffset > 3) return null;
+
                       const isCenter = offset === 0;
-                      const positionClass =
-                        Math.abs(offset) === 2
-                          ? 'hidden md:block opacity-45 scale-90 hover:opacity-75'
-                          : Math.abs(offset) === 1
-                            ? 'block opacity-65 sm:opacity-75 scale-90 sm:scale-95 hover:opacity-95'
-                            : 'block opacity-100 scale-100 ring-1 ring-cyan-400/70 shadow-[0_0_35px_rgba(34,211,238,0.22)] z-10';
+                      // Smooth orbital arc geometry
+                      const translateXPercent =
+                        offset === 0
+                          ? 0
+                          : offset * (absOffset === 1 ? 82 : absOffset === 2 ? 74 : 68);
+                      const translateZPx =
+                        isCenter ? 40 : absOffset === 1 ? -55 : absOffset === 2 ? -140 : -220;
+                      const rotateYDeg =
+                        isCenter
+                          ? centerTilt.ry
+                          : offset < 0
+                            ? Math.min(32, absOffset * 17)
+                            : -Math.min(32, absOffset * 17);
+                      const rotateXDeg = isCenter ? centerTilt.rx : 0;
+                      const scaleVal =
+                        isCenter
+                          ? 1.04
+                          : absOffset === 1
+                            ? 0.88
+                            : absOffset === 2
+                              ? 0.76
+                              : 0.64;
+                      const opacityVal =
+                        isCenter
+                          ? 1
+                          : absOffset === 1
+                            ? 0.78
+                            : absOffset === 2
+                              ? 0.46
+                              : 0;
+                      const zIndexVal = 20 - absOffset * 4;
 
                       return (
                         <div
-                          key={`${item.id}-${offset}`}
-                          onClick={() => handleSelectCarouselOffset(offset, idx)}
-                          className={`relative aspect-[3/4] overflow-hidden bg-[#080C14] border border-white/15 cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${positionClass}`}
+                          key={item.id}
+                          data-cursor={isCenter ? 'VIEW' : 'SLIDE'}
+                          onClick={() => {
+                            if (isCenter) {
+                              setLightboxIndex(idx);
+                            } else {
+                              setCenterTilt({ rx: 0, ry: 0 });
+                              setFeaturedCenterIdx(idx);
+                            }
+                          }}
+                          onMouseMove={(e) => {
+                            if (!isCenter) return;
+                            const rect =
+                              e.currentTarget.getBoundingClientRect();
+                            const nx =
+                              (e.clientX - rect.left) / rect.width - 0.5;
+                            const ny =
+                              (e.clientY - rect.top) / rect.height - 0.5;
+                            setCenterTilt({
+                              rx: -ny * 9,
+                              ry: nx * 11,
+                            });
+                          }}
+                          onMouseLeave={() => {
+                            if (isCenter) setCenterTilt({ rx: 0, ry: 0 });
+                          }}
+                          style={{
+                            zIndex: zIndexVal,
+                            opacity: opacityVal,
+                            pointerEvents: absOffset > 2 ? 'none' : 'auto',
+                            transform: `translate3d(calc(-50% + ${translateXPercent}%), -50%, ${translateZPx}px) rotateX(${rotateXDeg}deg) rotateY(${rotateYDeg}deg) scale(${scaleVal})`,
+                            transition: isCenter && (centerTilt.rx !== 0 || centerTilt.ry !== 0)
+                              ? 'transform 140ms ease-out, opacity 550ms ease, box-shadow 550ms ease'
+                              : 'transform 720ms cubic-bezier(0.16, 1, 0.3, 1), opacity 580ms ease, filter 580ms ease, box-shadow 580ms ease',
+                            filter: isCenter
+                              ? 'brightness(1.04)'
+                              : `brightness(${absOffset === 1 ? 0.78 : 0.58})`,
+                          }}
+                          className={`absolute top-1/2 left-1/2 w-[150px] sm:w-[215px] md:w-[248px] aspect-[3/4] overflow-hidden bg-[#080C14] cursor-pointer will-change-transform ${
+                            absOffset === 2 ? 'hidden sm:block' : ''
+                          } ${
+                            isCenter
+                              ? 'border border-cyan-400/90 shadow-[0_18px_50px_rgba(34,211,238,0.28)]'
+                              : 'border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.65)]'
+                          }`}
                         >
                           <img
                             src={item.thumbnailUrl}
                             alt={item.name}
                             onError={(e) => handleImageError(item.id, e)}
+                            draggable={false}
                             style={{ objectPosition: '50% 22%' }}
-                            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-2 sm:top-3 inset-x-1.5 sm:inset-x-3 glass-panel-strong py-0.5 sm:py-1 px-1.5 sm:px-2 text-center">
+
+                          {/* Subtle Specular Glare Overlay on Active Center Card */}
+                          {isCenter && (
+                            <div
+                              className="absolute inset-0 pointer-events-none opacity-35"
+                              style={{
+                                background: `radial-gradient(circle at ${50 + centerTilt.ry * 3}% ${50 - centerTilt.rx * 3}%, rgba(255,255,255,0.28), transparent 60%)`,
+                              }}
+                            />
+                          )}
+
+                          <div className="absolute top-2 sm:top-3 inset-x-2 sm:inset-x-3 glass-panel-strong py-0.5 sm:py-1 px-1.5 sm:px-2 text-center">
                             <span className="font-mono text-[8px] sm:text-[10px] font-bold text-white uppercase tracking-wider truncate block">
                               {isCenter ? gallery.client_name : item.name}
                             </span>
@@ -1148,7 +1345,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   <button
                     type="button"
                     onClick={handleNextCarousel}
-                    className="w-9 h-9 sm:w-11 sm:h-11 glass-panel hover:border-cyan-400 hover:bg-cyan-400/15 text-white flex items-center justify-center shrink-0 transition-all active:scale-90 z-20"
+                    className="w-9 h-9 sm:w-11 sm:h-11 glass-panel hover:border-cyan-400 hover:bg-cyan-400/15 text-white flex items-center justify-center shrink-0 transition-all active:scale-90 z-30"
                     aria-label="Berikutnya"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -1166,17 +1363,14 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                         key={p.id}
                         type="button"
                         onClick={() => {
-                          setCarouselDirection(
-                            dotIdx > featuredCenterIdx ? 'next' : 'prev'
-                          );
-                          setCarouselAnimKey((k) => k + 1);
+                          setCenterTilt({ rx: 0, ry: 0 });
                           setFeaturedCenterIdx(dotIdx);
                         }}
                         aria-label={`Foto ${dotIdx + 1}`}
-                        className={`h-1.5 transition-all duration-300 ${
+                        className={`h-1.5 transition-all duration-500 ${
                           isActive
-                            ? 'w-6 bg-cyan-400 shadow-[0_0_8px_#22d3ee]'
-                            : 'w-1.5 bg-white/20 hover:bg-white/40'
+                            ? 'w-7 bg-cyan-400 shadow-[0_0_10px_#22d3ee]'
+                            : 'w-1.5 bg-white/20 hover:bg-white/45'
                         }`}
                       />
                     );
@@ -1186,13 +1380,13 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             </section>
           )}
 
-          {/* 3. SHARP, EDGE-TO-EDGE PHOTO GRID (ZERO ROUNDED CORNERS + GLASSMORPHISM) */}
+          {/* 3. SHARP, EDGE-TO-EDGE PHOTO GRID (ZERO ROUNDED CORNERS + INTERACTIVE HOVER) */}
           <section id="photo-grid" className="w-full px-4 md:px-10 py-10 md:py-12">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 mb-6 md:mb-8 border-b border-white/10">
                 <div>
                   <span className="font-mono text-[11px] text-cyan-400 uppercase tracking-widest">
-                    FULL ARCHIVE
+                    FULL ARCHIVE // {gallery.studio_name.toUpperCase()}
                   </span>
                   <h2 className="font-jakarta font-bold text-xl md:text-2xl text-white uppercase tracking-wider mt-0.5">
                     Koleksi Foto ({visiblePhotos.length})
@@ -1203,175 +1397,171 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 </span>
               </div>
 
-              {isLoading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
-                  {Array.from({ length: 6 }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="aspect-[4/5] glass-panel animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="columns-2 lg:columns-3 gap-3 sm:gap-6 space-y-3 sm:space-y-6">
-                  {visiblePhotos.map((photo, index) => {
-                    const isHidden = (gallery.hidden_photo_ids || []).includes(
-                      photo.id
-                    );
-                    const isCover = photo.id === coverPhoto.id;
-                    const isFav = guestFavorites.includes(photo.id);
+              <div className="columns-2 lg:columns-3 gap-3 sm:gap-6 space-y-3 sm:space-y-6">
+                {visiblePhotos.map((photo, index) => {
+                  const isHidden = (gallery.hidden_photo_ids || []).includes(
+                    photo.id
+                  );
+                  const isCover = photo.id === coverPhoto.id;
+                  const isFav = guestFavorites.includes(photo.id);
 
-                    return (
-                      <article
-                        key={photo.id}
-                        className={`break-inside-avoid rounded-none glass-panel transition-all flex flex-col group ${
-                          isCover
-                            ? 'border-cyan-400/70 ring-1 ring-cyan-400/40'
-                            : 'hover:border-white/25'
-                        }`}
+                  return (
+                    <article
+                      key={photo.id}
+                      className={`break-inside-avoid rounded-none glass-panel transition-all duration-300 hover:-translate-y-1 flex flex-col group ${
+                        isCover
+                          ? 'border-cyan-400/70 ring-1 ring-cyan-400/40'
+                          : 'hover:border-cyan-400/40'
+                      }`}
+                    >
+                      {/* Sharp 90-degree Photo Container — Natural Aspect Ratio */}
+                      <div
+                        data-cursor="VIEW"
+                        className="relative w-full overflow-hidden rounded-none bg-[#0D1117]"
                       >
-                        {/* Sharp 90-degree Photo Container — Natural Aspect Ratio (No Rounded Corners) */}
-                        <div className="relative w-full overflow-hidden rounded-none bg-[#0D1117]">
-                          <img
-                            src={photo.thumbnailUrl}
-                            alt={photo.caption}
-                            loading="lazy"
-                            onError={(e) => handleImageError(photo.id, e)}
-                            onClick={() => setLightboxIndex(index)}
-                            className={`w-full h-auto block rounded-none cursor-pointer transition-transform duration-500 group-hover:scale-[1.02] ${
-                              isHidden ? 'opacity-30 grayscale' : ''
-                            }`}
-                          />
+                        <img
+                          src={photo.thumbnailUrl}
+                          alt={photo.caption}
+                          loading="lazy"
+                          onError={(e) => handleImageError(photo.id, e)}
+                          onClick={() => setLightboxIndex(index)}
+                          className={`w-full h-auto block rounded-none cursor-pointer transition-transform duration-700 ease-out group-hover:scale-[1.03] ${
+                            isHidden ? 'opacity-30 grayscale' : ''
+                          }`}
+                        />
 
-                          {isCover && (
-                            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-cyan-400 text-slate-950 font-jakarta font-bold text-[9px] sm:text-[10px] px-2 py-0.5 tracking-wider uppercase z-10">
-                              Sampul Album
-                            </div>
-                          )}
-
-                          {/* Hidden Notice Overlay in Owner Mode */}
-                          {isOwnerMode && isHidden && (
-                            <div className="absolute inset-0 bg-[#090C10]/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4 text-white z-20">
-                              <EyeOff className="w-6 h-6 text-cyan-400 mb-1" />
-                              <span className="font-jakarta font-semibold text-xs uppercase tracking-wider">
-                                Disembunyikan dari Tamu
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleHidePhoto(photo.id)}
-                                className="mt-2 px-3 py-1 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs"
-                              >
-                                Tampilkan Kembali
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Glassmorphic Hover Quick Actions Overlay */}
-                          {!isHidden && (
-                            <div className="absolute inset-0 bg-[#090C10]/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2.5 z-10 pointer-events-none">
-                              <button
-                                type="button"
-                                onClick={() => setLightboxIndex(index)}
-                                title="Perbesar"
-                                className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
-                              >
-                                <Maximize2 className="w-4 h-4" />
-                              </button>
-
-                              <a
-                                href={photo.downloadUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                download={photo.name}
-                                title="Unduh HD"
-                                className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
-                              >
-                                <Download className="w-4 h-4" />
-                              </a>
-
-                              <button
-                                type="button"
-                                onClick={() => toggleGuestFavorite(photo.id)}
-                                title="Favorit"
-                                className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
-                              >
-                                <Heart
-                                  className={`w-4 h-4 ${
-                                    isFav
-                                      ? 'fill-rose-500 text-rose-500'
-                                      : 'text-white'
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Sleek Glassmorphic Single-Line Footer */}
-                        <div className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 border-t border-white/10">
-                          <span className="font-mono text-[10px] sm:text-[11px] text-slate-300 truncate">
-                            {photo.name}
+                        {gallery.watermark_enabled && !isHidden && (
+                          <span className="pointer-events-none absolute bottom-2 right-2 font-mono text-[9px] uppercase tracking-[0.22em] text-white/30 select-none">
+                            {gallery.studio_name}
                           </span>
+                        )}
 
-                          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                            {isOwnerMode && (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={isCover || isSavingOwnerSetting}
-                                  onClick={() => handleSetCoverPhoto(photo.id)}
-                                  className={`px-2 py-1 font-jakarta font-semibold text-[10px] sm:text-[11px] border transition-colors ${
-                                    isCover
-                                      ? 'bg-cyan-400 text-slate-950 border-cyan-400'
-                                      : 'bg-white/5 hover:bg-white/15 text-slate-200 border-white/15'
-                                  }`}
-                                >
-                                  {isCover ? 'Sampul' : 'Set Sampul'}
-                                </button>
+                        {isCover && (
+                          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-cyan-400 text-slate-950 font-jakarta font-bold text-[9px] sm:text-[10px] px-2 py-0.5 tracking-wider uppercase z-10">
+                            Sampul Album
+                          </div>
+                        )}
 
-                                <button
-                                  type="button"
-                                  disabled={isSavingOwnerSetting}
-                                  onClick={() =>
-                                    handleToggleHidePhoto(photo.id)
-                                  }
-                                  title={
-                                    isHidden
-                                      ? 'Tampilkan ke Tamu'
-                                      : 'Sembunyikan dari Tamu'
-                                  }
-                                  className={`p-1 border transition-colors ${
-                                    isHidden
-                                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                                      : 'bg-white/5 hover:bg-white/15 text-slate-300 border-white/15'
-                                  }`}
-                                >
-                                  {isHidden ? (
-                                    <Eye className="w-3.5 h-3.5" />
-                                  ) : (
-                                    <EyeOff className="w-3.5 h-3.5" />
-                                  )}
-                                </button>
-                              </>
-                            )}
+                        {/* Hidden Notice Overlay in Owner Mode */}
+                        {isOwnerMode && isHidden && (
+                          <div className="absolute inset-0 bg-[#090C10]/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4 text-white z-20">
+                            <EyeOff className="w-6 h-6 text-cyan-400 mb-1" />
+                            <span className="font-jakarta font-semibold text-xs uppercase tracking-wider">
+                              Disembunyikan dari Tamu
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleHidePhoto(photo.id)}
+                              className="mt-2 px-3 py-1 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs"
+                            >
+                              Tampilkan Kembali
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Glassmorphic Hover Quick Actions Overlay */}
+                        {!isHidden && (
+                          <div className="absolute inset-0 bg-[#090C10]/35 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2.5 z-10 pointer-events-none">
+                            <button
+                              type="button"
+                              onClick={() => setLightboxIndex(index)}
+                              title="Perbesar"
+                              className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+                            >
+                              <Maximize2 className="w-4 h-4" />
+                            </button>
 
                             <a
                               href={photo.downloadUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               download={photo.name}
-                              className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-slate-200 border border-white/15 font-jakarta font-semibold text-[10px] sm:text-[11px] transition-colors"
+                              title="Unduh HD"
+                              className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
                             >
-                              <Download className="w-3 h-3" />
-                              <span className="hidden sm:inline">Unduh</span>
+                              <Download className="w-4 h-4" />
                             </a>
+
+                            <button
+                              type="button"
+                              onClick={() => toggleGuestFavorite(photo.id)}
+                              title="Favorit"
+                              className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
+                            >
+                              <Heart
+                                className={`w-4 h-4 transition-transform active:scale-125 ${
+                                  isFav
+                                    ? 'fill-rose-500 text-rose-500'
+                                    : 'text-white'
+                                }`}
+                              />
+                            </button>
                           </div>
+                        )}
+                      </div>
+
+                      {/* Sleek Glassmorphic Single-Line Footer */}
+                      <div className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 border-t border-white/10">
+                        <span className="font-mono text-[10px] sm:text-[11px] text-slate-300 truncate">
+                          {photo.name}
+                        </span>
+
+                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                          {isOwnerMode && (
+                            <>
+                              <button
+                                type="button"
+                                disabled={isCover || isSavingOwnerSetting}
+                                onClick={() => handleSetCoverPhoto(photo.id)}
+                                className={`px-2 py-1 font-jakarta font-semibold text-[10px] sm:text-[11px] border transition-colors ${
+                                  isCover
+                                    ? 'bg-cyan-400 text-slate-950 border-cyan-400'
+                                    : 'bg-white/5 hover:bg-white/15 text-slate-200 border-white/15'
+                                }`}
+                              >
+                                {isCover ? 'Sampul' : 'Set Sampul'}
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isSavingOwnerSetting}
+                                onClick={() => handleToggleHidePhoto(photo.id)}
+                                title={
+                                  isHidden
+                                    ? 'Tampilkan ke Tamu'
+                                    : 'Sembunyikan dari Tamu'
+                                }
+                                className={`p-1 border transition-colors ${
+                                  isHidden
+                                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                                    : 'bg-white/5 hover:bg-white/15 text-slate-300 border-white/15'
+                                }`}
+                              >
+                                {isHidden ? (
+                                  <Eye className="w-3.5 h-3.5" />
+                                ) : (
+                                  <EyeOff className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </>
+                          )}
+
+                          <a
+                            href={photo.downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download={photo.name}
+                            className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-slate-200 border border-white/15 font-jakarta font-semibold text-[10px] sm:text-[11px] transition-colors"
+                          >
+                            <Download className="w-3 h-3" />
+                            <span className="hidden sm:inline">Unduh</span>
+                          </a>
                         </div>
-                      </article>
-                    );
-                  })}
-                </div>
-              )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </div>
           </section>
         </main>
@@ -1420,7 +1610,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
             <div className="p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-white/10">
               <span className="font-mono text-xs text-slate-400 hidden sm:inline">
-                {visiblePhotos[lightboxIndex].name}
+                {gallery.studio_name} • {visiblePhotos[lightboxIndex].name}
               </span>
 
               <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
@@ -1455,7 +1645,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   download={visiblePhotos[lightboxIndex].name}
-                  className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs hover:bg-cyan-300"
+                  className="btn-futuristic inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs hover:bg-cyan-300"
                 >
                   <Download className="w-4 h-4" />
                   <span>Unduh HD</span>
@@ -1478,8 +1668,8 @@ export default function DigitalAlbumPage({ params }: AlbumPageProps) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#090C10] text-slate-300 flex items-center justify-center font-mono text-xs uppercase tracking-[0.25em]">
-          LOADING DIGITAL ARCHIVE...
+        <div className="min-h-screen bg-transparent text-cyan-300 flex items-center justify-center font-mono text-xs uppercase tracking-[0.28em]">
+          SYNCHRONIZING DIGITAL ARCHIVE...
         </div>
       }
     >

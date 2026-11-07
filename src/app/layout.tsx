@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Anton, Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import SpaceBackdrop from '@/components/SpaceBackdrop';
+import FuturisticCursor from '@/components/FuturisticCursor';
+import ZeevisualWatermark from '@/components/ZeevisualWatermark';
 
 const anton = Anton({
   weight: '400',
@@ -24,9 +26,9 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'DIFOTOIN — Futuristic Client Photo Proofing & Digital Album',
+  title: 'DIFOTOIN — Futuristic Client Photo Proofing & Digital Album | Crafted by Zeevisual',
   description:
-    'Platform pilih foto favorit klien & album digital futuristik minimalis untuk studio fotografi profesional.',
+    'Platform pilih foto favorit klien & album digital futuristik minimalis untuk studio fotografi profesional. Crafted by Zeevisual.',
 };
 
 export default function RootLayout({
@@ -41,9 +43,11 @@ export default function RootLayout({
     >
       <body className="futuristic-canvas text-slate-100 font-jakarta antialiased min-h-screen flex flex-col relative">
         <SpaceBackdrop />
+        <FuturisticCursor />
         <div className="relative z-10 min-h-screen flex flex-col">
           {children}
         </div>
+        <ZeevisualWatermark />
       </body>
     </html>
   );

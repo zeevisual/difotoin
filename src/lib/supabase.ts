@@ -427,6 +427,34 @@ export async function deleteStudioSubscription(
   return updated;
 }
 
+export async function updateStudioSubscriptionInfo(
+  studioId: string,
+  patch: Partial<
+    Pick<
+      StudioSubscription,
+      'studio_name' | 'owner_name' | 'whatsapp_number' | 'access_code'
+    >
+  >
+): Promise<StudioSubscription | null> {
+  if (supabase) {
+    await supabase
+      .from('studio_subscriptions')
+      .update(patch)
+      .eq('id', studioId);
+  }
+  const current = getLocalStudios();
+  let updatedRecord: StudioSubscription | null = null;
+  const updated = current.map((s) => {
+    if (s.id === studioId) {
+      updatedRecord = { ...s, ...patch };
+      return updatedRecord;
+    }
+    return s;
+  });
+  saveLocalStudios(updated);
+  return updatedRecord;
+}
+
 function getLocalGalleries(): GalleryRecord[] {
   if (typeof window === 'undefined') return SEED_GALLERIES;
   try {
@@ -543,16 +571,23 @@ export async function createGallery(
     .replace(/\D/g, '')
     .replace(/^0/, '62');
 
+  const resolvedStudioName =
+    input.studio_name?.trim() ||
+    (cleanStudioSlug === 'zeevisual' ? 'Zeevisual' : cleanStudioSlug);
+  const studioPrefix =
+    cleanStudioSlug === 'zeevisual'
+      ? 'ZV'
+      : cleanStudioSlug.replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() ||
+        'ST';
+
   const newGallery: GalleryRecord = {
     id:
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
         : `gal-${Date.now()}`,
-    order_code: `#ZV-${orderNumber}`,
+    order_code: `#${studioPrefix}-${orderNumber}`,
     studio_slug: cleanStudioSlug,
-    studio_name:
-      input.studio_name ||
-      (cleanStudioSlug === 'zeevisual' ? 'Zeevisual' : cleanStudioSlug),
+    studio_name: resolvedStudioName,
     studio_whatsapp: cleanWhatsapp,
     client_name: input.client_name.trim(),
     slug,

@@ -47,8 +47,15 @@ export default function ClientProofingWorkspacePage({
 }: ProofingPageProps) {
   const { studio_slug, slug } = params;
 
-  const [gallery, setGallery] = useState<GalleryRecord>(SEED_GALLERIES[0]);
-  const [photos, setPhotos] = useState<DrivePhoto[]>(DEMO_EDITORIAL_PHOTOS);
+  const [gallery, setGallery] = useState<GalleryRecord>({
+    ...SEED_GALLERIES[0],
+    studio_slug,
+    studio_name:
+      studio_slug.toLowerCase() === 'zeevisual' ? 'Zeevisual' : studio_slug,
+    client_name: slug.replace(/-/g, ' '),
+    slug,
+  });
+  const [photos, setPhotos] = useState<DrivePhoto[]>([]);
   const [selections, setSelections] = useState<SelectionRecord[]>([]);
   const [isLoadingDrive, setIsLoadingDrive] = useState(true);
 
@@ -92,20 +99,26 @@ export default function ClientProofingWorkspacePage({
         setSelections(initialSelections);
       }
 
+      let loadedPhotos: DrivePhoto[] = [];
       try {
         const res = await fetch(
           `/api/drive/${encodeURIComponent(activeGal.gdrive_folder_id)}`
         );
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && Array.isArray(data.photos) && data.photos.length > 0) {
-            setPhotos(data.photos);
+          if (Array.isArray(data.photos) && data.photos.length > 0) {
+            loadedPhotos = data.photos;
           }
         }
       } catch {
-        // Fallback already initialized
-      } finally {
-        if (isMounted) setIsLoadingDrive(false);
+        // Fallback if network error
+      }
+
+      if (isMounted) {
+        setPhotos(
+          loadedPhotos.length > 0 ? loadedPhotos : DEMO_EDITORIAL_PHOTOS
+        );
+        setIsLoadingDrive(false);
       }
     }
 
@@ -325,17 +338,19 @@ Terima kasih!`;
       {/* FUTURISTIC GLASSMORPHIC STICKY HEADER */}
       <header className="sticky top-0 z-50 w-full glass-header">
         <div className="max-w-7xl mx-auto px-4 md:px-10 h-16 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] shrink-0" />
             <Link
               href="/"
-              className="font-jakarta font-extrabold text-sm md:text-base text-white tracking-[0.22em] uppercase hover:text-cyan-400 transition-colors shrink-0"
+              className="font-jakarta font-extrabold text-sm md:text-base text-white tracking-[0.22em] uppercase hover:text-cyan-400 transition-colors truncate"
             >
-              DIFOTOIN
+              {gallery.studio_name || 'ZEEVISUAL'}
             </Link>
-            <span className="text-white/20">|</span>
-            <span className="font-jakarta font-semibold text-xs text-slate-400 uppercase tracking-widest truncate">
-              {gallery.studio_name || 'Zeevisual'}
+            <span className="text-white/20 hidden sm:inline">|</span>
+            <span className="hidden sm:inline font-mono text-[10px] text-slate-400 uppercase tracking-[0.18em] shrink-0">
+              {gallery.studio_slug.toLowerCase() === 'zeevisual'
+                ? 'PROOFING WORKSPACE'
+                : 'BY ZEEVISUAL'}
             </span>
           </div>
 
@@ -629,14 +644,15 @@ Terima kasih!`;
                   return (
                     <article
                       key={photo.id}
-                      className={`break-inside-avoid flex flex-col rounded-none glass-panel transition-all duration-200 ${
+                      className={`break-inside-avoid flex flex-col rounded-none glass-panel transition-all duration-300 hover:-translate-y-1 ${
                         isSelected
                           ? 'ring-2 ring-cyan-400 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.2)]'
-                          : 'hover:border-white/25'
+                          : 'hover:border-cyan-400/40'
                       }`}
                     >
                       {/* Sharp 90-degree Photo Container — No Rounded Corners */}
                       <div
+                        data-cursor={isSelected ? 'BATAL' : 'PILIH'}
                         className={`relative w-full overflow-hidden rounded-none bg-[#0D1117] group ${
                           layoutMode === 'uniform' ? 'aspect-[4/5]' : ''
                         }`}

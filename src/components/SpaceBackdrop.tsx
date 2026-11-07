@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 // Deterministic star positions so SSR and CSR match without hydration mismatch
 const SMALL_STARS = Array.from({ length: 115 }, (_, i) => {
@@ -40,6 +40,52 @@ const SPARKLE_STARS = [
 ];
 
 export default function SpaceBackdrop() {
+  const starLayerRef = useRef<HTMLDivElement | null>(null);
+  const earthLayerRef = useRef<HTMLDivElement | null>(null);
+  const moonLayerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(pointer: fine)');
+    if (!mq.matches) return;
+
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+    let rafId: number;
+
+    const onMouseMove = (e: MouseEvent) => {
+      targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+      targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+
+    const tick = () => {
+      currentX += (targetX - currentX) * 0.05;
+      currentY += (targetY - currentY) * 0.05;
+
+      if (starLayerRef.current) {
+        starLayerRef.current.style.transform = `translate3d(${currentX * -12}px, ${currentY * -12}px, 0)`;
+      }
+      if (moonLayerRef.current) {
+        moonLayerRef.current.style.transform = `translate3d(${currentX * -20}px, ${currentY * -16}px, 0) rotate(-15deg)`;
+      }
+      if (earthLayerRef.current) {
+        earthLayerRef.current.style.transform = `translate3d(${currentX * 16}px, ${currentY * 12}px, 0)`;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('mousemove', onMouseMove);
+    };
+  }, []);
+
   return (
     <div
       aria-hidden="true"
@@ -48,8 +94,11 @@ export default function SpaceBackdrop() {
       {/* 1. Deep Space Ambient Gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_68%_62%,rgba(14,165,233,0.10)_0%,rgba(2,5,13,0.92)_48%,rgba(1,2,5,1)_100%)]" />
 
-      {/* 2. Twinkling Tiny Starfield (115+ Crisp Vector/CSS Stars) */}
-      <div className="absolute inset-0">
+      {/* 2. Interactive Parallax Twinkling Starfield (115+ Crisp Vector/CSS Stars) */}
+      <div
+        ref={starLayerRef}
+        className="absolute -inset-6 will-change-transform"
+      >
         {SMALL_STARS.map((star) => (
           <span
             key={star.id}
@@ -84,9 +133,10 @@ export default function SpaceBackdrop() {
         ))}
       </div>
 
-      {/* 3. Crisp Vector Crescent Moon in High Orbit */}
+      {/* 3. Crisp Vector Crescent Moon in High Orbit (with Depth Parallax) */}
       <div
-        className="absolute top-[14%] left-[46%] w-5 h-5 md:w-6 md:h-6 rounded-full opacity-85"
+        ref={moonLayerRef}
+        className="absolute top-[14%] left-[46%] w-5 h-5 md:w-6 md:h-6 rounded-full opacity-85 will-change-transform"
         style={{
           boxShadow: 'inset -4px -2px 0 0 rgba(224, 242, 254, 0.9)',
           filter: 'drop-shadow(0 0 6px rgba(56, 189, 248, 0.45))',
@@ -94,8 +144,11 @@ export default function SpaceBackdrop() {
         }}
       />
 
-      {/* 4. SUPER-HD 4K SPHERICAL EARTH IN BOTTOM-RIGHT (100% Filled Edge-to-Edge with Atmosphere & Clouds) */}
-      <div className="absolute -bottom-[34vmin] -right-[18vmin] w-[96vmin] h-[96vmin] md:w-[108vmin] md:h-[108vmin] rounded-full">
+      {/* 4. SUPER-HD 4K SPHERICAL EARTH IN BOTTOM-RIGHT (100% Filled Edge-to-Edge + Slow Orbital Rotation & Parallax) */}
+      <div
+        ref={earthLayerRef}
+        className="absolute -bottom-[34vmin] -right-[18vmin] w-[96vmin] h-[96vmin] md:w-[108vmin] md:h-[108vmin] rounded-full will-change-transform"
+      >
         {/* Outer Atmospheric Cyan-Blue Halo radiating into space */}
         <div
           className="absolute -inset-3 rounded-full pointer-events-none"
@@ -116,11 +169,11 @@ export default function SpaceBackdrop() {
               '-10px -10px 48px rgba(56, 189, 248, 0.36), -2px -2px 14px rgba(186, 230, 253, 0.5), inset 18px 18px 52px rgba(56, 189, 248, 0.48), inset 3px 3px 12px rgba(224, 242, 254, 0.72)',
           }}
         >
-          {/* Layer A: Full-Frame 4K Satellite Cloud & Cyclone Swirl Texture (Covers 100% of Top Rim, No Black Sky) */}
+          {/* Layer A: Full-Frame 4K Satellite Cloud & Cyclone Swirl Texture (Slowly Drifting Clouds!) */}
           <img
             src="https://images.unsplash.com/photo-1527482797697-8795b05a13fe?auto=format&fit=crop&w=3840&q=100"
             alt=""
-            className="w-full h-full object-cover object-center scale-110 opacity-60 brightness-[0.68] contrast-125 saturate-90"
+            className="w-full h-full object-cover object-center scale-115 opacity-60 brightness-[0.68] contrast-125 saturate-90 animate-earth-clouds"
           />
 
           {/* Layer B: 4K NASA Earth Continents & Clouds shifted up so clouds fill the top curve */}

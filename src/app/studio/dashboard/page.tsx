@@ -40,6 +40,7 @@ import {
   SEED_GALLERIES,
   SEED_STUDIO_SUBSCRIPTIONS,
   toggleStudioSubscriptionActive,
+  updateStudioSubscriptionInfo,
 } from '@/lib/supabase';
 import {
   generateOwnerToken,
@@ -100,6 +101,7 @@ export default function StudioDashboardPage() {
 
   // Create Gallery Form states
   const [studioSlug, setStudioSlug] = useState('zeevisual');
+  const [studioBrandName, setStudioBrandName] = useState('Zeevisual');
   const [studioWhatsapp, setStudioWhatsapp] = useState('');
   const [clientName, setClientName] = useState('Aida Fitri Harahab');
   const [slug, setSlug] = useState('aida-fitri-harahab');
@@ -164,6 +166,8 @@ export default function StudioDashboardPage() {
           if (authRes.ok && authRes.studio) {
             setLoggedStudio(authRes.studio);
             setStudioSlug(authRes.studio.studio_slug);
+            setStudioBrandName(authRes.studio.studio_name);
+            setStudioWhatsapp(authRes.studio.whatsapp_number || '');
             await loadDashboardData(authRes.studio);
           } else {
             window.localStorage.removeItem(STUDIO_SESSION_KEY);
@@ -225,6 +229,8 @@ export default function StudioDashboardPage() {
 
       setLoggedStudio(res.studio);
       setStudioSlug(res.studio.studio_slug);
+      setStudioBrandName(res.studio.studio_name);
+      setStudioWhatsapp(res.studio.whatsapp_number || '');
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(
           STUDIO_SESSION_KEY,
@@ -259,6 +265,7 @@ export default function StudioDashboardPage() {
 
   function handleResetNewForm() {
     setStudioSlug(loggedStudio?.studio_slug || 'zeevisual');
+    setStudioBrandName(loggedStudio?.studio_name || 'Zeevisual');
     setClientName('');
     setSlug('');
     setIsSlugManual(false);
@@ -299,18 +306,20 @@ export default function StudioDashboardPage() {
     }
   }
 
-  // Exact Indonesian WhatsApp message required by specification
+  // Exact Indonesian WhatsApp message dynamically branded to the Photographer's Studio Name
   const whatsappMessage = useMemo(() => {
     const cleanStudio =
       (loggedStudio && !loggedStudio.is_super_admin
         ? loggedStudio.studio_slug
         : studioSlug.trim()) || 'zeevisual';
+    const displayBrand =
+      studioBrandName.trim() || loggedStudio?.studio_name || cleanStudio;
     const cleanClient = clientName.trim() || 'Klien';
     const cleanSlug = slug.trim() || slugifyClientName(cleanClient);
     const cleanToken = ownerToken.trim() || 'mhttesqg7rjx';
 
     return `Halo ${cleanClient}
-Galeri foto kamu dari ${cleanStudio} sudah siap di Difotoin.
+Galeri foto kamu dari ${displayBrand} sudah siap di Difotoin.
 
 Pilih foto favorit kamu :
 ${baseUrl}/${cleanStudio}/${cleanSlug}
@@ -320,7 +329,15 @@ ${baseUrl}/${cleanSlug}?t=${cleanToken}
 (bisa atur siapa yang lihat, ganti sampul, bikin pin)
 
 Selamat menikmati momennya`;
-  }, [baseUrl, studioSlug, clientName, slug, ownerToken, loggedStudio]);
+  }, [
+    baseUrl,
+    studioSlug,
+    studioBrandName,
+    clientName,
+    slug,
+    ownerToken,
+    loggedStudio,
+  ]);
 
   const activeSelections = useMemo(() => {
     return selectionsMap[activeGallery.id] || [];
@@ -381,13 +398,35 @@ Selamat menikmati momennya`;
         ? studioSlug.trim() || 'zeevisual'
         : loggedStudio.studio_slug;
 
-      const created = await createGallery({
-        studio_slug: effectiveStudioSlug,
-        studio_name: loggedStudio.is_super_admin
+      const resolvedBrandName =
+        studioBrandName.trim() ||
+        (loggedStudio.is_super_admin
           ? effectiveStudioSlug === 'zeevisual'
             ? 'Zeevisual'
             : effectiveStudioSlug
-          : loggedStudio.studio_name,
+          : loggedStudio.studio_name);
+
+      // Persist Studio Admin's custom brand name & WhatsApp to their subscription profile
+      if (
+        !loggedStudio.is_super_admin &&
+        (resolvedBrandName !== loggedStudio.studio_name ||
+          studioWhatsapp.trim() !== loggedStudio.whatsapp_number)
+      ) {
+        const updatedProfile = await updateStudioSubscriptionInfo(
+          loggedStudio.id,
+          {
+            studio_name: resolvedBrandName,
+            whatsapp_number: studioWhatsapp.trim(),
+          }
+        );
+        if (updatedProfile) {
+          setLoggedStudio(updatedProfile);
+        }
+      }
+
+      const created = await createGallery({
+        studio_slug: effectiveStudioSlug,
+        studio_name: resolvedBrandName,
         studio_whatsapp:
           studioWhatsapp.trim() || loggedStudio.whatsapp_number || '',
         client_name: clientName.trim() || 'Klien Baru',
@@ -418,6 +457,7 @@ Selamat menikmati momennya`;
   function handleSelectGalleryFromRow(gal: GalleryRecord) {
     setActiveGallery(gal);
     setStudioSlug(gal.studio_slug);
+    setStudioBrandName(gal.studio_name || gal.studio_slug);
     setStudioWhatsapp(gal.studio_whatsapp || '');
     setClientName(gal.client_name);
     setSlug(gal.slug);
@@ -642,44 +682,33 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 </span>
               </button>
 
-              {/* Quick Demo Fillers for Owner Testing */}
+              {/* Private Registered-Only Access Info (No Exposed Demo Credentials!) */}
               <div className="pt-3 border-t border-white/10 flex flex-col gap-2">
-                <span className="font-jakarta font-bold text-[11px] uppercase tracking-wider text-slate-400">
-                  Akses Cepat (Untuk Testing Owner):
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginSlug('zeevisual');
-                      setLoginCode('ZV2025');
-                    }}
-                    className="px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-cyan-400/15 hover:border-cyan-400/40 text-white border border-white/10 font-jakarta font-bold text-xs text-left transition-all"
-                  >
-                    <div className="text-cyan-300">👑 Super Admin</div>
-                    <div className="font-mono text-[10px] text-slate-400 mt-0.5">
-                      zeevisual / ZV2025
+                <div className="grid grid-cols-2 gap-2.5 text-left">
+                  <div className="p-2.5 rounded-xl bg-amber-400/[0.06] border border-amber-400/20">
+                    <div className="font-jakarta font-bold text-[11px] text-amber-300 flex items-center gap-1">
+                      <Crown className="w-3 h-3" />
+                      <span>Super Admin</span>
                     </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoginSlug('kalasenja');
-                      setLoginCode('DFTN-KALA25');
-                    }}
-                    className="px-3 py-2.5 rounded-xl bg-white/[0.04] hover:bg-cyan-400/15 hover:border-cyan-400/40 text-white border border-white/10 font-jakarta font-bold text-xs text-left transition-all"
-                  >
-                    <div className="text-slate-200">📸 Contoh Member</div>
-                    <div className="font-mono text-[10px] text-slate-400 mt-0.5">
-                      kalasenja / DFTN-KALA25
+                    <p className="font-jakarta text-[10px] text-slate-400 mt-0.5 leading-snug">
+                      Owner Utama (Zeevisual) — Kelola member, lisensi &amp; seluruh galeri.
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-cyan-400/[0.06] border border-cyan-400/20">
+                    <div className="font-jakarta font-bold text-[11px] text-cyan-300 flex items-center gap-1">
+                      <Camera className="w-3 h-3" />
+                      <span>Studio Admin</span>
                     </div>
-                  </button>
+                    <p className="font-jakarta text-[10px] text-slate-400 mt-0.5 leading-snug">
+                      Fotografer Terdaftar — Nama web otomatis mengikuti brand studio Anda.
+                    </p>
+                  </div>
                 </div>
               </div>
 
               <div className="bg-white/[0.03] p-3.5 rounded-xl border border-white/10 flex flex-col gap-1.5 text-center">
                 <span className="font-jakarta text-xs text-slate-400">
-                  Belum berlangganan akses studio Difotoin?
+                  Belum terdaftar sebagai mitra studio Difotoin?
                 </span>
                 <a
                   href="https://wa.me/6281234567890?text=Halo%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20akses%20Studio%20di%20Difotoin."
@@ -687,7 +716,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-1.5 font-jakarta font-bold text-xs text-cyan-400 hover:text-cyan-300"
                 >
-                  <span>Hubungi Zeevisual untuk Berlangganan Lisensi →</span>
+                  <span>Hubungi Zeevisual untuk Aktivasi Lisensi →</span>
                 </a>
               </div>
             </form>
@@ -709,17 +738,24 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
               <Link href="/" className="flex items-center gap-2.5 group">
                 <div className="w-1 h-5 bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
                 <span className="font-anton text-2xl text-white uppercase tracking-widest group-hover:text-cyan-400 transition-colors">
-                  DIFOTOIN
+                  {loggedStudio?.is_super_admin
+                    ? 'DIFOTOIN'
+                    : loggedStudio?.studio_name || 'DIFOTOIN'}
                 </span>
               </Link>
               <span className="hidden sm:inline-flex items-center gap-1.5 bg-white/5 text-slate-200 font-jakarta font-bold text-xs px-2.5 py-1 rounded-lg border border-white/10">
                 <Camera className="w-3.5 h-3.5 text-cyan-400" />
-                {loggedStudio?.studio_slug || studioSlug}
+                /{loggedStudio?.studio_slug || studioSlug}
               </span>
-              {loggedStudio?.is_super_admin && (
-                <span className="hidden md:inline-flex items-center gap-1 bg-cyan-400/15 text-cyan-300 font-jakarta font-bold text-[11px] px-2.5 py-0.5 rounded-full border border-cyan-400/30">
-                  <Crown className="w-3 h-3 text-cyan-400" />
-                  Super Admin
+              {loggedStudio?.is_super_admin ? (
+                <span className="hidden md:inline-flex items-center gap-1.5 bg-amber-400/15 text-amber-300 font-jakarta font-bold text-[11px] px-3 py-0.5 rounded-full border border-amber-400/40 shadow-[0_0_14px_rgba(251,191,36,0.2)]">
+                  <Crown className="w-3.5 h-3.5 text-amber-300" />
+                  SUPER ADMIN (OWNER ZEEVISUAL)
+                </span>
+              ) : (
+                <span className="hidden md:inline-flex items-center gap-1.5 bg-cyan-400/15 text-cyan-300 font-jakarta font-bold text-[11px] px-3 py-0.5 rounded-full border border-cyan-400/30">
+                  <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                  STUDIO ADMIN PARTNER
                 </span>
               )}
             </div>
@@ -792,22 +828,36 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
             <div className="flex flex-col gap-1.5 max-w-2xl">
-              <div className="inline-flex items-center gap-2 text-cyan-400 font-jakarta font-bold text-xs uppercase tracking-[0.2em]">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>
-                  STUDIO PARTNER • {loggedStudio?.studio_name.toUpperCase()} (
-                  {loggedStudio?.plan_name})
-                </span>
-              </div>
+              {loggedStudio?.is_super_admin ? (
+                <div className="inline-flex items-center gap-2 text-amber-300 font-jakarta font-bold text-xs uppercase tracking-[0.2em]">
+                  <Crown className="w-3.5 h-3.5 text-amber-300" />
+                  <span>
+                    SUPER ADMIN COMMAND CENTER • ZEEVISUAL (PLATFORM OWNER)
+                  </span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 text-cyan-400 font-jakarta font-bold text-xs uppercase tracking-[0.2em]">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>
+                    STUDIO ADMIN WORKSPACE •{' '}
+                    {loggedStudio?.studio_name.toUpperCase()} (
+                    {loggedStudio?.plan_name})
+                  </span>
+                </div>
+              )}
               <h1 className="font-anton text-3xl md:text-4xl text-white uppercase tracking-wider leading-none mt-1">
-                {activeTab === 'subscriptions'
+                {activeTab === 'subscriptions' && loggedStudio?.is_super_admin
                   ? 'Kelola Member & Lisensi Langganan Fotografer'
-                  : 'Dashboard Galeri & Seleksi Foto'}
+                  : loggedStudio?.is_super_admin
+                  ? 'Master Studio & Seleksi Foto (Super Admin)'
+                  : `Workspace Fotografer — ${loggedStudio?.studio_name}`}
               </h1>
               <p className="font-jakarta text-sm text-slate-400 leading-relaxed mt-1">
-                {activeTab === 'subscriptions'
-                  ? 'Daftarkan fotografer yang membeli paket langganan, atur masa aktif lisensi, dan salin pesan aktivasi WhatsApp dalam satu klik.'
-                  : 'Tempelkan link folder Google Drive, bagikan link pilih foto ke klien via WhatsApp, dan salin daftar foto terpilih yang sudah tersusun rapi untuk filter Adobe Lightroom.'}
+                {activeTab === 'subscriptions' && loggedStudio?.is_super_admin
+                  ? 'Khusus Super Admin (Zeevisual): daftarkan fotografer berlangganan, kelola kode akses privat, atur kuota galeri, dan salin pesan aktivasi WhatsApp.'
+                  : loggedStudio?.is_super_admin
+                  ? 'Kontrol penuh seluruh galeri klien Zeevisual maupun mitra fotografer, salin filter Lightroom, dan pantau aktivitas seleksi foto.'
+                  : `Seluruh halaman pilih foto & album klien Anda otomatis memakai identitas brand "${studioBrandName || loggedStudio?.studio_name}" (dengan watermark platform Crafted by Zeevisual).`}
               </p>
             </div>
 
@@ -831,14 +881,25 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   {activeSelections.length} File
                 </span>
               </div>
-              <div className="bg-white/[0.03] p-3.5 px-4 rounded-xl border border-white/10 flex flex-col justify-center">
-                <span className="font-jakarta font-semibold text-[11px] text-slate-400 uppercase tracking-wider">
-                  Member Studio
-                </span>
-                <span className="font-anton text-2xl text-white leading-tight mt-0.5">
-                  {studioList.length} Akun
-                </span>
-              </div>
+              {loggedStudio?.is_super_admin ? (
+                <div className="bg-amber-400/10 p-3.5 px-4 rounded-xl border border-amber-400/30 flex flex-col justify-center">
+                  <span className="font-jakarta font-semibold text-[11px] text-amber-300 uppercase tracking-wider">
+                    Member Studio
+                  </span>
+                  <span className="font-anton text-2xl text-amber-200 leading-tight mt-0.5">
+                    {studioList.length} Akun
+                  </span>
+                </div>
+              ) : (
+                <div className="bg-emerald-400/10 p-3.5 px-4 rounded-xl border border-emerald-400/30 flex flex-col justify-center">
+                  <span className="font-jakarta font-semibold text-[11px] text-emerald-300 uppercase tracking-wider">
+                    Status Lisensi
+                  </span>
+                  <span className="font-anton text-2xl text-emerald-200 leading-tight mt-0.5">
+                    AKTIF
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1206,14 +1267,19 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   onSubmit={handlePublishGallery}
                   className="p-6 md:p-8 flex flex-col gap-5"
                 >
-                  {/* Row 1: Studio Slug & Client Name */}
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                    <div className="sm:col-span-4 flex flex-col gap-1.5">
+                  {/* Row 1: Studio Brand Identity (studio_slug + Nama Brand Fotografer) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/10">
+                    <div className="sm:col-span-5 flex flex-col gap-1.5">
                       <label
                         htmlFor="studio-slug-input"
-                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300"
+                        className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
                       >
-                        Nama Studio (`studio_slug`)
+                        <span>ID Studio (`studio_slug`)</span>
+                        {!loggedStudio?.is_super_admin && (
+                          <span className="text-[10px] text-slate-400">
+                            Terkunci
+                          </span>
+                        )}
                       </label>
                       <input
                         id="studio-slug-input"
@@ -1231,30 +1297,67 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         }
                         placeholder="zeevisual"
                         required
-                        className="w-full bg-white/[0.03] text-cyan-300 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-sm focus:outline-none focus:border-cyan-400"
+                        className="w-full bg-white/[0.03] text-cyan-300 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono font-semibold text-sm focus:outline-none focus:border-cyan-400"
                       />
                     </div>
 
-                    <div className="sm:col-span-8 flex flex-col gap-1.5">
+                    <div className="sm:col-span-7 flex flex-col gap-1.5">
                       <label
-                        htmlFor="client-name-input"
+                        htmlFor="studio-brand-input"
                         className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
                       >
-                        <span>Nama Klien / Pasangan</span>
-                        <span className="text-[11px] text-cyan-400 font-semibold">
-                          *wajib diisi
+                        <span>Nama Brand Fotografer di Web</span>
+                        <span className="text-[10px] text-cyan-400 font-semibold">
+                          Tampil di Halaman Klien
                         </span>
                       </label>
                       <input
-                        id="client-name-input"
+                        id="studio-brand-input"
                         type="text"
-                        value={clientName}
-                        onChange={(e) => handleClientNameChange(e.target.value)}
-                        placeholder="Contoh: Aida Fitri Harahab"
+                        value={studioBrandName}
+                        onChange={(e) => setStudioBrandName(e.target.value)}
+                        placeholder={
+                          loggedStudio?.studio_name || 'Contoh: Kala Senja Photography'
+                        }
                         required
-                        className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-fraunces font-bold text-base focus:outline-none focus:border-cyan-400"
+                        className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-bold text-sm focus:outline-none focus:border-cyan-400"
                       />
                     </div>
+
+                    <div className="sm:col-span-12 flex items-center justify-between gap-2 pt-1 text-[11px] font-jakarta text-slate-400">
+                      <span>
+                        Seluruh header, judul, &amp; pesan WA klien otomatis menggunakan nama brand{' '}
+                        <strong className="text-cyan-300">
+                          {studioBrandName || loggedStudio?.studio_name || 'Zeevisual'}
+                        </strong>
+                        .
+                      </span>
+                      <span className="hidden md:inline-block font-mono text-[10px] text-slate-500 uppercase tracking-widest shrink-0">
+                        Watermark: Crafted by Zeevisual
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Row 1B: Client Name */}
+                  <div className="flex flex-col gap-1.5">
+                    <label
+                      htmlFor="client-name-input"
+                      className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between"
+                    >
+                      <span>Nama Klien / Pasangan / Event</span>
+                      <span className="text-[11px] text-cyan-400 font-semibold">
+                        *wajib diisi
+                      </span>
+                    </label>
+                    <input
+                      id="client-name-input"
+                      type="text"
+                      value={clientName}
+                      onChange={(e) => handleClientNameChange(e.target.value)}
+                      placeholder="Contoh: Aida Fitri Harahab"
+                      required
+                      className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-fraunces font-bold text-base focus:outline-none focus:border-cyan-400"
+                    />
                   </div>
 
                   {/* Row 2: Auto-generated Slug & Owner Token */}
