@@ -67,7 +67,7 @@ async function tryFetchPublicEmbeddedDriveFolder(
         id: fileId,
         name: fileName,
         mimeType: 'image/jpeg',
-        thumbnailUrl: `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`,
+        thumbnailUrl: `https://drive.google.com/thumbnail?id=${fileId}&sz=w800`,
         fullResUrl: `https://drive.google.com/thumbnail?id=${fileId}&sz=w2200`,
         downloadUrl: `https://drive.google.com/uc?export=download&id=${fileId}`,
         category: categories[idx % categories.length],
@@ -174,7 +174,7 @@ export async function GET(
               id: file.id,
               name: file.name,
               mimeType: file.mimeType,
-              thumbnailUrl: `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`,
+              thumbnailUrl: `https://drive.google.com/thumbnail?id=${file.id}&sz=w800`,
               fullResUrl: `https://drive.google.com/thumbnail?id=${file.id}&sz=w2200`,
               downloadUrl:
                 file.webContentLink ||

@@ -87,11 +87,11 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   const [featuredCenterIdx, setFeaturedCenterIdx] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isHoveringCarousel, setIsHoveringCarousel] = useState(false);
-  const [centerTilt, setCenterTilt] = useState<{ rx: number; ry: number }>({
-    rx: 0,
-    ry: 0,
-  });
   const touchStartXRef = useRef<number | null>(null);
+
+  // Progressive Photo Grid Batching (prevents mounting 100+ heavy cards simultaneously)
+  const [gridLimit, setGridLimit] = useState(24);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   // Lightbox & Favorites
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -277,7 +277,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   // Smooth 3D Carousel Navigation Helpers
   function handlePrevCarousel() {
     if (visiblePhotos.length === 0) return;
-    setCenterTilt({ rx: 0, ry: 0 });
     setFeaturedCenterIdx(
       (prev) => (prev - 1 + visiblePhotos.length) % visiblePhotos.length
     );
@@ -285,9 +284,26 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   function handleNextCarousel() {
     if (visiblePhotos.length === 0) return;
-    setCenterTilt({ rx: 0, ry: 0 });
     setFeaturedCenterIdx((prev) => (prev + 1) % visiblePhotos.length);
   }
+
+  // Progressive Infinite Scroll Observer for Large Photo Albums
+  useEffect(() => {
+    if (gridLimit >= visiblePhotos.length) return;
+    const el = loadMoreRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setGridLimit((prev) => Math.min(prev + 24, visiblePhotos.length));
+        }
+      },
+      { rootMargin: '600px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [gridLimit, visiblePhotos.length]);
 
   // Compute shortest circular signed offset in [-N/2, +N/2] so every card glides smoothly!
   function getCircularOffset(index: number, center: number, total: number) {
@@ -1152,7 +1168,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
               onMouseEnter={() => setIsHoveringCarousel(true)}
               onMouseLeave={() => {
                 setIsHoveringCarousel(false);
-                setCenterTilt({ rx: 0, ry: 0 });
               }}
               onTouchStart={(e) => {
                 touchStartXRef.current = e.touches[0]?.clientX ?? null;
@@ -1240,13 +1255,11 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                           : offset * (absOffset === 1 ? 82 : absOffset === 2 ? 74 : 68);
                       const translateZPx =
                         isCenter ? 40 : absOffset === 1 ? -55 : absOffset === 2 ? -140 : -220;
-                      const rotateYDeg =
-                        isCenter
-                          ? centerTilt.ry
-                          : offset < 0
-                            ? Math.min(32, absOffset * 17)
-                            : -Math.min(32, absOffset * 17);
-                      const rotateXDeg = isCenter ? centerTilt.rx : 0;
+                      const rotateYDeg = isCenter
+                        ? 0
+                        : offset < 0
+                          ? Math.min(32, absOffset * 17)
+                          : -Math.min(32, absOffset * 17);
                       const scaleVal =
                         isCenter
                           ? 1.04
@@ -1273,69 +1286,56 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                             if (isCenter) {
                               setLightboxIndex(idx);
                             } else {
-                              setCenterTilt({ rx: 0, ry: 0 });
                               setFeaturedCenterIdx(idx);
                             }
-                          }}
-                          onMouseMove={(e) => {
-                            if (!isCenter) return;
-                            const rect =
-                              e.currentTarget.getBoundingClientRect();
-                            const nx =
-                              (e.clientX - rect.left) / rect.width - 0.5;
-                            const ny =
-                              (e.clientY - rect.top) / rect.height - 0.5;
-                            setCenterTilt({
-                              rx: -ny * 9,
-                              ry: nx * 11,
-                            });
-                          }}
-                          onMouseLeave={() => {
-                            if (isCenter) setCenterTilt({ rx: 0, ry: 0 });
                           }}
                           style={{
                             zIndex: zIndexVal,
                             opacity: opacityVal,
                             pointerEvents: absOffset > 2 ? 'none' : 'auto',
-                            transform: `translate3d(calc(-50% + ${translateXPercent}%), -50%, ${translateZPx}px) rotateX(${rotateXDeg}deg) rotateY(${rotateYDeg}deg) scale(${scaleVal})`,
-                            transition: isCenter && (centerTilt.rx !== 0 || centerTilt.ry !== 0)
-                              ? 'transform 140ms ease-out, opacity 550ms ease, box-shadow 550ms ease'
-                              : 'transform 720ms cubic-bezier(0.16, 1, 0.3, 1), opacity 580ms ease, filter 580ms ease, box-shadow 580ms ease',
-                            filter: isCenter
-                              ? 'brightness(1.04)'
-                              : `brightness(${absOffset === 1 ? 0.78 : 0.58})`,
+                            transform: `translate3d(calc(-50% + ${translateXPercent}%), -50%, ${translateZPx}px) rotateY(${rotateYDeg}deg) scale(${scaleVal})`,
+                            transition:
+                              'transform 680ms cubic-bezier(0.16, 1, 0.3, 1), opacity 520ms ease',
                           }}
-                          className={`absolute top-1/2 left-1/2 w-[150px] sm:w-[215px] md:w-[248px] aspect-[3/4] overflow-hidden bg-[#080C14] cursor-pointer will-change-transform ${
+                          className={`absolute top-1/2 left-1/2 w-[150px] sm:w-[215px] md:w-[248px] aspect-[3/4] cursor-pointer will-change-transform ${
                             absOffset === 2 ? 'hidden sm:block' : ''
-                          } ${
-                            isCenter
-                              ? 'border border-cyan-400/90 shadow-[0_18px_50px_rgba(34,211,238,0.28)]'
-                              : 'border border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.65)]'
                           }`}
                         >
-                          <img
-                            src={item.thumbnailUrl}
-                            alt={item.name}
-                            onError={(e) => handleImageError(item.id, e)}
-                            draggable={false}
-                            style={{ objectPosition: '50% 22%' }}
-                            className="w-full h-full object-cover"
-                          />
-
-                          {/* Subtle Specular Glare Overlay on Active Center Card */}
-                          {isCenter && (
-                            <div
-                              className="absolute inset-0 pointer-events-none opacity-35"
-                              style={{
-                                background: `radial-gradient(circle at ${50 + centerTilt.ry * 3}% ${50 - centerTilt.rx * 3}%, rgba(255,255,255,0.28), transparent 60%)`,
-                              }}
+                          <div
+                            onMouseMove={(e) => {
+                              if (!isCenter) return;
+                              const rect =
+                                e.currentTarget.getBoundingClientRect();
+                              const nx =
+                                (e.clientX - rect.left) / rect.width - 0.5;
+                              const ny =
+                                (e.clientY - rect.top) / rect.height - 0.5;
+                              e.currentTarget.style.transform = `perspective(900px) rotateX(${(-ny * 8).toFixed(2)}deg) rotateY(${(nx * 10).toFixed(2)}deg)`;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = '';
+                            }}
+                            className={`relative w-full h-full overflow-hidden bg-[#080C14] transition-transform duration-150 ease-out ${
+                              isCenter
+                                ? 'border border-cyan-400/90 shadow-[0_16px_42px_rgba(34,211,238,0.24)]'
+                                : 'border border-white/15 shadow-[0_10px_24px_rgba(0,0,0,0.6)] opacity-90'
+                            }`}
+                          >
+                            <img
+                              src={item.thumbnailUrl}
+                              alt={item.name}
+                              decoding="async"
+                              onError={(e) => handleImageError(item.id, e)}
+                              draggable={false}
+                              style={{ objectPosition: '50% 22%' }}
+                              className="w-full h-full object-cover"
                             />
-                          )}
 
-                          <div className="absolute top-2 sm:top-3 inset-x-2 sm:inset-x-3 glass-panel-strong py-0.5 sm:py-1 px-1.5 sm:px-2 text-center">
-                            <span className="font-mono text-[8px] sm:text-[10px] font-bold text-white uppercase tracking-wider truncate block">
-                              {isCenter ? gallery.client_name : item.name}
-                            </span>
+                            <div className="absolute top-2 sm:top-3 inset-x-2 sm:inset-x-3 bg-[#070B14]/88 border border-white/15 py-0.5 sm:py-1 px-1.5 sm:px-2 text-center">
+                              <span className="font-mono text-[8px] sm:text-[10px] font-bold text-white uppercase tracking-wider truncate block">
+                                {isCenter ? gallery.client_name : item.name}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1363,7 +1363,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                         key={p.id}
                         type="button"
                         onClick={() => {
-                          setCenterTilt({ rx: 0, ry: 0 });
                           setFeaturedCenterIdx(dotIdx);
                         }}
                         aria-label={`Foto ${dotIdx + 1}`}
@@ -1398,7 +1397,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
               </div>
 
               <div className="columns-2 lg:columns-3 gap-3 sm:gap-6 space-y-3 sm:space-y-6">
-                {visiblePhotos.map((photo, index) => {
+                {visiblePhotos.slice(0, gridLimit).map((photo, index) => {
                   const isHidden = (gallery.hidden_photo_ids || []).includes(
                     photo.id
                   );
@@ -1408,10 +1407,10 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   return (
                     <article
                       key={photo.id}
-                      className={`break-inside-avoid rounded-none glass-panel transition-all duration-300 hover:-translate-y-1 flex flex-col group ${
+                      className={`break-inside-avoid rounded-none photo-card-surface hover:-translate-y-0.5 flex flex-col group ${
                         isCover
                           ? 'border-cyan-400/70 ring-1 ring-cyan-400/40'
-                          : 'hover:border-cyan-400/40'
+                          : ''
                       }`}
                     >
                       {/* Sharp 90-degree Photo Container — Natural Aspect Ratio */}
@@ -1423,9 +1422,10 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                           src={photo.thumbnailUrl}
                           alt={photo.caption}
                           loading="lazy"
+                          decoding="async"
                           onError={(e) => handleImageError(photo.id, e)}
                           onClick={() => setLightboxIndex(index)}
-                          className={`w-full h-auto block rounded-none cursor-pointer transition-transform duration-700 ease-out group-hover:scale-[1.03] ${
+                          className={`w-full h-auto block rounded-none cursor-pointer transition-transform duration-500 ease-out group-hover:scale-[1.02] ${
                             isHidden ? 'opacity-30 grayscale' : ''
                           }`}
                         />
@@ -1444,7 +1444,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
                         {/* Hidden Notice Overlay in Owner Mode */}
                         {isOwnerMode && isHidden && (
-                          <div className="absolute inset-0 bg-[#090C10]/80 backdrop-blur-sm flex flex-col items-center justify-center text-center p-4 text-white z-20">
+                          <div className="absolute inset-0 bg-[#090C10]/90 flex flex-col items-center justify-center text-center p-4 text-white z-20">
                             <EyeOff className="w-6 h-6 text-cyan-400 mb-1" />
                             <span className="font-jakarta font-semibold text-xs uppercase tracking-wider">
                               Disembunyikan dari Tamu
@@ -1459,14 +1459,14 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                           </div>
                         )}
 
-                        {/* Glassmorphic Hover Quick Actions Overlay */}
+                        {/* Lightweight Hover Quick Actions Overlay (Zero backdrop-filter per card!) */}
                         {!isHidden && (
-                          <div className="absolute inset-0 bg-[#090C10]/35 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2.5 z-10 pointer-events-none">
+                          <div className="absolute inset-0 bg-[#090C10]/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2.5 z-10 pointer-events-none">
                             <button
                               type="button"
                               onClick={() => setLightboxIndex(index)}
                               title="Perbesar"
-                              className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+                              className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
                             >
                               <Maximize2 className="w-4 h-4" />
                             </button>
@@ -1477,7 +1477,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                               rel="noopener noreferrer"
                               download={photo.name}
                               title="Unduh HD"
-                              className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+                              className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
                             >
                               <Download className="w-4 h-4" />
                             </a>
@@ -1486,7 +1486,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                               type="button"
                               onClick={() => toggleGuestFavorite(photo.id)}
                               title="Favorit"
-                              className="pointer-events-auto w-9 h-9 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
+                              className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
                             >
                               <Heart
                                 className={`w-4 h-4 transition-transform active:scale-125 ${
@@ -1562,6 +1562,25 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   );
                 })}
               </div>
+
+              {gridLimit < visiblePhotos.length && (
+                <div
+                  ref={loadMoreRef}
+                  className="w-full py-8 flex flex-col items-center justify-center gap-2"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setGridLimit((prev) =>
+                        Math.min(prev + 36, visiblePhotos.length)
+                      )
+                    }
+                    className="px-5 py-2.5 bg-[#080D17] hover:bg-cyan-400 hover:text-slate-950 text-cyan-300 border border-cyan-400/40 font-jakarta font-bold text-xs uppercase tracking-wider transition-colors"
+                  >
+                    Tampilkan Foto Lainnya ({gridLimit} / {visiblePhotos.length})
+                  </button>
+                </div>
+              )}
             </div>
           </section>
         </main>

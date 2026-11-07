@@ -645,10 +645,10 @@ Terima kasih!`;
                   return (
                     <article
                       key={photo.id}
-                      className={`break-inside-avoid flex flex-col rounded-none glass-panel transition-all duration-300 hover:-translate-y-1 ${
+                      className={`break-inside-avoid flex flex-col rounded-none photo-card-surface hover:-translate-y-0.5 ${
                         isSelected
-                          ? 'ring-2 ring-cyan-400 border-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.2)]'
-                          : 'hover:border-cyan-400/40'
+                          ? 'ring-2 ring-cyan-400 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.18)]'
+                          : ''
                       }`}
                     >
                       {/* Sharp 90-degree Photo Container — No Rounded Corners */}
@@ -662,9 +662,10 @@ Terima kasih!`;
                           src={photo.thumbnailUrl}
                           alt={photo.caption}
                           loading="lazy"
+                          decoding="async"
                           onError={(e) => handleImageError(photo.id, e)}
                           onClick={() => handleToggleSelect(photo)}
-                          className={`w-full rounded-none cursor-pointer transition-transform duration-500 group-hover:scale-[1.02] ${
+                          className={`w-full rounded-none cursor-pointer transition-transform duration-300 group-hover:scale-[1.02] ${
                             layoutMode === 'uniform'
                               ? 'h-full object-cover'
                               : 'h-auto block'
@@ -691,7 +692,7 @@ Terima kasih!`;
                             type="button"
                             onClick={() => setLightboxPhoto(photo)}
                             title="Perbesar Foto"
-                            className="w-8 h-8 glass-panel-strong text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
+                            className="w-8 h-8 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
                           >
                             <ZoomIn className="w-3.5 h-3.5" />
                           </button>
@@ -705,7 +706,7 @@ Terima kasih!`;
                             className={`w-8 h-8 flex items-center justify-center transition-colors ${
                               isSelected
                                 ? 'bg-cyan-400 text-slate-950'
-                                : 'glass-panel-strong text-white hover:border-cyan-400'
+                                : 'bg-[#070B14]/92 border border-white/20 text-white hover:border-cyan-400'
                             }`}
                           >
                             <Heart

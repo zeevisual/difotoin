@@ -74,10 +74,6 @@ export default function PhotographerDemoPage() {
 
   const [reviewIndex, setReviewIndex] = useState(0);
   const [autoPlayReview, setAutoPlayReview] = useState(false);
-  const [centerTilt, setCenterTilt] = useState<{ rx: number; ry: number }>({
-    rx: 0,
-    ry: 0,
-  });
   const touchStartXRef = useRef<number | null>(null);
 
   // Lightbox State
@@ -584,10 +580,10 @@ export default function PhotographerDemoPage() {
               return (
                 <article
                   key={photo.id}
-                  className={`group glass-panel rounded-none overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 ${
+                  className={`group photo-card-surface rounded-none overflow-hidden flex flex-col hover:-translate-y-0.5 ${
                     isSelected
                       ? 'border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.22)]'
-                      : 'border-white/10 hover:border-white/30'
+                      : ''
                   }`}
                 >
                   <div
@@ -599,6 +595,7 @@ export default function PhotographerDemoPage() {
                       src={photo.thumbnailUrl}
                       alt="Demo Preview"
                       loading="lazy"
+                      decoding="async"
                       draggable={false}
                       onError={(e) => {
                         const target = e.currentTarget;
@@ -918,11 +915,10 @@ export default function PhotographerDemoPage() {
                         ? -70
                         : -170;
                     const rotateYDeg = isCenter
-                      ? centerTilt.ry
+                      ? 0
                       : offset < 0
                         ? Math.min(32, absOffset * 18)
                         : -Math.min(32, absOffset * 18);
-                    const rotateXDeg = isCenter ? centerTilt.rx : 0;
                     const scaleVal = isCenter
                       ? 1
                       : absOffset === 1
@@ -949,52 +945,54 @@ export default function PhotographerDemoPage() {
                             setReviewIndex(idx);
                           }
                         }}
-                        onMouseMove={(e) => {
-                          if (!isCenter) return;
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const nx =
-                            (e.clientX - rect.left) / rect.width - 0.5;
-                          const ny =
-                            (e.clientY - rect.top) / rect.height - 0.5;
-                          setCenterTilt({ rx: -ny * 9, ry: nx * 11 });
-                        }}
-                        onMouseLeave={() => {
-                          if (isCenter) setCenterTilt({ rx: 0, ry: 0 });
-                        }}
                         data-cursor={isCenter ? 'VIEW' : 'SLIDE'}
                         style={{
                           zIndex: 20 - absOffset * 4,
                           opacity: opacityVal,
-                          transform: `translate3d(${translateXPercent}%, 0, ${translateZPx}px) rotateY(${rotateYDeg}deg) rotateX(${rotateXDeg}deg) scale(${scaleVal})`,
+                          transform: `translate3d(${translateXPercent}%, 0, ${translateZPx}px) rotateY(${rotateYDeg}deg) scale(${scaleVal})`,
                           transition:
-                            isCenter &&
-                            (centerTilt.rx !== 0 || centerTilt.ry !== 0)
-                              ? 'transform 140ms ease-out, opacity 500ms ease'
-                              : 'transform 720ms cubic-bezier(0.16, 1, 0.3, 1), opacity 550ms ease',
+                            'transform 680ms cubic-bezier(0.16, 1, 0.3, 1), opacity 520ms ease',
                         }}
-                        className={`absolute w-[200px] sm:w-[235px] md:w-[270px] aspect-[3/4] overflow-hidden cursor-pointer rounded-none border ${
-                          isCenter
-                            ? 'border-cyan-400/70 shadow-[0_25px_70px_rgba(0,0,0,0.9),0_0_28px_rgba(34,211,238,0.22)]'
-                            : 'border-white/15'
-                        }`}
+                        className="absolute w-[200px] sm:w-[235px] md:w-[270px] aspect-[3/4] cursor-pointer rounded-none will-change-transform"
                       >
-                        <img
-                          src={item.thumbnailUrl}
-                          alt={displayClient}
-                          draggable={false}
-                          onError={(e) => {
-                            const target = e.currentTarget;
-                            if (!target.dataset.fallback) {
-                              target.dataset.fallback = '1';
-                              target.src = `https://lh3.googleusercontent.com/d/${item.id}=w1200`;
-                            }
+                        <div
+                          onMouseMove={(e) => {
+                            if (!isCenter) return;
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const nx =
+                              (e.clientX - rect.left) / rect.width - 0.5;
+                            const ny =
+                              (e.clientY - rect.top) / rect.height - 0.5;
+                            e.currentTarget.style.transform = `perspective(900px) rotateX(${(-ny * 8).toFixed(2)}deg) rotateY(${(nx * 10).toFixed(2)}deg)`;
                           }}
-                          className="w-full h-full object-cover rounded-none"
-                        />
-                        <div className="absolute top-3 inset-x-3 py-1 px-2 bg-slate-950/75 backdrop-blur-md border border-white/15 text-center">
-                          <span className="font-jakarta font-bold text-[10px] uppercase tracking-[0.18em] text-white truncate block">
-                            {isCenter ? displayClient : displayBrand}
-                          </span>
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = '';
+                          }}
+                          className={`relative w-full h-full overflow-hidden rounded-none border transition-transform duration-150 ease-out ${
+                            isCenter
+                              ? 'border-cyan-400/70 shadow-[0_22px_60px_rgba(0,0,0,0.85),0_0_24px_rgba(34,211,238,0.2)]'
+                              : 'border-white/15'
+                          }`}
+                        >
+                          <img
+                            src={item.thumbnailUrl}
+                            alt={displayClient}
+                            decoding="async"
+                            draggable={false}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              if (!target.dataset.fallback) {
+                                target.dataset.fallback = '1';
+                                target.src = `https://lh3.googleusercontent.com/d/${item.id}=w1200`;
+                              }
+                            }}
+                            className="w-full h-full object-cover rounded-none"
+                          />
+                          <div className="absolute top-3 inset-x-3 py-1 px-2 bg-[#070B14]/90 border border-white/15 text-center">
+                            <span className="font-jakarta font-bold text-[10px] uppercase tracking-[0.18em] text-white truncate block">
+                              {isCenter ? displayClient : displayBrand}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -1031,7 +1029,7 @@ export default function PhotographerDemoPage() {
                   return (
                     <article
                       key={photo.id}
-                      className="break-inside-avoid mb-3 sm:mb-5 glass-panel rounded-none overflow-hidden group"
+                      className="break-inside-avoid mb-3 sm:mb-5 photo-card-surface rounded-none overflow-hidden group"
                     >
                       <div
                         onClick={() => setLightboxIndex(idx)}
@@ -1042,6 +1040,7 @@ export default function PhotographerDemoPage() {
                           src={photo.thumbnailUrl}
                           alt={displayClient}
                           loading="lazy"
+                          decoding="async"
                           draggable={false}
                           onError={(e) => {
                             const target = e.currentTarget;
