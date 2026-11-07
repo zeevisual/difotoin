@@ -27,14 +27,15 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
 
 const STORAGE_GALLERIES_KEY = 'difotoin_galleries_zv_v2';
 const STORAGE_SELECTIONS_KEY = 'difotoin_selections_zv_v2';
-const STORAGE_STUDIOS_KEY = 'difotoin_studio_subs_zv_v1';
+const STORAGE_STUDIOS_KEY = 'difotoin_studio_subs_zv_v2';
+const LEGACY_DUMMY_STUDIO_ID = '99999999-9999-4999-8999-999999999992';
 
 export const SEED_STUDIO_SUBSCRIPTIONS: StudioSubscription[] = [
   {
     id: '99999999-9999-4999-8999-999999999991',
     studio_slug: 'zeevisual',
     studio_name: 'Zeevisual',
-    owner_name: 'Owner Zeevisual (Super Admin)',
+    owner_name: 'Zeevisual (Super Admin)',
     whatsapp_number: '6281234567890',
     access_code: 'ZV2025',
     plan_name: 'Super Admin',
@@ -43,20 +44,6 @@ export const SEED_STUDIO_SUBSCRIPTIONS: StudioSubscription[] = [
     is_super_admin: true,
     expires_at: null,
     created_at: '2024-10-01T00:00:00.000Z',
-  },
-  {
-    id: '99999999-9999-4999-8999-999999999992',
-    studio_slug: 'kalasenja',
-    studio_name: 'Kalasenja Portrait',
-    owner_name: 'Raka Pratama',
-    whatsapp_number: '6281298765432',
-    access_code: 'DFTN-KALA25',
-    plan_name: 'Bulanan (30 Hari)',
-    max_galleries: 50,
-    is_active: true,
-    is_super_admin: false,
-    expires_at: new Date(Date.now() + 30 * 86400 * 1000).toISOString(),
-    created_at: '2024-10-12T00:00:00.000Z',
   },
 ];
 
@@ -254,11 +241,25 @@ export async function fetchAllStudioSubscriptions(): Promise<
       .order('created_at', { ascending: true });
 
     if (!error && data && data.length > 0) {
-      saveLocalStudios(data as StudioSubscription[]);
-      return data as StudioSubscription[];
+      const hasLegacyDummy = (data as StudioSubscription[]).some(
+        (s) => s.id === LEGACY_DUMMY_STUDIO_ID
+      );
+      if (hasLegacyDummy) {
+        await supabase
+          .from('studio_subscriptions')
+          .delete()
+          .eq('id', LEGACY_DUMMY_STUDIO_ID);
+      }
+      const cleaned = (data as StudioSubscription[]).filter(
+        (s) => s.id !== LEGACY_DUMMY_STUDIO_ID
+      );
+      const finalStudios =
+        cleaned.length > 0 ? cleaned : SEED_STUDIO_SUBSCRIPTIONS;
+      saveLocalStudios(finalStudios);
+      return finalStudios;
     }
   }
-  return getLocalStudios();
+  return getLocalStudios().filter((s) => s.id !== LEGACY_DUMMY_STUDIO_ID);
 }
 
 export async function authenticateStudio(

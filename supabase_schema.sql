@@ -273,7 +273,7 @@ values
     '99999999-9999-4999-8999-999999999991',
     'zeevisual',
     'Zeevisual',
-    'Owner Zeevisual (Super Admin)',
+    'Zeevisual (Super Admin)',
     '6281234567890',
     'ZV2025',
     'Super Admin',
@@ -281,19 +281,6 @@ values
     true,
     true,
     null
-  ),
-  (
-    '99999999-9999-4999-8999-999999999992',
-    'kalasenja',
-    'Kalasenja Portrait',
-    'Raka Pratama',
-    '6281298765432',
-    'DFTN-KALA25',
-    'Bulanan (30 Hari)',
-    50,
-    true,
-    false,
-    now() + interval '30 days'
   )
 on conflict (studio_slug) do nothing;
 

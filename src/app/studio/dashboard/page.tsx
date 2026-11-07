@@ -645,7 +645,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   onChange={(e) =>
                     setLoginSlug(slugifyClientName(e.target.value))
                   }
-                  placeholder="Contoh: zeevisual atau kalasenja"
+                  placeholder="Contoh: zeevisual"
                   required
                   className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-sm focus:outline-none focus:border-cyan-400"
                 />
@@ -967,7 +967,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       setNewSubStudioName(e.target.value);
                       setNewSubStudioSlug(slugifyClientName(e.target.value));
                     }}
-                    placeholder="Contoh: Lumina Portrait Studio"
+                    placeholder="Contoh: Zeevisual"
                     required
                     className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-semibold text-sm focus:outline-none focus:border-cyan-400"
                   />
@@ -984,7 +984,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       onChange={(e) =>
                         setNewSubStudioSlug(slugifyClientName(e.target.value))
                       }
-                      placeholder="lumina-portrait"
+                      placeholder="zeevisual"
                       required
                       className="w-full bg-white/[0.03] text-cyan-300 placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono font-bold text-xs focus:outline-none focus:border-cyan-400"
                     />
@@ -998,7 +998,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       type="text"
                       value={newSubOwnerName}
                       onChange={(e) => setNewSubOwnerName(e.target.value)}
-                      placeholder="Contoh: Andi Wijaya"
+                      placeholder="Contoh: Zeevisual"
                       required
                       className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta text-sm focus:outline-none focus:border-cyan-400"
                     />
@@ -1317,7 +1317,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                         value={studioBrandName}
                         onChange={(e) => setStudioBrandName(e.target.value)}
                         placeholder={
-                          loggedStudio?.studio_name || 'Contoh: Kala Senja Photography'
+                          loggedStudio?.studio_name || 'Contoh: Zeevisual'
                         }
                         required
                         className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta font-bold text-sm focus:outline-none focus:border-cyan-400"
@@ -1354,7 +1354,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                       type="text"
                       value={clientName}
                       onChange={(e) => handleClientNameChange(e.target.value)}
-                      placeholder="Contoh: Aida Fitri Harahab"
+                      placeholder="Contoh: Zeevisual"
                       required
                       className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-fraunces font-bold text-base focus:outline-none focus:border-cyan-400"
                     />
