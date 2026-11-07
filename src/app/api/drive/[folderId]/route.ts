@@ -56,10 +56,11 @@ async function tryFetchPublicEmbeddedDriveFolder(
     while ((match = entryRegex.exec(html)) !== null) {
       const fileId = match[1];
       const fileName = match[2].trim();
-      const isImage = /\.(jpe?g|png|webp|gif|heic|avif|bmp|tiff?)$/i.test(
-        fileName
-      );
-      if (!isImage && results.length > 0) continue;
+      const isNonImage =
+        /\.(mp4|mov|avi|mkv|pdf|zip|rar|doc|docx|xls|xlsx|txt|mp3|wav)$/i.test(
+          fileName
+        );
+      if (isNonImage) continue;
 
       const idx = results.length;
       results.push({
@@ -86,11 +87,12 @@ async function tryFetchPublicEmbeddedDriveFolder(
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { folderId: string } }
 ) {
   const folderId = params.folderId;
   const apiKey = process.env.GOOGLE_DRIVE_API_KEY;
+  const strictMode = request.nextUrl.searchParams.get('strict') === '1';
 
   const isDemoFolder =
     !folderId ||
@@ -100,6 +102,16 @@ export async function GET(
     folderId === '1z7DRezaKiranaPortrait35mm';
 
   if (isDemoFolder) {
+    if (strictMode) {
+      return NextResponse.json({
+        source: 'empty-or-private',
+        folderId,
+        warning:
+          'Silakan tempel link folder Google Drive foto Anda sendiri (pastikan akses folder disetel ke "Siapa saja yang memiliki link / Anyone with the link").',
+        count: 0,
+        photos: [],
+      });
+    }
     return NextResponse.json({
       source: 'demo-fallback',
       folderId,
@@ -200,7 +212,19 @@ export async function GET(
     });
   }
 
-  // 3. Fallback to curated mixed portrait/landscape editorial photos
+  // 3. If strictMode is requested (e.g. Photographer Demo Testing), inform user instead of showing generic photos
+  if (strictMode) {
+    return NextResponse.json({
+      source: 'empty-or-private',
+      folderId,
+      warning:
+        'Folder Google Drive belum dibuka ke Publik ("Siapa saja yang memiliki link / Anyone with the link") atau tidak berisi file foto.',
+      count: 0,
+      photos: [],
+    });
+  }
+
+  // 4. Fallback to curated mixed portrait/landscape editorial photos
   return NextResponse.json({
     source: 'demo-fallback',
     folderId,

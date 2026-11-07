@@ -4,9 +4,9 @@ import {
   ArrowUpRight,
   CheckCircle2,
   FolderOpen,
-  Heart,
   KeyRound,
   Lock,
+  MessageCircle,
   Sparkles,
 } from 'lucide-react';
 import GiantFooter from '@/components/GiantFooter';
@@ -39,6 +39,12 @@ export default function HomePage() {
                 EXPLORE
               </span>
               <Link
+                href="/studio/demo"
+                className="text-cyan-300 hover:text-cyan-200 transition-colors"
+              >
+                DEMO FOTOGRAFER
+              </Link>
+              <Link
                 href="/zeevisual/aida-fitri-harahab"
                 className="hover:text-cyan-400 transition-colors"
               >
@@ -59,6 +65,14 @@ export default function HomePage() {
             </nav>
 
             <div className="flex items-center gap-2.5">
+              <Link
+                href="/studio/demo"
+                data-cursor="DEMO"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-300 font-jakarta font-semibold text-xs border border-cyan-400/30 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Coba Demo</span>
+              </Link>
               <Link
                 href="/studio/dashboard"
                 data-cursor="STUDIO"
@@ -106,12 +120,12 @@ export default function HomePage() {
               </Link>
 
               <Link
-                href="/zeevisual/aida-fitri-harahab"
+                href="/studio/demo"
                 data-cursor="DEMO"
-                className="btn-futuristic inline-flex items-center gap-2 px-6 py-3.5 glass-panel hover:bg-white/10 text-white font-jakarta font-semibold text-xs uppercase tracking-[0.16em] transition-all hover:-translate-y-0.5"
+                className="btn-futuristic inline-flex items-center gap-2 px-6 py-3.5 glass-panel hover:bg-white/10 text-white font-jakarta font-semibold text-xs uppercase tracking-[0.16em] transition-all hover:-translate-y-0.5 border border-cyan-400/35"
               >
-                <Heart className="w-4 h-4 text-cyan-400" />
-                <span>Lihat Demo Pilih Foto</span>
+                <FolderOpen className="w-4 h-4 text-cyan-400" />
+                <span>Demo Pakai Google Drive Anda</span>
               </Link>
             </div>
           </div>
@@ -154,12 +168,21 @@ export default function HomePage() {
             </div>
             <div className="glass-panel p-5 transition-transform duration-500 hover:-translate-y-1">
               <div className="text-[11px] font-mono text-cyan-400 uppercase tracking-widest mb-1">
-                03 // MULTI-STUDIO BRANDING
+                03 // DEMO &amp; LISENSI STUDIO
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Khusus fotografer berlangganan: nama brand web otomatis
-                mengikuti nama studio fotografer masing-masing dengan lisensi
-                resmi Crafted by Zeevisual.
+                Fotografer dapat mengetes tampilan gratis memakai link Google
+                Drive sendiri. Untuk membuka pengiriman link &amp; teks foto,
+                berlangganan via WA Super Admin{' '}
+                <a
+                  href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20Difotoin."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 font-semibold hover:underline"
+                >
+                  089614114644
+                </a>
+                .
               </p>
             </div>
           </div>
@@ -286,6 +309,46 @@ export default function HomePage() {
                 <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </div>
             </Link>
+          </div>
+
+          {/* PHOTOGRAPHER FREE SANDBOX DEMO & SUBSCRIPTION BANNER */}
+          <div className="glass-panel border border-cyan-400/30 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex flex-col gap-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 text-cyan-300 font-jakarta font-bold text-xs uppercase tracking-[0.2em]">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Mode Demo Fotografer • Tes Pakai Google Drive Sendiri</span>
+              </div>
+              <h3 className="font-jakarta font-bold text-xl md:text-2xl text-white">
+                Ingin Coba Pakai Foto Jepretan Anda Sendiri Sebelum Berlangganan?
+              </h3>
+              <p className="font-jakarta text-xs md:text-sm text-slate-300 leading-relaxed">
+                Tempelkan link folder Google Drive Anda di halaman Mode Demo
+                untuk mengetes tampilan Pilih Foto &amp; Album Digital 3D secara
+                langsung. Untuk membuka pengiriman link ke klien &amp; ekspor
+                teks nama file foto, silakan berlangganan melalui Super Admin.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
+              <Link
+                href="/studio/demo"
+                data-cursor="DEMO"
+                className="btn-futuristic px-5 py-3 bg-white/10 hover:bg-white/20 text-white border border-cyan-400/40 font-jakarta font-bold text-xs uppercase tracking-wider inline-flex items-center justify-center gap-2"
+              >
+                <FolderOpen className="w-4 h-4 text-cyan-400" />
+                <span>Coba Mode Demo</span>
+              </Link>
+              <a
+                href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20Difotoin."
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="WHATSAPP"
+                className="btn-futuristic px-5 py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-extrabold text-xs uppercase tracking-wider shadow-[0_0_24px_rgba(34,211,238,0.35)] inline-flex items-center justify-center gap-2"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>WA Super Admin • 089614114644</span>
+              </a>
+            </div>
           </div>
         </div>
       </main>

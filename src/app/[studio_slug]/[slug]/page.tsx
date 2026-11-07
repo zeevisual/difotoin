@@ -208,14 +208,15 @@ Terima kasih!`;
   ]);
 
   const studioWaUrl = useMemo(() => {
-    const cleanPhone = (gallery.studio_whatsapp || '')
-      .replace(/\D/g, '')
-      .replace(/^0/, '62');
+    const rawPhone =
+      gallery.studio_whatsapp ||
+      (gallery.studio_slug === 'zeevisual' ? '6289614114644' : '');
+    const cleanPhone = rawPhone.replace(/\D/g, '').replace(/^0/, '62');
     const encoded = encodeURIComponent(clientToStudioWaMessage);
     return cleanPhone
       ? `https://wa.me/${cleanPhone}?text=${encoded}`
       : `https://wa.me/?text=${encoded}`;
-  }, [gallery.studio_whatsapp, clientToStudioWaMessage]);
+  }, [gallery.studio_whatsapp, gallery.studio_slug, clientToStudioWaMessage]);
 
   const filteredPhotos = useMemo(() => {
     return photos.filter((photo) => {

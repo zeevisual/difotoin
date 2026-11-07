@@ -30,13 +30,24 @@ const STORAGE_SELECTIONS_KEY = 'difotoin_selections_zv_v2';
 const STORAGE_STUDIOS_KEY = 'difotoin_studio_subs_zv_v2';
 const LEGACY_DUMMY_STUDIO_ID = '99999999-9999-4999-8999-999999999992';
 
+export const SUPER_ADMIN_WA_NUMBER = '6289614114644';
+export const SUPER_ADMIN_WA_DISPLAY = '0896-1411-4644';
+
+export function buildSuperAdminUpgradeWaUrl(studioName?: string): string {
+  const cleanBrand = studioName?.trim();
+  const intro = cleanBrand
+    ? `Halo Super Admin Zeevisual, saya dari studio *${cleanBrand}* sudah mencoba Mode Demo Difotoin dan ingin berlangganan Full Akses.`
+    : 'Halo Super Admin Zeevisual, saya sudah mencoba Mode Demo Difotoin dan ingin berlangganan Full Akses untuk studio saya.';
+  return `https://wa.me/${SUPER_ADMIN_WA_NUMBER}?text=${encodeURIComponent(intro)}`;
+}
+
 export const SEED_STUDIO_SUBSCRIPTIONS: StudioSubscription[] = [
   {
     id: '99999999-9999-4999-8999-999999999991',
     studio_slug: 'zeevisual',
     studio_name: 'Zeevisual',
     owner_name: 'Zeevisual (Super Admin)',
-    whatsapp_number: '6281234567890',
+    whatsapp_number: SUPER_ADMIN_WA_NUMBER,
     access_code: 'ZV2025',
     plan_name: 'Super Admin',
     max_galleries: 9999,
