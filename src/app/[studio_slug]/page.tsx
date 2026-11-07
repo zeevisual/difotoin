@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   Camera,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -12,7 +13,6 @@ import {
   Download,
   ExternalLink,
   Eye,
-  EyeOff,
   Heart,
   KeyRound,
   Lock,
@@ -21,18 +21,23 @@ import {
   Pause,
   Play,
   PlayCircle,
+  Plus,
   Share2,
   Sparkles,
+  Users,
   X,
 } from 'lucide-react';
 import GiantFooter from '@/components/GiantFooter';
 import {
+  decodeGuestAlbumPhotoIds,
+  encodeGuestAlbumPhotoIds,
   fetchGalleryBySlug,
+  fetchSelectionsForGallery,
   SEED_GALLERIES,
   updateGallerySettings,
 } from '@/lib/supabase';
 import { DEMO_EDITORIAL_PHOTOS } from '@/lib/drive-utils';
-import { DrivePhoto, GalleryRecord } from '@/types/difotoin';
+import { DrivePhoto, GalleryRecord, SelectionRecord } from '@/types/difotoin';
 
 interface AlbumPageProps {
   params: {
@@ -47,11 +52,17 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   // IMPORTANT: Initialized as null / empty so NO wrong demo cover ever flashes while loading!
   const [gallery, setGallery] = useState<GalleryRecord | null>(null);
   const [photos, setPhotos] = useState<DrivePhoto[]>([]);
+  const [proofingSelections, setProofingSelections] = useState<
+    SelectionRecord[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHeroImgLoaded, setIsHeroImgLoaded] = useState(false);
 
   // Visitor / Owner simulation states
   const [previewAsVisitor, setPreviewAsVisitor] = useState(false);
+  const [ownerGridFilter, setOwnerGridFilter] = useState<
+    'all' | 'guest' | 'private'
+  >('all');
   const [isPinUnlocked, setIsPinUnlocked] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
@@ -93,8 +104,8 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
   const [gridLimit, setGridLimit] = useState(24);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // Lightbox & Favorites
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // Lightbox & Favorites (stored by photoId so Owner & Guest views never mismatch indices)
+  const [lightboxPhotoId, setLightboxPhotoId] = useState<string | null>(null);
   const [guestFavorites, setGuestFavorites] = useState<string[]>([]);
 
   const [baseUrl, setBaseUrl] = useState(
@@ -133,19 +144,21 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       const activeGal = found || { ...SEED_GALLERIES[0], slug };
       if (!isMounted) return;
 
+      const [driveRes, loadedSelections] = await Promise.allSettled([
+        fetch(`/api/drive/${encodeURIComponent(activeGal.gdrive_folder_id)}`),
+        fetchSelectionsForGallery(activeGal.id),
+      ]);
+
       let loadedPhotos: DrivePhoto[] = [];
-      try {
-        const res = await fetch(
-          `/api/drive/${encodeURIComponent(activeGal.gdrive_folder_id)}`
-        );
-        if (res.ok) {
-          const data = await res.json();
+      if (driveRes.status === 'fulfilled' && driveRes.value.ok) {
+        try {
+          const data = await driveRes.value.json();
           if (Array.isArray(data.photos) && data.photos.length > 0) {
             loadedPhotos = data.photos;
           }
+        } catch {
+          // Fallback if JSON parse error
         }
-      } catch {
-        // Fallback if network error
       }
 
       if (!isMounted) return;
@@ -157,6 +170,9 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       setGallery(activeGal);
       setPinDraft(activeGal.album_pin || '');
       setPhotos(loadedPhotos);
+      if (loadedSelections.status === 'fulfilled') {
+        setProofingSelections(loadedSelections.value);
+      }
       setIsLoading(false);
     }
 
@@ -166,20 +182,57 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     };
   }, [slug]);
 
-  const visiblePhotos = useMemo(() => {
-    if (!gallery) return photos;
-    const hiddenSet = new Set(gallery.hidden_photo_ids || []);
-    const hasValidOwner = Boolean(
-      tokenParam && tokenParam === gallery.owner_token
-    );
-    const ownerActive = hasValidOwner && !previewAsVisitor;
-    return photos.filter((photo) => {
-      if (!ownerActive && hiddenSet.has(photo.id)) {
-        return false;
-      }
-      return true;
-    });
-  }, [photos, gallery, tokenParam, previewAsVisitor]);
+  const hasValidOwnerToken = Boolean(
+    gallery && tokenParam && tokenParam === gallery.owner_token
+  );
+  const isOwnerMode = hasValidOwnerToken && !previewAsVisitor;
+
+  // Curated Guest Album State — Guests ONLY see photos explicitly chosen by the Client!
+  const guestAlbumState = useMemo(
+    () => decodeGuestAlbumPhotoIds(gallery?.hidden_photo_ids),
+    [gallery?.hidden_photo_ids]
+  );
+
+  const guestSelectedSet = useMemo(
+    () => new Set(guestAlbumState.photoIds),
+    [guestAlbumState.photoIds]
+  );
+
+  const guestVisiblePhotos = useMemo(
+    () => photos.filter((photo) => guestSelectedSet.has(photo.id)),
+    [photos, guestSelectedSet]
+  );
+
+  // Proofing selections that match loaded Google Drive photo IDs (for 1-click import)
+  const matchingProofingIds = useMemo(() => {
+    const idSet = new Set(photos.map((p) => p.id));
+    return proofingSelections
+      .map((s) => s.photo_id)
+      .filter((id) => idSet.has(id));
+  }, [photos, proofingSelections]);
+
+  // 3D Carousel photos: Guests strictly see guestVisiblePhotos; Owner previews curated set (if >= 3) or all photos
+  const carouselPhotos = useMemo(() => {
+    if (!isOwnerMode) return guestVisiblePhotos;
+    return guestVisiblePhotos.length >= 3 ? guestVisiblePhotos : photos;
+  }, [isOwnerMode, guestVisiblePhotos, photos]);
+
+  // Main Grid photos: Guests strictly see guestVisiblePhotos; Owner sees all/guest/private per filter
+  const gridPhotos = useMemo(() => {
+    if (!isOwnerMode) return guestVisiblePhotos;
+    if (ownerGridFilter === 'guest') return guestVisiblePhotos;
+    if (ownerGridFilter === 'private') {
+      return photos.filter((p) => !guestSelectedSet.has(p.id));
+    }
+    return photos;
+  }, [isOwnerMode, guestVisiblePhotos, ownerGridFilter, photos, guestSelectedSet]);
+
+  // Lightbox pool: Guests strictly navigate guestVisiblePhotos; Owner navigates full archive
+  const lightboxPhotos = isOwnerMode ? photos : guestVisiblePhotos;
+  const activeLightboxIndex = useMemo(() => {
+    if (!lightboxPhotoId) return -1;
+    return lightboxPhotos.findIndex((p) => p.id === lightboxPhotoId);
+  }, [lightboxPhotoId, lightboxPhotos]);
 
   const coverPhoto = useMemo(() => {
     if (photos.length === 0) return null;
@@ -187,8 +240,18 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       const matched = photos.find((p) => p.id === gallery.cover_photo_id);
       if (matched) return matched;
     }
+    if (guestVisiblePhotos.length > 0) return guestVisiblePhotos[0];
     return photos[0];
-  }, [photos, gallery?.cover_photo_id]);
+  }, [photos, gallery?.cover_photo_id, guestVisiblePhotos]);
+
+  // Keep carousel center index safely within bounds when switching filters/modes
+  useEffect(() => {
+    if (carouselPhotos.length === 0) {
+      setFeaturedCenterIdx(0);
+    } else if (featuredCenterIdx >= carouselPhotos.length) {
+      setFeaturedCenterIdx(0);
+    }
+  }, [carouselPhotos.length, featuredCenterIdx]);
 
   // Reset hero fade when cover photo changes, with safety fallback timer
   useEffect(() => {
@@ -200,14 +263,14 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   // Optional Auto-Orbit Carousel Timer
   useEffect(() => {
-    if (!isAutoPlaying || isHoveringCarousel || visiblePhotos.length < 3) {
+    if (!isAutoPlaying || isHoveringCarousel || carouselPhotos.length < 3) {
       return;
     }
     const id = setInterval(() => {
-      setFeaturedCenterIdx((prev) => (prev + 1) % visiblePhotos.length);
+      setFeaturedCenterIdx((prev) => (prev + 1) % carouselPhotos.length);
     }, 3400);
     return () => clearInterval(id);
-  }, [isAutoPlaying, isHoveringCarousel, visiblePhotos.length]);
+  }, [isAutoPlaying, isHoveringCarousel, carouselPhotos.length]);
 
   function saveCoverPosition(
     nextX: number,
@@ -276,34 +339,34 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
   // Smooth 3D Carousel Navigation Helpers
   function handlePrevCarousel() {
-    if (visiblePhotos.length === 0) return;
+    if (carouselPhotos.length === 0) return;
     setFeaturedCenterIdx(
-      (prev) => (prev - 1 + visiblePhotos.length) % visiblePhotos.length
+      (prev) => (prev - 1 + carouselPhotos.length) % carouselPhotos.length
     );
   }
 
   function handleNextCarousel() {
-    if (visiblePhotos.length === 0) return;
-    setFeaturedCenterIdx((prev) => (prev + 1) % visiblePhotos.length);
+    if (carouselPhotos.length === 0) return;
+    setFeaturedCenterIdx((prev) => (prev + 1) % carouselPhotos.length);
   }
 
   // Progressive Infinite Scroll Observer for Large Photo Albums
   useEffect(() => {
-    if (gridLimit >= visiblePhotos.length) return;
+    if (gridLimit >= gridPhotos.length) return;
     const el = loadMoreRef.current;
     if (!el || typeof IntersectionObserver === 'undefined') return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setGridLimit((prev) => Math.min(prev + 24, visiblePhotos.length));
+          setGridLimit((prev) => Math.min(prev + 24, gridPhotos.length));
         }
       },
       { rootMargin: '600px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [gridLimit, visiblePhotos.length]);
+  }, [gridLimit, gridPhotos.length]);
 
   // Compute shortest circular signed offset in [-N/2, +N/2] so every card glides smoothly!
   function getCircularOffset(index: number, center: number, total: number) {
@@ -336,11 +399,6 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       </div>
     );
   }
-
-  const hasValidOwnerToken = Boolean(
-    tokenParam && tokenParam === gallery.owner_token
-  );
-  const isOwnerMode = hasValidOwnerToken && !previewAsVisitor;
 
   const cleanVisitorUrl = `${baseUrl}/${gallery.slug}`;
   const whatsappVisitorShareText = `Halo keluarga & sahabat! Berikut link album digital momen spesial ${gallery.client_name} dari ${gallery.studio_name}:\n${cleanVisitorUrl}${
@@ -405,14 +463,21 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
     }
   }
 
-  // Owner Action 3: Toggle Photo Visibility
-  async function handleToggleHidePhoto(photoId: string) {
+  // Owner Action 3: Save Curated Guest Album Photo Whitelist (Optimistic Instant UI!)
+  async function handleSaveGuestAlbumIds(
+    nextGuestIds: string[],
+    toastMessage?: string
+  ) {
     if (!gallery) return;
-    const currentHidden = gallery.hidden_photo_ids || [];
-    const isHidden = currentHidden.includes(photoId);
-    const nextHidden = isHidden
-      ? currentHidden.filter((id) => id !== photoId)
-      : [...currentHidden, photoId];
+    const encoded = encodeGuestAlbumPhotoIds(nextGuestIds);
+
+    // Optimistic update so clicking photos feels 0ms instant
+    setGallery((prev) =>
+      prev ? { ...prev, hidden_photo_ids: encoded } : prev
+    );
+    if (toastMessage) {
+      showToast(toastMessage);
+    }
 
     setIsSavingOwnerSetting(true);
     try {
@@ -420,24 +485,55 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
         gallery.id,
         gallery.owner_token,
         {
-          hidden_photo_ids: nextHidden,
+          hidden_photo_ids: encoded,
         }
       );
       if (updated) {
         setGallery(updated);
-      } else {
-        setGallery((prev) =>
-          prev ? { ...prev, hidden_photo_ids: nextHidden } : prev
-        );
       }
-      showToast(
-        isHidden
-          ? 'Foto ditampilkan kembali untuk pengunjung.'
-          : 'Foto disembunyikan dari pengunjung.'
-      );
     } finally {
       setIsSavingOwnerSetting(false);
     }
+  }
+
+  async function handleToggleGuestPhoto(photoId: string) {
+    const isCurrentlySelected = guestSelectedSet.has(photoId);
+    const nextGuestIds = isCurrentlySelected
+      ? guestAlbumState.photoIds.filter((id) => id !== photoId)
+      : [...guestAlbumState.photoIds, photoId];
+
+    await handleSaveGuestAlbumIds(
+      nextGuestIds,
+      isCurrentlySelected
+        ? 'Foto dihapus dari Album Tamu.'
+        : `Foto ditambahkan ke Album Tamu (${nextGuestIds.length} foto tampil).`
+    );
+  }
+
+  async function handleUseProofingSelectionsForGuest() {
+    if (matchingProofingIds.length === 0) {
+      showToast('Belum ada foto pilihan edit di halaman Pilih Foto.');
+      return;
+    }
+    await handleSaveGuestAlbumIds(
+      matchingProofingIds,
+      `${matchingProofingIds.length} foto pilihan edit diterapkan ke Album Tamu!`
+    );
+  }
+
+  async function handleSelectAllForGuest() {
+    const allIds = photos.map((p) => p.id);
+    await handleSaveGuestAlbumIds(
+      allIds,
+      `Semua ${allIds.length} foto ditampilkan ke Album Tamu.`
+    );
+  }
+
+  async function handleClearGuestPhotos() {
+    await handleSaveGuestAlbumIds(
+      [],
+      'Pilihan foto Album Tamu dikosongkan.'
+    );
   }
 
   // Owner Action 4: Copy Clean Visitor Link
@@ -497,60 +593,84 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             >
               EXPLORE
             </a>
-            <a
-              href="#review-strip"
-              className="hover:text-white transition-colors"
-            >
-              REVIEW
-            </a>
+            {carouselPhotos.length >= 3 && (
+              <a
+                href="#review-strip"
+                className="hover:text-white transition-colors"
+              >
+                REVIEW
+              </a>
+            )}
             <a
               href="#photo-grid"
               className="hover:text-white transition-colors"
             >
-              PHOTO ({visiblePhotos.length})
+              {isOwnerMode
+                ? `ALBUM TAMU (${guestVisiblePhotos.length}/${photos.length})`
+                : `PHOTO (${guestVisiblePhotos.length})`}
             </a>
-            <Link
-              href={`/${gallery.studio_slug}/${gallery.slug}`}
-              className="hover:text-cyan-400 transition-colors"
-            >
-              PROOFING
-            </Link>
+            {isOwnerMode && (
+              <Link
+                href={`/${gallery.studio_slug}/${gallery.slug}`}
+                className="hover:text-cyan-400 transition-colors"
+              >
+                PROOFING
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
             {hasValidOwnerToken && previewAsVisitor && (
               <button
                 type="button"
-                onClick={() => setPreviewAsVisitor(false)}
+                onClick={() => {
+                  setPreviewAsVisitor(false);
+                  setLightboxPhotoId(null);
+                }}
                 className="inline-flex items-center gap-1.5 bg-cyan-400 text-slate-950 font-jakarta font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5"
               >
                 <KeyRound className="w-3.5 h-3.5" />
-                <span>Mode Pemilik</span>
+                <span>Kembali ke Mode Pemilik</span>
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => setIsAdjustingCover((prev) => !prev)}
-              className={`inline-flex items-center gap-1.5 font-jakarta font-semibold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 border transition-colors ${
-                isAdjustingCover
-                  ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
-                  : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
-              }`}
-              title="Geser posisi foto sampul agar wajah/objek pas"
-            >
-              <Move className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">
-                {isAdjustingCover ? 'Selesai Geser' : 'Geser Sampul'}
-              </span>
-            </button>
+            {isOwnerMode && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsAdjustingCover((prev) => !prev)}
+                  className={`inline-flex items-center gap-1.5 font-jakarta font-semibold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 border transition-colors ${
+                    isAdjustingCover
+                      ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                      : 'bg-white/10 hover:bg-white/20 text-white border-white/15'
+                  }`}
+                  title="Geser posisi foto sampul agar wajah/objek pas"
+                >
+                  <Move className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">
+                    {isAdjustingCover ? 'Selesai Geser' : 'Geser Sampul'}
+                  </span>
+                </button>
 
-            <Link
-              href={`/${gallery.studio_slug}/${gallery.slug}`}
-              className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-jakarta font-semibold text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 border border-white/15 transition-colors"
-            >
-              <span>Pilih Foto</span>
-            </Link>
+                <Link
+                  href={`/${gallery.studio_slug}/${gallery.slug}`}
+                  className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-jakarta font-semibold text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 border border-white/15 transition-colors"
+                >
+                  <span>Pilih Foto Edit</span>
+                </Link>
+              </>
+            )}
+
+            {!isOwnerMode && guestVisiblePhotos.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setLightboxPhotoId(guestVisiblePhotos[0].id)}
+                className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-jakarta font-semibold text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 border border-white/15 transition-colors"
+              >
+                <PlayCircle className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Slideshow</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -565,9 +685,31 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 <span className="font-jakarta font-bold text-[11px] sm:text-xs uppercase tracking-[0.18em] text-cyan-300">
                   Mode Pemilik Album
                 </span>
+                <span className="hidden sm:inline font-mono text-[10px] text-slate-400">
+                  • {guestVisiblePhotos.length} dari {photos.length} foto tampil di Album Tamu
+                </span>
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActiveOwnerTool(
+                      activeOwnerTool === 'visibility' ? 'none' : 'visibility'
+                    )
+                  }
+                  className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 font-jakarta font-semibold text-[11px] sm:text-xs border transition-all ${
+                    activeOwnerTool === 'visibility'
+                      ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                      : 'bg-cyan-400/15 text-cyan-200 border-cyan-400/40 hover:bg-cyan-400/25'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>
+                    Pilih Foto Tamu ({guestVisiblePhotos.length}/{photos.length})
+                  </span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() =>
@@ -608,32 +750,13 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   type="button"
                   onClick={() =>
                     setActiveOwnerTool(
-                      activeOwnerTool === 'visibility' ? 'none' : 'visibility'
-                    )
-                  }
-                  className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 font-jakarta font-semibold text-[11px] sm:text-xs border transition-all ${
-                    activeOwnerTool === 'visibility'
-                      ? 'bg-cyan-400 text-slate-950 border-cyan-400'
-                      : 'bg-white/5 text-slate-200 border-white/10 hover:bg-white/10'
-                  }`}
-                >
-                  <EyeOff className="w-3.5 h-3.5" />
-                  <span>
-                    Sembunyikan ({gallery.hidden_photo_ids?.length || 0})
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveOwnerTool(
                       activeOwnerTool === 'share' ? 'none' : 'share'
                     )
                   }
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-400 text-slate-950 font-jakarta font-bold text-[11px] sm:text-xs hover:bg-cyan-300 transition-all"
                 >
                   <Share2 className="w-3.5 h-3.5" />
-                  <span>Bagikan Link</span>
+                  <span>Bagikan Link Tamu</span>
                 </button>
 
                 <button
@@ -641,6 +764,8 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                   onClick={() => {
                     setPreviewAsVisitor(true);
                     setIsPinUnlocked(false);
+                    setLightboxPhotoId(null);
+                    setIsAdjustingCover(false);
                   }}
                   className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white/10 text-white font-jakarta font-semibold text-[11px] sm:text-xs border border-white/15 hover:bg-white/20 transition-colors"
                 >
@@ -830,24 +955,63 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 )}
 
                 {activeOwnerTool === 'visibility' && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <span className="font-jakarta font-bold text-xs uppercase text-white">
-                        Atur Visibilitas Foto (
-                        {gallery.hidden_photo_ids?.length || 0} Disembunyikan)
-                      </span>
-                      <p className="font-jakarta text-xs text-slate-400">
-                        Klik ikon mata pada masing-masing foto di bawah untuk
-                        menyembunyikan atau menampilkan foto bagi tamu.
-                      </p>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                      <div>
+                        <span className="font-jakarta font-bold text-xs uppercase text-white">
+                          Pilih Foto untuk Album Tamu ({guestVisiblePhotos.length}{' '}
+                          dari {photos.length} Foto Dipilih)
+                        </span>
+                        <p className="font-jakarta text-xs text-slate-400 mt-0.5">
+                          Album Tamu tidak menampilkan semua foto otomatis — hanya
+                          foto yang kamu pilih di bawah yang akan terlihat oleh tamu.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {matchingProofingIds.length > 0 && (
+                          <button
+                            type="button"
+                            disabled={isSavingOwnerSetting}
+                            onClick={handleUseProofingSelectionsForGuest}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-400/20 hover:bg-cyan-400 hover:text-slate-950 text-cyan-200 border border-cyan-400/50 font-jakarta font-bold text-xs transition-colors"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>
+                              Pakai Pilihan Edit ({matchingProofingIds.length} Foto)
+                            </span>
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={isSavingOwnerSetting}
+                          onClick={handleSelectAllForGuest}
+                          className="px-3 py-1.5 bg-white/5 hover:bg-white/15 text-slate-200 border border-white/15 font-jakarta font-semibold text-xs transition-colors"
+                        >
+                          Pilih Semua ({photos.length})
+                        </button>
+
+                        {guestVisiblePhotos.length > 0 && (
+                          <button
+                            type="button"
+                            disabled={isSavingOwnerSetting}
+                            onClick={handleClearGuestPhotos}
+                            className="px-3 py-1.5 bg-white/5 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 font-jakarta font-semibold text-xs transition-colors"
+                          >
+                            Kosongkan
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveOwnerTool('none')}
+                          className="px-3.5 py-1.5 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs"
+                        >
+                          Selesai
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveOwnerTool('none')}
-                      className="shrink-0 px-3.5 py-1.5 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs"
-                    >
-                      Selesai
-                    </button>
                   </div>
                 )}
 
@@ -1123,30 +1287,36 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                 </h1>
 
                 <p className="font-jakarta text-xs sm:text-sm md:text-base text-slate-300 tracking-wider uppercase">
-                  {gallery.session_date} • {visiblePhotos.length} HIGH-RES FRAMES
+                  {isOwnerMode
+                    ? `${gallery.session_date} • ${guestVisiblePhotos.length} DARI ${photos.length} FOTO TAMPIL DI ALBUM TAMU`
+                    : `${gallery.session_date} • ${guestVisiblePhotos.length} SELECTED FRAMES`}
                 </p>
 
                 <div className="w-16 sm:w-24 h-1 bg-cyan-400 shadow-[0_0_12px_#22d3ee] mt-0.5" />
               </div>
 
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <button
-                  type="button"
-                  onClick={() => setLightboxIndex(0)}
-                  className="btn-futuristic inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-[11px] sm:text-xs uppercase tracking-[0.16em] shadow-[0_0_20px_rgba(34,211,238,0.25)]"
-                >
-                  <PlayCircle className="w-4 h-4" />
-                  <span>Buka Layar Penuh</span>
-                </button>
+                {lightboxPhotos.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setLightboxPhotoId(lightboxPhotos[0].id)}
+                    className="btn-futuristic inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-bold text-[11px] sm:text-xs uppercase tracking-[0.16em] shadow-[0_0_20px_rgba(34,211,238,0.25)]"
+                  >
+                    <PlayCircle className="w-4 h-4" />
+                    <span>Buka Layar Penuh</span>
+                  </button>
+                )}
 
-                <button
-                  type="button"
-                  onClick={() => setIsAdjustingCover((prev) => !prev)}
-                  className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 glass-panel hover:bg-white/15 text-white font-jakarta font-semibold text-[11px] sm:text-xs uppercase tracking-[0.14em]"
-                >
-                  <Move className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Geser Sampul</span>
-                </button>
+                {isOwnerMode && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAdjustingCover((prev) => !prev)}
+                    className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 sm:py-3 glass-panel hover:bg-white/15 text-white font-jakarta font-semibold text-[11px] sm:text-xs uppercase tracking-[0.14em]"
+                  >
+                    <Move className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Geser Sampul</span>
+                  </button>
+                )}
 
                 <a
                   href={coverPhoto.downloadUrl}
@@ -1162,7 +1332,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
           </section>
 
           {/* 2. FLUID 3D PERSPECTIVE COVERFLOW "REVIEW PHOTO" STAGE (Zero Stiffness!) */}
-          {visiblePhotos.length >= 3 && (
+          {carouselPhotos.length >= 3 && (
             <section
               id="review-strip"
               onMouseEnter={() => setIsHoveringCarousel(true)}
@@ -1236,11 +1406,11 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                       transformStyle: 'preserve-3d',
                     }}
                   >
-                    {visiblePhotos.map((item, idx) => {
+                    {carouselPhotos.map((item, idx) => {
                       const offset = getCircularOffset(
                         idx,
                         featuredCenterIdx,
-                        visiblePhotos.length
+                        carouselPhotos.length
                       );
                       const absOffset = Math.abs(offset);
 
@@ -1284,7 +1454,7 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
                           data-cursor={isCenter ? 'VIEW' : 'SLIDE'}
                           onClick={() => {
                             if (isCenter) {
-                              setLightboxIndex(idx);
+                              setLightboxPhotoId(item.id);
                             } else {
                               setFeaturedCenterIdx(idx);
                             }
@@ -1354,9 +1524,9 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
                 {/* Interactive Carousel Progress Dots */}
                 <div className="flex items-center justify-center gap-1.5 flex-wrap max-w-md">
-                  {visiblePhotos.slice(0, 15).map((p, dotIdx) => {
+                  {carouselPhotos.slice(0, 15).map((p, dotIdx) => {
                     const isActive =
-                      featuredCenterIdx % Math.min(visiblePhotos.length, 15) ===
+                      featuredCenterIdx % Math.min(carouselPhotos.length, 15) ===
                       dotIdx;
                     return (
                       <button
@@ -1379,207 +1549,328 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             </section>
           )}
 
-          {/* 3. SHARP, EDGE-TO-EDGE PHOTO GRID (ZERO ROUNDED CORNERS + INTERACTIVE HOVER) */}
+          {/* 3. SHARP, EDGE-TO-EDGE PHOTO GRID (CURATED GUEST ALBUM vs FULL CLIENT OWNER ARCHIVE) */}
           <section id="photo-grid" className="w-full px-4 md:px-10 py-10 md:py-12">
             <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 mb-6 md:mb-8 border-b border-white/10">
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 mb-6 md:mb-8 border-b border-white/10">
                 <div>
                   <span className="font-mono text-[11px] text-cyan-400 uppercase tracking-widest">
-                    FULL ARCHIVE // {gallery.studio_name.toUpperCase()}
+                    {isOwnerMode
+                      ? `KURASI ALBUM TAMU // ${gallery.studio_name.toUpperCase()}`
+                      : `CURATED GUEST ALBUM // ${gallery.studio_name.toUpperCase()}`}
                   </span>
                   <h2 className="font-jakarta font-bold text-xl md:text-2xl text-white uppercase tracking-wider mt-0.5">
-                    Koleksi Foto ({visiblePhotos.length})
+                    {isOwnerMode
+                      ? `Pilih Foto Album Tamu (${guestVisiblePhotos.length} / ${photos.length} Tampil)`
+                      : `Koleksi Foto Pilihan (${guestVisiblePhotos.length})`}
                   </h2>
+                  {isOwnerMode && (
+                    <p className="font-jakarta text-xs text-slate-400 mt-1">
+                      Klik tombol <strong className="text-cyan-300">+ Tampilkan ke Tamu</strong> pada foto yang ingin kamu perlihatkan di link Album Tamu. Foto lainnya tetap privat.
+                    </p>
+                  )}
                 </div>
-                <span className="font-jakarta text-xs text-slate-400">
-                  Klik foto untuk memperbesar atau mengunduh HD
-                </span>
-              </div>
 
-              <div className="columns-2 lg:columns-3 gap-3 sm:gap-6 space-y-3 sm:space-y-6">
-                {visiblePhotos.slice(0, gridLimit).map((photo, index) => {
-                  const isHidden = (gallery.hidden_photo_ids || []).includes(
-                    photo.id
-                  );
-                  const isCover = photo.id === coverPhoto.id;
-                  const isFav = guestFavorites.includes(photo.id);
-
-                  return (
-                    <article
-                      key={photo.id}
-                      className={`break-inside-avoid rounded-none photo-card-surface hover:-translate-y-0.5 flex flex-col group ${
-                        isCover
-                          ? 'border-cyan-400/70 ring-1 ring-cyan-400/40'
-                          : ''
+                {isOwnerMode ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOwnerGridFilter('all');
+                        setGridLimit(24);
+                      }}
+                      className={`px-3 py-1.5 font-jakarta font-semibold text-xs border transition-colors ${
+                        ownerGridFilter === 'all'
+                          ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                          : 'bg-white/5 text-slate-300 border-white/15 hover:bg-white/10'
                       }`}
                     >
-                      {/* Sharp 90-degree Photo Container — Natural Aspect Ratio */}
-                      <div
-                        data-cursor="VIEW"
-                        className="relative w-full overflow-hidden rounded-none bg-[#0D1117]"
+                      Semua Foto ({photos.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOwnerGridFilter('guest');
+                        setGridLimit(24);
+                      }}
+                      className={`px-3 py-1.5 font-jakarta font-semibold text-xs border transition-colors ${
+                        ownerGridFilter === 'guest'
+                          ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                          : 'bg-white/5 text-slate-300 border-white/15 hover:bg-white/10'
+                      }`}
+                    >
+                      ✓ Tampil di Tamu ({guestVisiblePhotos.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOwnerGridFilter('private');
+                        setGridLimit(24);
+                      }}
+                      className={`px-3 py-1.5 font-jakarta font-semibold text-xs border transition-colors ${
+                        ownerGridFilter === 'private'
+                          ? 'bg-cyan-400 text-slate-950 border-cyan-400 font-bold'
+                          : 'bg-white/5 text-slate-300 border-white/15 hover:bg-white/10'
+                      }`}
+                    >
+                      Privat ({photos.length - guestVisiblePhotos.length})
+                    </button>
+
+                    {matchingProofingIds.length > 0 && (
+                      <button
+                        type="button"
+                        disabled={isSavingOwnerSetting}
+                        onClick={handleUseProofingSelectionsForGuest}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cyan-400/15 hover:bg-cyan-400 hover:text-slate-950 text-cyan-300 border border-cyan-400/40 font-jakarta font-bold text-xs transition-colors"
                       >
-                        <img
-                          src={photo.thumbnailUrl}
-                          alt={photo.caption}
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => handleImageError(photo.id, e)}
-                          onClick={() => setLightboxIndex(index)}
-                          className={`w-full h-auto block rounded-none cursor-pointer transition-transform duration-500 ease-out group-hover:scale-[1.02] ${
-                            isHidden ? 'opacity-30 grayscale' : ''
-                          }`}
-                        />
-
-                        {gallery.watermark_enabled && !isHidden && (
-                          <span className="pointer-events-none absolute bottom-2 right-2 font-mono text-[9px] uppercase tracking-[0.22em] text-white/30 select-none">
-                            {gallery.studio_name}
-                          </span>
-                        )}
-
-                        {isCover && (
-                          <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-cyan-400 text-slate-950 font-jakarta font-bold text-[9px] sm:text-[10px] px-2 py-0.5 tracking-wider uppercase z-10">
-                            Sampul Album
-                          </div>
-                        )}
-
-                        {/* Hidden Notice Overlay in Owner Mode */}
-                        {isOwnerMode && isHidden && (
-                          <div className="absolute inset-0 bg-[#090C10]/90 flex flex-col items-center justify-center text-center p-4 text-white z-20">
-                            <EyeOff className="w-6 h-6 text-cyan-400 mb-1" />
-                            <span className="font-jakarta font-semibold text-xs uppercase tracking-wider">
-                              Disembunyikan dari Tamu
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleToggleHidePhoto(photo.id)}
-                              className="mt-2 px-3 py-1 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs"
-                            >
-                              Tampilkan Kembali
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Lightweight Hover Quick Actions Overlay (Zero backdrop-filter per card!) */}
-                        {!isHidden && (
-                          <div className="absolute inset-0 bg-[#090C10]/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2.5 z-10 pointer-events-none">
-                            <button
-                              type="button"
-                              onClick={() => setLightboxIndex(index)}
-                              title="Perbesar"
-                              className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
-                            >
-                              <Maximize2 className="w-4 h-4" />
-                            </button>
-
-                            <a
-                              href={photo.downloadUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              download={photo.name}
-                              title="Unduh HD"
-                              className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
-                            >
-                              <Download className="w-4 h-4" />
-                            </a>
-
-                            <button
-                              type="button"
-                              onClick={() => toggleGuestFavorite(photo.id)}
-                              title="Favorit"
-                              className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
-                            >
-                              <Heart
-                                className={`w-4 h-4 transition-transform active:scale-125 ${
-                                  isFav
-                                    ? 'fill-rose-500 text-rose-500'
-                                    : 'text-white'
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Sleek Glassmorphic Single-Line Footer */}
-                      <div className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 border-t border-white/10">
-                        <span className="font-mono text-[10px] sm:text-[11px] text-slate-300 truncate">
-                          {photo.name}
-                        </span>
-
-                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                          {isOwnerMode && (
-                            <>
-                              <button
-                                type="button"
-                                disabled={isCover || isSavingOwnerSetting}
-                                onClick={() => handleSetCoverPhoto(photo.id)}
-                                className={`px-2 py-1 font-jakarta font-semibold text-[10px] sm:text-[11px] border transition-colors ${
-                                  isCover
-                                    ? 'bg-cyan-400 text-slate-950 border-cyan-400'
-                                    : 'bg-white/5 hover:bg-white/15 text-slate-200 border-white/15'
-                                }`}
-                              >
-                                {isCover ? 'Sampul' : 'Set Sampul'}
-                              </button>
-
-                              <button
-                                type="button"
-                                disabled={isSavingOwnerSetting}
-                                onClick={() => handleToggleHidePhoto(photo.id)}
-                                title={
-                                  isHidden
-                                    ? 'Tampilkan ke Tamu'
-                                    : 'Sembunyikan dari Tamu'
-                                }
-                                className={`p-1 border transition-colors ${
-                                  isHidden
-                                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                                    : 'bg-white/5 hover:bg-white/15 text-slate-300 border-white/15'
-                                }`}
-                              >
-                                {isHidden ? (
-                                  <Eye className="w-3.5 h-3.5" />
-                                ) : (
-                                  <EyeOff className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            </>
-                          )}
-
-                          <a
-                            href={photo.downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download={photo.name}
-                            className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-slate-200 border border-white/15 font-jakarta font-semibold text-[10px] sm:text-[11px] transition-colors"
-                          >
-                            <Download className="w-3 h-3" />
-                            <span className="hidden sm:inline">Unduh</span>
-                          </a>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Pakai Pilihan Edit ({matchingProofingIds.length})</span>
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <span className="font-jakarta text-xs text-slate-400">
+                    Klik foto untuk memperbesar atau mengunduh HD
+                  </span>
+                )}
               </div>
 
-              {gridLimit < visiblePhotos.length && (
-                <div
-                  ref={loadMoreRef}
-                  className="w-full py-8 flex flex-col items-center justify-center gap-2"
-                >
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setGridLimit((prev) =>
-                        Math.min(prev + 36, visiblePhotos.length)
-                      )
-                    }
-                    className="px-5 py-2.5 bg-[#080D17] hover:bg-cyan-400 hover:text-slate-950 text-cyan-300 border border-cyan-400/40 font-jakarta font-bold text-xs uppercase tracking-wider transition-colors"
-                  >
-                    Tampilkan Foto Lainnya ({gridLimit} / {visiblePhotos.length})
-                  </button>
+              {/* Empty State when Guest opens Album before Client has selected any photos */}
+              {!isOwnerMode && guestVisiblePhotos.length === 0 ? (
+                <div className="glass-panel p-8 sm:p-12 text-center flex flex-col items-center justify-center gap-3 max-w-xl mx-auto my-6">
+                  <div className="w-12 h-12 bg-cyan-400/10 border border-cyan-400/30 text-cyan-300 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-jakarta font-bold text-lg sm:text-xl text-white uppercase tracking-wider">
+                    Koleksi Foto Sedang Dipilih
+                  </h3>
+                  <p className="font-jakarta text-xs sm:text-sm text-slate-400 leading-relaxed">
+                    Pemilik album (<strong className="text-white">{gallery.client_name}</strong>) sedang memilih foto-foto terbaik yang akan ditampilkan untuk tamu &amp; keluarga di halaman ini.
+                  </p>
+                  {hasValidOwnerToken && previewAsVisitor && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewAsVisitor(false)}
+                      className="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs uppercase tracking-wider"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" />
+                      <span>Kembali ke Mode Pemilik untuk Memilih Foto</span>
+                    </button>
+                  )}
                 </div>
+              ) : (
+                <>
+                  <div className="columns-2 lg:columns-3 gap-3 sm:gap-6 space-y-3 sm:space-y-6">
+                    {gridPhotos.slice(0, gridLimit).map((photo) => {
+                      const isShownToGuest = guestSelectedSet.has(photo.id);
+                      const isCover = photo.id === coverPhoto.id;
+                      const isFav = guestFavorites.includes(photo.id);
+
+                      return (
+                        <article
+                          key={photo.id}
+                          className={`break-inside-avoid rounded-none photo-card-surface hover:-translate-y-0.5 flex flex-col group ${
+                            isOwnerMode && isShownToGuest
+                              ? 'border-cyan-400/75 ring-1 ring-cyan-400/35'
+                              : isCover
+                                ? 'border-cyan-400/50'
+                                : ''
+                          }`}
+                        >
+                          {/* Sharp 90-degree Photo Container — Natural Aspect Ratio */}
+                          <div
+                            data-cursor={
+                              isOwnerMode && activeOwnerTool === 'visibility'
+                                ? 'PILIH'
+                                : 'VIEW'
+                            }
+                            className="relative w-full overflow-hidden rounded-none bg-[#0D1117]"
+                          >
+                            <img
+                              src={photo.thumbnailUrl}
+                              alt={photo.caption}
+                              loading="lazy"
+                              decoding="async"
+                              onError={(e) => handleImageError(photo.id, e)}
+                              onClick={() => {
+                                if (
+                                  isOwnerMode &&
+                                  activeOwnerTool === 'visibility'
+                                ) {
+                                  handleToggleGuestPhoto(photo.id);
+                                } else {
+                                  setLightboxPhotoId(photo.id);
+                                }
+                              }}
+                              className={`w-full h-auto block rounded-none cursor-pointer transition-transform duration-500 ease-out group-hover:scale-[1.02] ${
+                                isOwnerMode && !isShownToGuest
+                                  ? 'opacity-70'
+                                  : ''
+                              }`}
+                            />
+
+                            {gallery.watermark_enabled && (
+                              <span className="pointer-events-none absolute bottom-2 right-2 font-mono text-[9px] uppercase tracking-[0.22em] text-white/30 select-none">
+                                {gallery.studio_name}
+                              </span>
+                            )}
+
+                            {isCover && (
+                              <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-cyan-400 text-slate-950 font-jakarta font-bold text-[9px] sm:text-[10px] px-2 py-0.5 tracking-wider uppercase z-10">
+                                Sampul Album
+                              </div>
+                            )}
+
+                            {/* Owner Status Badge: Shown in Guest Album vs Private */}
+                            {isOwnerMode && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleGuestPhoto(photo.id)}
+                                className={`absolute top-2 right-2 sm:top-3 sm:right-3 font-jakarta font-bold text-[9px] sm:text-[10px] px-2 py-0.5 tracking-wider uppercase z-20 inline-flex items-center gap-1 transition-colors ${
+                                  isShownToGuest
+                                    ? 'bg-cyan-400 text-slate-950 shadow-[0_0_12px_rgba(34,211,238,0.45)]'
+                                    : 'bg-[#070B14]/90 text-slate-300 border border-white/20 hover:border-cyan-400 hover:text-cyan-300'
+                                }`}
+                              >
+                                {isShownToGuest ? (
+                                  <>
+                                    <Check className="w-3 h-3 stroke-[3]" />
+                                    <span>Tampil di Tamu</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Plus className="w-3 h-3" />
+                                    <span>Privat</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+
+                            {/* Lightweight Hover Quick Actions Overlay (Zero backdrop-filter per card!) */}
+                            <div className="absolute inset-0 bg-[#090C10]/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2.5 z-10 pointer-events-none">
+                              <button
+                                type="button"
+                                onClick={() => setLightboxPhotoId(photo.id)}
+                                title="Perbesar"
+                                className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+                              >
+                                <Maximize2 className="w-4 h-4" />
+                              </button>
+
+                              <a
+                                href={photo.downloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={photo.name}
+                                title="Unduh HD"
+                                className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 hover:text-cyan-400 transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </a>
+
+                              {!isOwnerMode && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleGuestFavorite(photo.id)}
+                                  title="Favorit"
+                                  className="pointer-events-auto w-9 h-9 bg-[#070B14]/92 border border-white/20 text-white flex items-center justify-center hover:border-cyan-400 transition-colors"
+                                >
+                                  <Heart
+                                    className={`w-4 h-4 transition-transform active:scale-125 ${
+                                      isFav
+                                        ? 'fill-rose-500 text-rose-500'
+                                        : 'text-white'
+                                    }`}
+                                  />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Sleek Single-Line Card Footer */}
+                          <div className="px-2.5 sm:px-3.5 py-2 sm:py-2.5 flex items-center justify-between gap-1.5 border-t border-white/10">
+                            <span className="font-mono text-[10px] sm:text-[11px] text-slate-300 truncate">
+                              {photo.name}
+                            </span>
+
+                            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                              {isOwnerMode ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={isCover || isSavingOwnerSetting}
+                                    onClick={() => handleSetCoverPhoto(photo.id)}
+                                    className={`px-2 py-1 font-jakarta font-semibold text-[10px] sm:text-[11px] border transition-colors ${
+                                      isCover
+                                        ? 'bg-white/20 text-white border-white/30'
+                                        : 'bg-white/5 hover:bg-white/15 text-slate-300 border-white/15'
+                                    }`}
+                                  >
+                                    {isCover ? 'Sampul' : 'Set Sampul'}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleToggleGuestPhoto(photo.id)
+                                    }
+                                    className={`inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 font-jakarta font-bold text-[10px] sm:text-[11px] border transition-colors ${
+                                      isShownToGuest
+                                        ? 'bg-cyan-400 text-slate-950 border-cyan-400'
+                                        : 'bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-cyan-300 border-cyan-400/40'
+                                    }`}
+                                  >
+                                    {isShownToGuest ? (
+                                      <>
+                                        <Check className="w-3 h-3 stroke-[3]" />
+                                        <span>Tampil</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Plus className="w-3 h-3" />
+                                        <span>Ke Tamu</span>
+                                      </>
+                                    )}
+                                  </button>
+                                </>
+                              ) : (
+                                <a
+                                  href={photo.downloadUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  download={photo.name}
+                                  className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 bg-white/5 hover:bg-cyan-400 hover:text-slate-950 text-slate-200 border border-white/15 font-jakarta font-semibold text-[10px] sm:text-[11px] transition-colors"
+                                >
+                                  <Download className="w-3 h-3" />
+                                  <span className="hidden sm:inline">Unduh</span>
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+
+                  {gridLimit < gridPhotos.length && (
+                    <div
+                      ref={loadMoreRef}
+                      className="w-full py-8 flex flex-col items-center justify-center gap-2"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setGridLimit((prev) =>
+                            Math.min(prev + 36, gridPhotos.length)
+                          )
+                        }
+                        className="px-5 py-2.5 bg-[#080D17] hover:bg-cyan-400 hover:text-slate-950 text-cyan-300 border border-cyan-400/40 font-jakarta font-bold text-xs uppercase tracking-wider transition-colors"
+                      >
+                        Tampilkan Foto Lainnya ({gridLimit} / {gridPhotos.length})
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </section>
@@ -1587,9 +1878,9 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
       )}
 
       {/* FUTURISTIC GLASS LIGHTBOX MODAL WITH SMOOTH PHOTO TRANSITION */}
-      {lightboxIndex !== null && visiblePhotos[lightboxIndex] && (
+      {activeLightboxIndex !== -1 && lightboxPhotos[activeLightboxIndex] && (
         <div
-          onClick={() => setLightboxIndex(null)}
+          onClick={() => setLightboxPhotoId(null)}
           className="fixed inset-0 z-50 bg-[#05070A]/92 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4"
         >
           <div
@@ -1599,16 +1890,16 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
             <div className="px-4 sm:px-5 py-3 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="font-mono font-bold text-xs sm:text-sm text-white truncate max-w-[200px] sm:max-w-none">
-                  {visiblePhotos[lightboxIndex].name}
+                  {lightboxPhotos[activeLightboxIndex].name}
                 </span>
                 <span className="font-mono text-xs text-cyan-400">
-                  [{lightboxIndex + 1} / {visiblePhotos.length}]
+                  [{activeLightboxIndex + 1} / {lightboxPhotos.length}]
                 </span>
               </div>
 
               <button
                 type="button"
-                onClick={() => setLightboxIndex(null)}
+                onClick={() => setLightboxPhotoId(null)}
                 className="w-8 h-8 bg-white/10 text-white flex items-center justify-center hover:bg-cyan-400 hover:text-slate-950"
               >
                 <X className="w-4 h-4" />
@@ -1617,11 +1908,11 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
             <div className="relative bg-[#05070A] max-h-[72vh] sm:max-h-[76vh] flex items-center justify-center overflow-hidden">
               <img
-                key={visiblePhotos[lightboxIndex].id}
-                src={visiblePhotos[lightboxIndex].fullResUrl}
-                alt={visiblePhotos[lightboxIndex].caption}
+                key={lightboxPhotos[activeLightboxIndex].id}
+                src={lightboxPhotos[activeLightboxIndex].fullResUrl}
+                alt={lightboxPhotos[activeLightboxIndex].caption}
                 onError={(e) =>
-                  handleImageError(visiblePhotos[lightboxIndex].id, e)
+                  handleImageError(lightboxPhotos[activeLightboxIndex].id, e)
                 }
                 className="max-h-[72vh] sm:max-h-[76vh] w-auto object-contain rounded-none animate-lightbox-photo"
               />
@@ -1629,41 +1920,74 @@ function DigitalAlbumContent({ slug }: { slug: string }) {
 
             <div className="p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2.5 border-t border-white/10">
               <span className="font-mono text-xs text-slate-400 hidden sm:inline">
-                {gallery.studio_name} • {visiblePhotos[lightboxIndex].name}
+                {gallery.studio_name} •{' '}
+                {lightboxPhotos[activeLightboxIndex].name}
               </span>
 
-              <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+              <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto flex-wrap">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() =>
-                      setLightboxIndex(
-                        (lightboxIndex - 1 + visiblePhotos.length) %
-                          visiblePhotos.length
-                      )
-                    }
+                    onClick={() => {
+                      const prevIdx =
+                        (activeLightboxIndex - 1 + lightboxPhotos.length) %
+                        lightboxPhotos.length;
+                      setLightboxPhotoId(lightboxPhotos[prevIdx].id);
+                    }}
                     className="px-3 sm:px-3.5 py-2 bg-white/5 text-white border border-white/15 font-jakarta font-semibold text-xs hover:bg-white/15 transition-colors"
                   >
                     ← Sebelumnya
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      setLightboxIndex(
-                        (lightboxIndex + 1) % visiblePhotos.length
-                      )
-                    }
+                    onClick={() => {
+                      const nextIdx =
+                        (activeLightboxIndex + 1) % lightboxPhotos.length;
+                      setLightboxPhotoId(lightboxPhotos[nextIdx].id);
+                    }}
                     className="px-3 sm:px-3.5 py-2 bg-white/5 text-white border border-white/15 font-jakarta font-semibold text-xs hover:bg-white/15 transition-colors"
                   >
                     Berikutnya →
                   </button>
                 </div>
 
+                {isOwnerMode && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleToggleGuestPhoto(
+                        lightboxPhotos[activeLightboxIndex].id
+                      )
+                    }
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 font-jakarta font-bold text-xs border transition-colors ${
+                      guestSelectedSet.has(
+                        lightboxPhotos[activeLightboxIndex].id
+                      )
+                        ? 'bg-cyan-400 text-slate-950 border-cyan-400'
+                        : 'bg-white/10 text-cyan-300 border-cyan-400/50 hover:bg-cyan-400 hover:text-slate-950'
+                    }`}
+                  >
+                    {guestSelectedSet.has(
+                      lightboxPhotos[activeLightboxIndex].id
+                    ) ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <span>Tampil di Tamu</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Tampilkan ke Tamu</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
                 <a
-                  href={visiblePhotos[lightboxIndex].downloadUrl}
+                  href={lightboxPhotos[activeLightboxIndex].downloadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  download={visiblePhotos[lightboxIndex].name}
+                  download={lightboxPhotos[activeLightboxIndex].name}
                   className="btn-futuristic inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-cyan-400 text-slate-950 font-jakarta font-bold text-xs hover:bg-cyan-300"
                 >
                   <Download className="w-4 h-4" />

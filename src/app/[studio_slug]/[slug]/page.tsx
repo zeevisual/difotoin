@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import GiantFooter from '@/components/GiantFooter';
 import {
+  encodeGuestAlbumPhotoIds,
   fetchGalleryBySlug,
   fetchSelectionsForGallery,
   SEED_GALLERIES,
@@ -62,6 +63,7 @@ export default function ClientProofingWorkspacePage({
   const [layoutMode, setLayoutMode] = useState<'masonry' | 'uniform'>(
     'masonry'
   );
+  const [syncToGuestAlbum, setSyncToGuestAlbum] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'selected' | 'unselected'
@@ -288,21 +290,30 @@ Terima kasih!`;
   async function handleConfirmLockSelections(sendToWhatsapp = true) {
     setIsLocking(true);
     try {
+      const updates: { is_locked: boolean; hidden_photo_ids?: string[] } = {
+        is_locked: true,
+      };
+      if (syncToGuestAlbum) {
+        updates.hidden_photo_ids = encodeGuestAlbumPhotoIds(
+          selections.map((s) => s.photo_id)
+        );
+      }
+
       const updatedGal = await updateGallerySettings(
         gallery.id,
         gallery.owner_token,
-        {
-          is_locked: true,
-        }
+        updates
       );
       if (updatedGal) {
         setGallery(updatedGal);
       } else {
-        setGallery((prev) => ({ ...prev, is_locked: true }));
+        setGallery((prev) => ({ ...prev, ...updates }));
       }
       setIsSubmitModalOpen(false);
       showToast(
-        `Pilihan (${selectedCount} foto) berhasil dikunci & siap dikirim ke WhatsApp ${gallery.studio_name}!`
+        syncToGuestAlbum
+          ? `Pilihan (${selectedCount} foto) dikunci & ditampilkan ke Album Tamu!`
+          : `Pilihan (${selectedCount} foto) berhasil dikunci & siap dikirim ke WhatsApp ${gallery.studio_name}!`
       );
       if (sendToWhatsapp && typeof window !== 'undefined') {
         window.open(studioWaUrl, '_blank', 'noopener,noreferrer');
@@ -365,7 +376,15 @@ Terima kasih!`;
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={`/${gallery.slug}?t=${gallery.owner_token}`}
+              className="hidden sm:inline-flex items-center gap-1.5 bg-white/5 hover:bg-white/15 text-slate-200 border border-white/15 font-jakarta font-semibold text-xs px-3 py-2 transition-colors"
+            >
+              <Eye className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Atur Album Tamu</span>
+            </Link>
+
             <div className="inline-flex items-center gap-2 glass-panel text-white font-mono font-bold text-xs px-3.5 py-2">
               <Heart className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
               <span>
@@ -1052,6 +1071,30 @@ Terima kasih!`;
                     {sortedLightroomNames}
                   </div>
                 </div>
+              )}
+
+              {sortedSelections.length > 0 && (
+                <label className="flex items-start gap-2.5 p-3 bg-cyan-400/10 border border-cyan-400/30 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={syncToGuestAlbum}
+                    onChange={(e) => setSyncToGuestAlbum(e.target.checked)}
+                    className="mt-0.5 w-4 h-4 accent-cyan-400 cursor-pointer shrink-0"
+                  />
+                  <span className="font-jakarta text-xs text-slate-200 leading-relaxed">
+                    <strong className="text-cyan-300">
+                      Tampilkan juga {selectedCount} foto pilihan ini ke Album Tamu
+                    </strong>{' '}
+                    (kamu tetap bebas menambah/mengurangi foto khusus tamu kapan saja di{' '}
+                    <Link
+                      href={`/${gallery.slug}?t=${gallery.owner_token}`}
+                      className="underline text-white hover:text-cyan-300"
+                    >
+                      Mode Pemilik Album
+                    </Link>
+                    ).
+                  </span>
+                </label>
               )}
 
               <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-1">

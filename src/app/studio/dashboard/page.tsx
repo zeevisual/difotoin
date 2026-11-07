@@ -338,9 +338,9 @@ Galeri foto kamu dari ${displayBrand} sudah siap di Difotoin.
 Pilih foto favorit kamu :
 ${baseUrl}/${cleanStudio}/${cleanSlug}
 
-Bagikan album ini ke teman dan keluarga kamu :
+Atur & bagikan album ini ke teman dan keluarga kamu :
 ${baseUrl}/${cleanSlug}?t=${cleanToken}
-(bisa atur siapa yang lihat, ganti sampul, bikin pin)
+(pilih foto mana saja yang ditampilkan ke album tamu, ganti sampul, & bikin PIN)
 
 Selamat menikmati momennya`;
   }, [

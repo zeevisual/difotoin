@@ -33,6 +33,45 @@ const LEGACY_DUMMY_STUDIO_ID = '99999999-9999-4999-8999-999999999992';
 export const SUPER_ADMIN_WA_NUMBER = '6289614114644';
 export const SUPER_ADMIN_WA_DISPLAY = '0896-1411-4644';
 
+export const GUEST_ALBUM_CURATED_MARKER = '__GUEST_CURATED__';
+const GUEST_ALBUM_ID_PREFIX = 'guest:';
+
+/**
+ * Stores the client's curated Guest Album whitelist inside `galleries.hidden_photo_ids`
+ * (`text[]`) so it works 100% natively with existing Supabase tables without requiring
+ * manual SQL schema migrations.
+ */
+export function encodeGuestAlbumPhotoIds(photoIds: string[]): string[] {
+  const uniqueIds = Array.from(new Set(photoIds.filter(Boolean)));
+  return [
+    GUEST_ALBUM_CURATED_MARKER,
+    ...uniqueIds.map((id) => `${GUEST_ALBUM_ID_PREFIX}${id}`),
+  ];
+}
+
+/**
+ * Reads the exact photo IDs chosen by the Client to appear in the Guest Album (`Album Tamu`).
+ * By design, Guest Albums NEVER dump all Google Drive photos automatically — only photos
+ * explicitly selected by the Client are returned.
+ */
+export function decodeGuestAlbumPhotoIds(
+  hiddenPhotoIds: string[] | null | undefined
+): { isCurated: boolean; photoIds: string[] } {
+  const raw = Array.isArray(hiddenPhotoIds) ? hiddenPhotoIds : [];
+  if (raw.includes(GUEST_ALBUM_CURATED_MARKER)) {
+    return {
+      isCurated: true,
+      photoIds: raw
+        .filter((entry) => entry.startsWith(GUEST_ALBUM_ID_PREFIX))
+        .map((entry) => entry.slice(GUEST_ALBUM_ID_PREFIX.length)),
+    };
+  }
+  return {
+    isCurated: false,
+    photoIds: [],
+  };
+}
+
 export function buildSuperAdminUpgradeWaUrl(studioName?: string): string {
   const cleanBrand = studioName?.trim();
   const intro = cleanBrand
@@ -76,7 +115,15 @@ export const SEED_GALLERIES: GalleryRecord[] = [
     owner_token: 'mhttesqg7rjx',
     cover_photo_id: 'photo-01',
     album_pin: '2408',
-    hidden_photo_ids: ['photo-08'],
+    hidden_photo_ids: [
+      '__GUEST_CURATED__',
+      'guest:photo-01',
+      'guest:photo-02',
+      'guest:photo-05',
+      'guest:photo-07',
+      'guest:photo-09',
+      'guest:photo-10',
+    ],
     is_locked: false,
     watermark_enabled: true,
     created_at: '2024-10-14T10:00:00.000Z',
@@ -618,7 +665,7 @@ export async function createGallery(
     owner_token,
     cover_photo_id: 'photo-01',
     album_pin: input.album_pin ? input.album_pin.slice(0, 4) : null,
-    hidden_photo_ids: [],
+    hidden_photo_ids: encodeGuestAlbumPhotoIds([]),
     is_locked: false,
     watermark_enabled: input.watermark_enabled ?? true,
     created_at: new Date().toISOString(),
