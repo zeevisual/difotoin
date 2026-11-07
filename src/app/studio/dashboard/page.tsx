@@ -56,6 +56,14 @@ import {
 
 const STUDIO_SESSION_KEY = 'difotoin_active_studio_session_v1';
 
+const SESSION_CATEGORY_PRESETS = [
+  'Editorial Pre-Wedding',
+  'Wedding Documentation',
+  'Studio Portrait Session',
+  'Family & Engagement',
+  'Graduation / Wisuda',
+];
+
 export default function StudioDashboardPage() {
   // Authentication & Subscription State
   const [loggedStudio, setLoggedStudio] = useState<StudioSubscription | null>(
@@ -107,6 +115,7 @@ export default function StudioDashboardPage() {
   const [slug, setSlug] = useState('');
   const [isSlugManual, setIsSlugManual] = useState(false);
   const [sessionType, setSessionType] = useState('Editorial Pre-Wedding');
+  const [isCustomSessionType, setIsCustomSessionType] = useState(false);
   const [gdriveFolderUrl, setGdriveFolderUrl] = useState('');
   const [selectionQuota, setSelectionQuota] = useState<number>(50);
   const [ownerToken, setOwnerToken] = useState(() => generateOwnerToken(12));
@@ -273,6 +282,7 @@ export default function StudioDashboardPage() {
     setClientName('');
     setSlug('');
     setIsSlugManual(false);
+    setIsCustomSessionType(false);
     setSessionType('Editorial Pre-Wedding');
     setGdriveFolderUrl('');
     setSelectionQuota(50);
@@ -435,7 +445,7 @@ Selamat menikmati momennya`;
           studioWhatsapp.trim() || loggedStudio.whatsapp_number || '',
         client_name: clientName.trim() || 'Klien Baru',
         slug: slug.trim() || slugifyClientName(clientName),
-        session_type: sessionType,
+        session_type: sessionType.trim() || 'Photo Session',
         deadline_date: deadlineDate,
         gdrive_folder_url: gdriveFolderUrl,
         selection_quota: selectionQuota,
@@ -466,6 +476,7 @@ Selamat menikmati momennya`;
     setClientName(gal.client_name);
     setSlug(gal.slug);
     setIsSlugManual(true);
+    setIsCustomSessionType(!SESSION_CATEGORY_PRESETS.includes(gal.session_type));
     setSessionType(gal.session_type);
     setGdriveFolderUrl(gal.gdrive_folder_url);
     setSelectionQuota(gal.selection_quota);
@@ -1593,19 +1604,63 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300">
-                        Kategori Sesi
+                      <label className="font-jakarta font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center justify-between gap-2">
+                        <span>Kategori Sesi</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isCustomSessionType) {
+                              setIsCustomSessionType(false);
+                              setSessionType(SESSION_CATEGORY_PRESETS[0]);
+                            } else {
+                              setIsCustomSessionType(true);
+                              setSessionType('');
+                            }
+                          }}
+                          className="text-[11px] text-cyan-400 hover:underline font-semibold normal-case tracking-normal"
+                        >
+                          {isCustomSessionType
+                            ? 'Pilih dari Daftar'
+                            : 'Ketik Manual'}
+                        </button>
                       </label>
+
                       <select
-                        value={sessionType}
-                        onChange={(e) => setSessionType(e.target.value)}
+                        value={
+                          isCustomSessionType ? '__custom__' : sessionType
+                        }
+                        onChange={(e) => {
+                          if (e.target.value === '__custom__') {
+                            setIsCustomSessionType(true);
+                            setSessionType('');
+                          } else {
+                            setIsCustomSessionType(false);
+                            setSessionType(e.target.value);
+                          }
+                        }}
                         className="w-full bg-[#111722] text-white px-3 py-2.5 rounded-xl border border-white/15 font-jakarta text-xs font-semibold focus:outline-none focus:border-cyan-400"
                       >
-                        <option>Editorial Pre-Wedding</option>
-                        <option>Wedding Documentation</option>
-                        <option>Studio Portrait Session</option>
-                        <option>Family &amp; Engagement</option>
+                        {SESSION_CATEGORY_PRESETS.map((preset) => (
+                          <option key={preset} value={preset}>
+                            {preset}
+                          </option>
+                        ))}
+                        <option value="__custom__">
+                          ✎ Ketik Manual (Kategori Lainnya)...
+                        </option>
                       </select>
+
+                      {isCustomSessionType && (
+                        <input
+                          type="text"
+                          value={sessionType}
+                          onChange={(e) => setSessionType(e.target.value)}
+                          placeholder="Ketik kategori sesi manual..."
+                          autoFocus
+                          required
+                          className="w-full bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-cyan-400/50 font-jakarta text-xs font-semibold focus:outline-none focus:border-cyan-400 mt-0.5"
+                        />
+                      )}
                     </div>
                   </div>
 
