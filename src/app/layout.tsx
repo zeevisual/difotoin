@@ -32,6 +32,21 @@ const SITE_URL =
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: '/',
+  },
+  keywords: [
+    'Bukafoto',
+    'Zeevisual',
+    'Pilih Foto Klien',
+    'Client Photo Proofing',
+    'Album Digital Fotografer',
+    'bukafoto.my.id',
+  ],
+  robots: {
+    index: true,
+    follow: true,
+  },
   openGraph: {
     type: 'website',
     siteName: 'Bukafoto by Zeevisual',
