@@ -27,7 +27,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
               <span className="font-jakarta font-extrabold text-sm md:text-base tracking-[0.25em] text-white uppercase">
-                DIFOTOIN
+                BUKAFOTO
               </span>
               <span className="hidden sm:inline-block text-xs text-slate-400 tracking-widest uppercase border-l border-white/15 pl-3">
                 ZEEVISUAL
@@ -94,7 +94,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="font-jakarta font-extrabold text-4xl sm:text-6xl md:text-7xl text-white uppercase tracking-[0.06em] leading-[1.02]">
-              DIFOTOIN
+              BUKAFOTO
               <span className="block font-light text-slate-300 text-2xl sm:text-3xl md:text-4xl tracking-[0.18em] mt-2">
                 ZEEVISUAL ARCHIVE
               </span>
@@ -175,7 +175,7 @@ export default function HomePage() {
                 Drive sendiri. Untuk membuka pengiriman link &amp; teks foto,
                 berlangganan via WA Super Admin{' '}
                 <a
-                  href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20Difotoin."
+                  href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20Bukafoto."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-cyan-400 font-semibold hover:underline"
@@ -201,7 +201,7 @@ export default function HomePage() {
               System Modules
             </span>
             <h2 className="font-jakarta font-bold text-2xl md:text-3xl text-white tracking-wide">
-              Akses Cepat Ekosistem Difotoin
+              Akses Cepat Ekosistem Bukafoto
             </h2>
           </div>
 
@@ -339,7 +339,7 @@ export default function HomePage() {
                 <span>Coba Mode Demo</span>
               </Link>
               <a
-                href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20Difotoin."
+                href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20Bukafoto."
                 target="_blank"
                 rel="noopener noreferrer"
                 data-cursor="WHATSAPP"

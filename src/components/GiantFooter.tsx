@@ -29,7 +29,7 @@ export function GiantFooter({
               fontSize: 'clamp(3.4rem, 13vw, 10rem)',
             }}
           >
-            {studioName.length <= 12 ? studioName.toUpperCase() : 'DIFOTOIN'}
+            {studioName.length <= 12 ? studioName.toUpperCase() : 'BUKAFOTO'}
           </h2>
         </div>
 

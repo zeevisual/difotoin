@@ -99,7 +99,7 @@ export default function StudioDashboardPage() {
   const [newSubOwnerName, setNewSubOwnerName] = useState('');
   const [newSubWhatsapp, setNewSubWhatsapp] = useState('');
   const [newSubAccessCode, setNewSubAccessCode] = useState(() =>
-    generateLicenseCode('DFTN')
+    generateLicenseCode('BKFT')
   );
   const [newSubPlan, setNewSubPlan] =
     useState<StudioSubscription['plan_name']>('Bulanan (30 Hari)');
@@ -333,7 +333,7 @@ export default function StudioDashboardPage() {
     const cleanToken = ownerToken.trim() || 'mhttesqg7rjx';
 
     return `Halo ${cleanClient}
-Galeri foto kamu dari ${displayBrand} sudah siap di Difotoin.
+Galeri foto kamu dari ${displayBrand} sudah siap di Bukafoto.
 
 Pilih foto favorit kamu :
 ${baseUrl}/${cleanStudio}/${cleanSlug}
@@ -526,7 +526,7 @@ Selamat menikmati momennya`;
     setNewSubStudioSlug('');
     setNewSubOwnerName('');
     setNewSubWhatsapp('');
-    setNewSubAccessCode(generateLicenseCode('DFTN'));
+    setNewSubAccessCode(generateLicenseCode('BKFT'));
     setSubSuccessMsg(
       `Member Studio "${created.studio_name}" (${created.studio_slug}) berhasil diaktifkan dengan kode lisensi ${created.access_code}!`
     );
@@ -542,7 +542,7 @@ Selamat menikmati momennya`;
       : 'Selamanya (Lifetime)';
 
     return `Halo *${sub.owner_name}* (${sub.studio_name})!
-Akun langganan *Difotoin Studio* kamu sudah aktif.
+Akun langganan *Bukafoto Studio* kamu sudah aktif.
 
 *Link Login Dashboard Studio:*
 ${baseUrl}/studio/dashboard
@@ -580,7 +580,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `difotoin-${activeGallery.slug}-lightroom.txt`;
+    a.download = `bukafoto-${activeGallery.slug}-lightroom.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -598,7 +598,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
             <Link href="/" className="flex items-center gap-3 group">
               <div className="w-1 h-5 bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
               <span className="font-anton text-2xl text-white uppercase tracking-widest group-hover:text-cyan-400 transition-colors">
-                DIFOTOIN
+                BUKAFOTO
               </span>
             </Link>
             <span className="inline-flex items-center gap-1.5 glass-pill text-cyan-300 font-jakarta font-bold text-xs px-3.5 py-1.5 rounded-full">
@@ -636,7 +636,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 </h1>
                 <p className="font-jakarta text-xs text-slate-400 leading-relaxed">
                   Dashboard ini hanya dapat diakses oleh fotografer &amp; studio
-                  yang memiliki lisensi berlangganan aktif di Difotoin.
+                  yang memiliki lisensi berlangganan aktif di Bukafoto.
                 </p>
               </div>
 
@@ -754,7 +754,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   Ingin Full Akses (Kirim Link Klien &amp; Ekspor Teks Foto)?
                 </span>
                 <a
-                  href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20di%20Difotoin."
+                  href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20di%20Bukafoto."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-1.5 font-jakarta font-bold text-xs text-cyan-400 hover:text-cyan-300"
@@ -782,8 +782,8 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 <div className="w-1 h-5 bg-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
                 <span className="font-anton text-2xl text-white uppercase tracking-widest group-hover:text-cyan-400 transition-colors">
                   {loggedStudio?.is_super_admin
-                    ? 'DIFOTOIN'
-                    : loggedStudio?.studio_name || 'DIFOTOIN'}
+                    ? 'BUKAFOTO'
+                    : loggedStudio?.studio_name || 'BUKAFOTO'}
                 </span>
               </Link>
               <span className="hidden sm:inline-flex items-center gap-1.5 bg-white/5 text-slate-200 font-jakarta font-bold text-xs px-2.5 py-1 rounded-lg border border-white/10">
@@ -1100,7 +1100,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                     <button
                       type="button"
                       onClick={() =>
-                        setNewSubAccessCode(generateLicenseCode('DFTN'))
+                        setNewSubAccessCode(generateLicenseCode('BKFT'))
                       }
                       className="inline-flex items-center gap-1 text-[11px] text-cyan-400 font-semibold hover:underline"
                     >

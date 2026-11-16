@@ -191,7 +191,7 @@ export default function ClientProofingWorkspacePage({
       .join('\n');
 
     return `Halo *${gallery.studio_name || 'Zeevisual'}*!
-Saya *${gallery.client_name}* sudah selesai memilih *${selectedCount} / ${quota} foto* di Difotoin.
+Saya *${gallery.client_name}* sudah selesai memilih *${selectedCount} / ${quota} foto* di Bukafoto.
 
 *DAFTAR FILE TERPILIH (TERSUSUN RAPI):*
 ${numberedFiles || '-'}

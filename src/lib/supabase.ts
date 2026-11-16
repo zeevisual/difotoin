@@ -81,8 +81,8 @@ export function decodeGuestAlbumPhotoIds(
 export function buildSuperAdminUpgradeWaUrl(studioName?: string): string {
   const cleanBrand = studioName?.trim();
   const intro = cleanBrand
-    ? `Halo Super Admin Zeevisual, saya dari studio *${cleanBrand}* sudah mencoba Mode Demo Difotoin dan ingin berlangganan Full Akses.`
-    : 'Halo Super Admin Zeevisual, saya sudah mencoba Mode Demo Difotoin dan ingin berlangganan Full Akses untuk studio saya.';
+    ? `Halo Super Admin Zeevisual, saya dari studio *${cleanBrand}* sudah mencoba Mode Demo Bukafoto dan ingin berlangganan Full Akses.`
+    : 'Halo Super Admin Zeevisual, saya sudah mencoba Mode Demo Bukafoto dan ingin berlangganan Full Akses untuk studio saya.';
   return `https://wa.me/${SUPER_ADMIN_WA_NUMBER}?text=${encodeURIComponent(intro)}`;
 }
 
@@ -255,7 +255,7 @@ export const SEED_SELECTIONS: SelectionRecord[] = [
   },
 ];
 
-export function generateLicenseCode(prefix = 'DFTN'): string {
+export function generateLicenseCode(prefix = 'BKFT'): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let part1 = '';
   let part2 = '';
@@ -342,7 +342,7 @@ export async function authenticateStudio(
     return {
       ok: false,
       error:
-        'Studio belum terdaftar sebagai member berlangganan Difotoin. Silakan hubungi Admin Zeevisual untuk berlangganan.',
+        'Studio belum terdaftar sebagai member berlangganan Bukafoto. Silakan hubungi Admin Zeevisual untuk berlangganan.',
     };
   }
 
@@ -393,7 +393,7 @@ export async function createStudioSubscription(
     studio_name: input.studio_name.trim(),
     owner_name: input.owner_name.trim() || input.studio_name.trim(),
     whatsapp_number: (input.whatsapp_number || '').trim(),
-    access_code: input.access_code.trim() || generateLicenseCode('DFTN'),
+    access_code: input.access_code.trim() || generateLicenseCode('BKFT'),
     plan_name: input.plan_name,
     max_galleries: Number(input.max_galleries) || 50,
     is_active: true,

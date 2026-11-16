@@ -7,7 +7,7 @@ interface RetroTickerProps {
 }
 
 export function RetroTicker({
-  text = 'DIFOTOIN ★ PILIH FOTO FAVORITMU ★ ABADIKAN SETIAP MOMEN ★',
+  text = 'BUKAFOTO ★ PILIH FOTO FAVORITMU ★ ABADIKAN SETIAP MOMEN ★',
   variant = 'cream',
   className = '',
 }: RetroTickerProps) {

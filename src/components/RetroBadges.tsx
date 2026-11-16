@@ -37,7 +37,7 @@ export function GroovyFlowerSvg({
  * Retro Circular Stamp Badge with notched/serrated vintage seal border and rotating text
  */
 export function RetroCircularStamp({
-  topText = 'DIFOTOIN ARCHIVE',
+  topText = 'BUKAFOTO ARCHIVE',
   centerText = '1974',
   bottomText = 'APPROVED PROOF',
   variant = 'mustard',
