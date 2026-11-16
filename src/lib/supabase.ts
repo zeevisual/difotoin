@@ -12,8 +12,14 @@ import {
   slugifyClientName,
 } from '@/lib/drive-utils';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const DEFAULT_SUPABASE_URL = 'https://brupeqiqweiyrfcflebr.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJydXBlcWlxd2VpeXJmY2ZsZWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4MDMyMTQsImV4cCI6MjExMDM3OTIxNH0.582pEI8bKPKvF9BiX_Yawmvx7t8TcpfM8golFyG3CiQ';
+
+const supabaseUrl =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured =
   Boolean(supabaseUrl) &&

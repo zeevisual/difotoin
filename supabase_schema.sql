@@ -320,7 +320,15 @@ values (
   'mhttesqg7rjx',
   'photo-01',
   '2408',
-  ARRAY['photo-08'],
+  ARRAY[
+    '__GUEST_CURATED__',
+    'guest:photo-01',
+    'guest:photo-02',
+    'guest:photo-05',
+    'guest:photo-07',
+    'guest:photo-09',
+    'guest:photo-10'
+  ],
   false,
   true
 )
