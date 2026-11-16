@@ -25,7 +25,18 @@ const jakarta = Plus_Jakarta_Sans({
   display: 'swap',
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL?.startsWith('http')
+    ? process.env.NEXT_PUBLIC_BASE_URL
+    : 'https://difotoin.vercel.app';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    type: 'website',
+    siteName: 'Difotoin by Zeevisual',
+    locale: 'id_ID',
+  },
   title: 'DIFOTOIN — Futuristic Client Photo Proofing & Digital Album | Crafted by Zeevisual',
   description:
     'Platform pilih foto favorit klien & album digital futuristik minimalis untuk studio fotografi profesional. Crafted by Zeevisual.',
