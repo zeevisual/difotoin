@@ -26,6 +26,7 @@ import { parseGoogleDriveFolderId } from '@/lib/drive-utils';
 import { buildSuperAdminUpgradeWaUrl } from '@/lib/supabase';
 import GiantFooter from '@/components/GiantFooter';
 import DemoUpgradeModal from '@/components/DemoUpgradeModal';
+import PricingSection from '@/components/PricingSection';
 
 const DEMO_SESSION_STORAGE_KEY = 'difotoin_fg_demo_session_v1';
 
@@ -1166,6 +1167,10 @@ export default function PhotographerDemoPage() {
           </div>
         </div>
       )}
+
+      <div className="max-w-7xl w-full mx-auto px-4 md:px-10 pt-8">
+        <PricingSection compact />
+      </div>
 
       {/* SUBSCRIPTION UPGRADE MODAL */}
       <DemoUpgradeModal

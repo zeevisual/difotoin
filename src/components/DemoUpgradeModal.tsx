@@ -1,15 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   CheckCircle2,
   Crown,
   Lock,
   MessageCircle,
+  QrCode,
   Sparkles,
   X,
 } from 'lucide-react';
 import { buildSuperAdminUpgradeWaUrl } from '@/lib/supabase';
+import { formatRupiah, SUBSCRIPTION_PLANS } from '@/utils/pricing-plans';
+import QrisCheckoutModal from '@/components/QrisCheckoutModal';
 
 interface DemoUpgradeModalProps {
   open: boolean;
@@ -24,6 +27,22 @@ export default function DemoUpgradeModal({
   studioName,
   lockedActionLabel = 'Pengiriman Link Klien & Ekspor Teks Foto',
 }: DemoUpgradeModalProps) {
+  const [qrisOpen, setQrisOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState(SUBSCRIPTION_PLANS[1].id);
+
+  if (qrisOpen) {
+    return (
+      <QrisCheckoutModal
+        isOpen={qrisOpen}
+        initialPlanId={selectedPlanId}
+        onClose={() => {
+          setQrisOpen(false);
+          onClose();
+        }}
+      />
+    );
+  }
+
   if (!open) return null;
 
   const waUpgradeUrl = buildSuperAdminUpgradeWaUrl(studioName);
@@ -110,17 +129,49 @@ export default function DemoUpgradeModal({
             </div>
           </div>
 
-          {/* Super Admin Contact CTA */}
+          {/* Instant QRIS Checkout & Pricelist Quick Pick */}
           <div className="flex flex-col gap-2.5">
+            <div className="grid grid-cols-2 gap-2">
+              {SUBSCRIPTION_PLANS.map((plan) => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelectedPlanId(plan.id)}
+                  className={`px-3 py-2 rounded-xl border text-left transition-all ${
+                    selectedPlanId === plan.id
+                      ? 'bg-cyan-400/15 border-cyan-400 text-white'
+                      : 'bg-white/[0.03] border-white/10 text-slate-300 hover:bg-white/[0.07]'
+                  }`}
+                >
+                  <div className="font-jakarta font-bold text-[11px] truncate">
+                    {plan.title}
+                  </div>
+                  <div className="font-mono font-bold text-xs text-cyan-300">
+                    {formatRupiah(plan.price)}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setQrisOpen(true)}
+              data-cursor="QRIS"
+              className="btn-futuristic w-full py-3.5 px-5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-extrabold text-xs md:text-sm uppercase tracking-[0.14em] shadow-[0_0_28px_rgba(34,211,238,0.4)] transition-all flex items-center justify-center gap-2 text-center"
+            >
+              <QrCode className="w-4 h-4 shrink-0" />
+              <span>Bayar QRIS &amp; Aktifkan Otomatis</span>
+            </button>
+
             <a
               href={waUpgradeUrl}
               target="_blank"
               rel="noopener noreferrer"
               data-cursor="WHATSAPP"
-              className="btn-futuristic w-full py-3.5 px-5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-extrabold text-xs md:text-sm uppercase tracking-[0.14em] shadow-[0_0_28px_rgba(34,211,238,0.4)] transition-all flex items-center justify-center gap-2 text-center"
+              className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-slate-200 font-jakarta font-bold text-xs inline-flex items-center justify-center gap-2 transition-colors"
             >
-              <MessageCircle className="w-4 h-4 shrink-0" />
-              <span>Hubungi Super Admin • WA 089614114644</span>
+              <MessageCircle className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span>Tanya Super Admin • WA 089614114644</span>
             </a>
 
             <div className="flex items-center justify-between gap-2 pt-1">

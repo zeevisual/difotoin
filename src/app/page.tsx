@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import GiantFooter from '@/components/GiantFooter';
+import PricingSection from '@/components/PricingSection';
 
 export default function HomePage() {
   return (
@@ -38,6 +39,12 @@ export default function HomePage() {
               <span className="text-white border-b-2 border-cyan-400 pb-1">
                 EXPLORE
               </span>
+              <a
+                href="#pricing"
+                className="hover:text-cyan-400 transition-colors"
+              >
+                PRICELIST
+              </a>
               <Link
                 href="/studio/demo"
                 className="text-cyan-300 hover:text-cyan-200 transition-colors"
@@ -350,6 +357,8 @@ export default function HomePage() {
               </a>
             </div>
           </div>
+
+          <PricingSection />
         </div>
       </main>
 

@@ -18,6 +18,7 @@ import {
   LogOut,
   MessageSquare,
   Plus,
+  QrCode,
   RefreshCw,
   ShieldCheck,
   Sparkles,
@@ -25,6 +26,8 @@ import {
   Users,
 } from 'lucide-react';
 import GiantFooter from '@/components/GiantFooter';
+import QrisCheckoutModal from '@/components/QrisCheckoutModal';
+import SuperAdminQrisCard from '@/components/SuperAdminQrisCard';
 import {
   authenticateStudio,
   createGallery,
@@ -74,6 +77,7 @@ export default function StudioDashboardPage() {
   const [loginCode, setLoginCode] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [qrisSignupOpen, setQrisSignupOpen] = useState(false);
 
   // Dashboard Tab ('galleries' | 'subscriptions')
   const [activeTab, setActiveTab] = useState<'galleries' | 'subscriptions'>(
@@ -749,22 +753,39 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 </div>
               </div>
 
-              <div className="bg-white/[0.03] p-3.5 rounded-xl border border-white/10 flex flex-col gap-1.5 text-center">
-                <span className="font-jakarta text-xs text-slate-300">
-                  Ingin Full Akses (Kirim Link Klien &amp; Ekspor Teks Foto)?
-                </span>
+              <div className="bg-white/[0.03] p-3.5 rounded-xl border border-white/10 flex flex-col gap-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setQrisSignupOpen(true)}
+                  data-cursor="QRIS"
+                  className="btn-futuristic w-full py-2.5 px-4 rounded-xl bg-cyan-400/15 hover:bg-cyan-400 hover:text-slate-950 text-cyan-200 border border-cyan-400/40 font-jakarta font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                >
+                  <QrCode className="w-4 h-4 shrink-0" />
+                  <span>Belum Punya Akun? Daftar &amp; Bayar QRIS Otomatis →</span>
+                </button>
                 <a
                   href="https://wa.me/6289614114644?text=Halo%20Super%20Admin%20Zeevisual%2C%20saya%20ingin%20berlangganan%20Full%20Akses%20Studio%20di%20Bukafoto."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 font-jakarta font-bold text-xs text-cyan-400 hover:text-cyan-300"
+                  className="inline-flex items-center justify-center gap-1.5 font-jakarta font-bold text-xs text-slate-400 hover:text-cyan-300"
                 >
-                  <span>Hubungi Super Admin • WA 089614114644 →</span>
+                  <span>Atau Tanya Super Admin • WA 089614114644 →</span>
                 </a>
               </div>
             </form>
           </div>
         </main>
+
+        <QrisCheckoutModal
+          isOpen={qrisSignupOpen}
+          onClose={() => setQrisSignupOpen(false)}
+          onSuccessLogin={(studio) => {
+            setLoggedStudio(studio);
+            setStudioSlug(studio.studio_slug);
+            setStudioBrandName(studio.studio_name);
+            setStudioWhatsapp(studio.whatsapp_number || '');
+          }}
+        />
 
         <GiantFooter />
       </div>
@@ -983,7 +1004,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
         {/* TAB 2: SUPER ADMIN — KELOLA MEMBER & LANGGANAN FOTOGRAFER            */}
         {/* ==================================================================== */}
         {activeTab === 'subscriptions' && loggedStudio?.is_super_admin && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="flex flex-col gap-6">
+            <SuperAdminQrisCard />
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* LEFT: ADD SUBSCRIBER STUDIO FORM */}
             <div className="lg:col-span-5 glass-panel rounded-2xl overflow-hidden flex flex-col">
               <div className="bg-white/[0.04] border-b border-white/10 px-6 py-4 flex items-center justify-between">
@@ -1280,6 +1303,7 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                 })}
               </div>
             </div>
+          </div>
           </div>
         )}
 
