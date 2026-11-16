@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   createStudioSubscription,
@@ -14,6 +14,10 @@ import {
   markQrisProofAsUsed,
   validateQrisPaymentProof,
 } from '@/utils/qris-validator';
+import {
+  fetchMidtransPaidStatus,
+  requestMidtransTransaction,
+} from '@/utils/midtrans-client';
 
 const STUDIO_SESSION_KEY = 'difotoin_active_studio_session_v1';
 
@@ -44,21 +48,29 @@ export function useQrisCheckout({
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [qrisSrc, setQrisSrc] = useState('/qris-bukafoto.svg');
+  const [midtransOrderId, setMidtransOrderId] = useState<string | null>(null);
+  const [midtransRedirectUrl, setMidtransRedirectUrl] = useState<string | null>(null);
+  const [midtransStatusText, setMidtransStatusText] = useState('pending');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerifiedPaid, setIsVerifiedPaid] = useState(false);
   const [activatedStudio, setActivatedStudio] =
     useState<StudioSubscription | null>(null);
+  const activatingRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) return;
     setStep('form');
     setPlanId(initialPlanId || SUBSCRIPTION_PLANS[1].id);
     setQrisSrc(getQrisImageUrl());
+    setMidtransOrderId(null);
+    setMidtransRedirectUrl(null);
+    setMidtransStatusText('pending');
     setErrorMsg(null);
     setIsVerifiedPaid(false);
     setActivatedStudio(null);
+    activatingRef.current = false;
   }, [isOpen, initialPlanId]);
 
   useEffect(() => {
@@ -92,31 +104,86 @@ export function useQrisCheckout({
     [planId]
   );
 
+  const provisionPaidStudio = useCallback(async () => {
+    if (activatingRef.current) return;
+    activatingRef.current = true;
+    setIsVerifiedPaid(true);
+    try {
+      const created = await createStudioSubscription({
+        studio_slug: studioSlug,
+        studio_name: studioName.trim(),
+        owner_name: ownerName.trim() || studioName.trim(),
+        whatsapp_number: whatsapp.trim(),
+        access_code: accessCode.trim(),
+        plan_name: selectedPlan.plan_name,
+        max_galleries: selectedPlan.max_galleries,
+        duration_days: selectedPlan.duration_days,
+      });
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(STUDIO_SESSION_KEY, JSON.stringify(created));
+      }
+      setActivatedStudio(created);
+      setStep('activated');
+    } catch {
+      activatingRef.current = false;
+      setIsVerifiedPaid(false);
+      setErrorMsg('Gagal membuat akun di server. Coba cek ulang.');
+    }
+  }, [studioSlug, studioName, ownerName, whatsapp, accessCode, selectedPlan]);
+
+  const checkMidtransStatusOnce = useCallback(async () => {
+    if (!midtransOrderId || activatingRef.current) return false;
+    const data = await fetchMidtransPaidStatus(midtransOrderId);
+    if (!data) return false;
+    if (data.transactionStatus) setMidtransStatusText(data.transactionStatus);
+    if (data.paid) {
+      await provisionPaidStudio();
+      return true;
+    }
+    return false;
+  }, [midtransOrderId, provisionPaidStudio]);
+
+  useEffect(() => {
+    if (step !== 'payment' || !midtransOrderId || isVerifiedPaid) return;
+    const interval = setInterval(() => void checkMidtransStatusOnce(), 3000);
+    return () => clearInterval(interval);
+  }, [step, midtransOrderId, isVerifiedPaid, checkMidtransStatusOnce]);
+
   async function handleGoToPayment(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
     const cleanSlug = slugifyClientName(studioSlug || studioName);
     if (!cleanSlug || cleanSlug.length < 3) {
-      setErrorMsg('Nama & slug studio minimal 3 karakter.');
-      return;
+      return setErrorMsg('Nama & slug studio minimal 3 karakter.');
     }
     if (cleanSlug === 'zeevisual') {
-      setErrorMsg('Slug "zeevisual" khusus Super Admin. Gunakan nama studio Anda.');
-      return;
+      return setErrorMsg('Slug "zeevisual" khusus Super Admin. Gunakan nama studio Anda.');
     }
     if (accessCode.trim().length < 4) {
-      setErrorMsg('Password / kode lisensi akses minimal 4 karakter.');
-      return;
+      return setErrorMsg('Password / kode lisensi akses minimal 4 karakter.');
     }
 
     setIsChecking(true);
     try {
       const existing = await fetchAllStudioSubscriptions();
       if (existing.some((s) => s.studio_slug.toLowerCase() === cleanSlug)) {
-        setErrorMsg(`Slug "/${cleanSlug}" sudah dipakai. Tambahkan variasi nama.`);
-        return;
+        return setErrorMsg(`Slug "/${cleanSlug}" sudah dipakai. Tambahkan variasi nama.`);
       }
       setStudioSlug(cleanSlug);
+      const txData = await requestMidtransTransaction({
+        planId: selectedPlan.id,
+        studioSlug: cleanSlug,
+        ownerName: ownerName.trim() || studioName.trim(),
+        whatsapp: whatsapp.trim(),
+      });
+      if (txData.configured && txData.orderId && txData.redirectUrl) {
+        setMidtransOrderId(txData.orderId);
+        setMidtransRedirectUrl(txData.redirectUrl);
+        return setStep('payment');
+      }
+      if (txData.configured && txData.error) return setErrorMsg(txData.error);
+      setMidtransOrderId(null);
+      setMidtransRedirectUrl(null);
       setUniqueCode(Math.floor(101 + Math.random() * 298));
       setStep('payment');
     } finally {
@@ -135,26 +202,10 @@ export function useQrisCheckout({
         expectedAmount: selectedPlan.price + uniqueCode,
       });
       if (!check.ok || !check.receiptHash) {
-        setErrorMsg(check.error || 'Bukti pembayaran QRIS belum valid.');
-        return;
+        return setErrorMsg(check.error || 'Bukti pembayaran QRIS belum valid.');
       }
-      setIsVerifiedPaid(true);
-      const created = await createStudioSubscription({
-        studio_slug: studioSlug,
-        studio_name: studioName.trim(),
-        owner_name: ownerName.trim() || studioName.trim(),
-        whatsapp_number: whatsapp.trim(),
-        access_code: accessCode.trim(),
-        plan_name: selectedPlan.plan_name,
-        max_galleries: selectedPlan.max_galleries,
-        duration_days: selectedPlan.duration_days,
-      });
       markQrisProofAsUsed(referenceId, check.receiptHash);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(STUDIO_SESSION_KEY, JSON.stringify(created));
-      }
-      setActivatedStudio(created);
-      setStep('activated');
+      await provisionPaidStudio();
     } finally {
       setIsVerifying(false);
     }
@@ -177,36 +228,14 @@ export function useQrisCheckout({
   }
 
   return {
-    step,
-    setStep,
-    planId,
-    setPlanId,
-    selectedPlan,
-    studioName,
-    setStudioName,
-    studioSlug,
-    setStudioSlug,
-    ownerName,
-    setOwnerName,
-    whatsapp,
-    setWhatsapp,
-    accessCode,
-    setAccessCode,
-    uniqueCode,
-    payerName,
-    setPayerName,
-    referenceId,
-    setReferenceId,
-    proofUrl,
-    qrisSrc,
-    errorMsg,
-    isChecking,
-    isVerifying,
-    isVerifiedPaid,
-    activatedStudio,
-    handleGoToPayment,
-    handleProofUpload,
-    handleActivateSubmit,
-    handleOpenDashboard,
+    step, setStep, planId, setPlanId, selectedPlan,
+    studioName, setStudioName, studioSlug, setStudioSlug,
+    ownerName, setOwnerName, whatsapp, setWhatsapp,
+    accessCode, setAccessCode, uniqueCode,
+    payerName, setPayerName, referenceId, setReferenceId,
+    proofUrl, qrisSrc, midtransOrderId, midtransRedirectUrl,
+    midtransStatusText, errorMsg, isChecking, isVerifying, isVerifiedPaid,
+    activatedStudio, handleGoToPayment, handleProofUpload,
+    handleActivateSubmit, checkMidtransStatusOnce, handleOpenDashboard,
   };
 }

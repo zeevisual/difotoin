@@ -5,6 +5,7 @@ import { QrCode, X } from 'lucide-react';
 import { StudioSubscription } from '@/types/difotoin';
 import { useQrisCheckout } from '@/hooks/useQrisCheckout';
 import QrisStudioFormStep from '@/components/QrisStudioFormStep';
+import MidtransPaymentPanel from '@/components/MidtransPaymentPanel';
 import { QrisActivatedStep, QrisPaymentStep } from '@/components/QrisPaymentSteps';
 
 interface QrisCheckoutModalProps {
@@ -45,7 +46,7 @@ export default function QrisCheckoutModal({
               {c.step === 'form'
                 ? '1. Data Studio & Paket'
                 : c.step === 'payment'
-                  ? '2. Scan QRIS & Verifikasi Lunas'
+                  ? '2. Bayar QRIS & Verifikasi Otomatis'
                   : '3. Akun Aktif Otomatis'}
             </span>
           </div>
@@ -86,23 +87,34 @@ export default function QrisCheckoutModal({
             />
           )}
 
-          {c.step === 'payment' && (
-            <QrisPaymentStep
-              qrisSrc={c.qrisSrc}
-              selectedPlan={c.selectedPlan}
-              totalAmount={c.selectedPlan.price + c.uniqueCode}
-              payerName={c.payerName}
-              onChangePayerName={c.setPayerName}
-              referenceId={c.referenceId}
-              onChangeReferenceId={c.setReferenceId}
-              proofUrl={c.proofUrl}
-              onProofUpload={c.handleProofUpload}
-              isVerifying={c.isVerifying}
-              isVerifiedPaid={c.isVerifiedPaid}
-              onBack={() => c.setStep('form')}
-              onSubmit={c.handleActivateSubmit}
-            />
-          )}
+          {c.step === 'payment' &&
+            (c.midtransRedirectUrl && c.midtransOrderId ? (
+              <MidtransPaymentPanel
+                selectedPlan={c.selectedPlan}
+                orderId={c.midtransOrderId}
+                redirectUrl={c.midtransRedirectUrl}
+                statusText={c.midtransStatusText}
+                isVerifiedPaid={c.isVerifiedPaid}
+                onRefreshStatus={() => void c.checkMidtransStatusOnce()}
+                onBack={() => c.setStep('form')}
+              />
+            ) : (
+              <QrisPaymentStep
+                qrisSrc={c.qrisSrc}
+                selectedPlan={c.selectedPlan}
+                totalAmount={c.selectedPlan.price + c.uniqueCode}
+                payerName={c.payerName}
+                onChangePayerName={c.setPayerName}
+                referenceId={c.referenceId}
+                onChangeReferenceId={c.setReferenceId}
+                proofUrl={c.proofUrl}
+                onProofUpload={c.handleProofUpload}
+                isVerifying={c.isVerifying}
+                isVerifiedPaid={c.isVerifiedPaid}
+                onBack={() => c.setStep('form')}
+                onSubmit={c.handleActivateSubmit}
+              />
+            ))}
 
           {c.step === 'activated' && c.activatedStudio && (
             <QrisActivatedStep
