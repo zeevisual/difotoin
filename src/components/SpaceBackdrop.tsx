@@ -166,12 +166,12 @@ export default function SpaceBackdrop() {
           backfaceVisibility: 'hidden',
         }}
       >
-        {/* Outer Atmospheric Cyan-Blue Halo radiating softly from the sunlit side into space */}
+        {/* Outer Atmospheric Halo radiating softly from the sunlit side into space */}
         <div
           className="absolute -inset-3 rounded-full pointer-events-none"
           style={{
             background:
-              'radial-gradient(circle at 26% 24%, rgba(56, 189, 248, 0.36) 0%, rgba(14, 165, 233, 0.15) 38%, transparent 66%)',
+              'radial-gradient(circle at 26% 24%, rgb(var(--accent-400) / 0.36) 0%, rgb(var(--accent-500) / 0.15) 38%, transparent 66%)',
             filter: 'blur(28px)',
             transform: 'translateZ(0)',
           }}
@@ -185,7 +185,7 @@ export default function SpaceBackdrop() {
             background:
               'radial-gradient(circle at 25% 22%, #1e4b6b 0%, #0c2b47 32%, #051324 58%, #010409 85%)',
             boxShadow:
-              '-10px -10px 48px rgba(56, 189, 248, 0.36), -2px -2px 14px rgba(186, 230, 253, 0.5), inset 18px 18px 52px rgba(56, 189, 248, 0.48), inset 3px 3px 12px rgba(224, 242, 254, 0.72)',
+              '-10px -10px 48px rgb(var(--accent-400) / 0.36), -2px -2px 14px rgb(var(--accent-200) / 0.5), inset 18px 18px 52px rgb(var(--accent-400) / 0.48), inset 3px 3px 12px rgb(var(--accent-200) / 0.72)',
           }}
         >
           {/* Layer A: Full-Frame Super-HD Satellite Cloud & Cyclone Swirl Texture */}
@@ -204,12 +204,12 @@ export default function SpaceBackdrop() {
             className="absolute inset-0 w-full h-full object-cover object-bottom scale-[1.65] translate-y-[-14%] opacity-45 brightness-[0.65] contrast-125 mix-blend-lighten"
           />
 
-          {/* Layer C: 3D Spherical Side Atmospheric Cyan-Blue Scattering Glow */}
+          {/* Layer C: 3D Spherical Side Atmospheric Scattering Glow */}
           <div
             className="absolute inset-0 rounded-full mix-blend-screen"
             style={{
               background:
-                'radial-gradient(circle at 20% 18%, rgba(125, 211, 252, 0.44) 0%, rgba(56, 189, 248, 0.24) 26%, rgba(14, 165, 233, 0.09) 46%, transparent 66%)',
+                'radial-gradient(circle at 20% 18%, rgb(var(--accent-300) / 0.44) 0%, rgb(var(--accent-400) / 0.24) 26%, rgb(var(--accent-500) / 0.09) 46%, transparent 66%)',
             }}
           />
 
@@ -227,8 +227,8 @@ export default function SpaceBackdrop() {
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
           style={{
-            borderTop: '1.5px solid rgba(186, 230, 253, 0.72)',
-            borderLeft: '1.5px solid rgba(125, 211, 252, 0.62)',
+            borderTop: '1.5px solid rgb(var(--accent-200) / 0.72)',
+            borderLeft: '1.5px solid rgb(var(--accent-300) / 0.62)',
             maskImage:
               'linear-gradient(135deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0.68) 30%, transparent 54%)',
             WebkitMaskImage:

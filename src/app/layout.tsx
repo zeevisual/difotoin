@@ -3,6 +3,7 @@ import { Anton, Fraunces, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import SpaceBackdrop from '@/components/SpaceBackdrop';
 import FuturisticCursor from '@/components/FuturisticCursor';
+import ThemeSwitcher from '@/components/ThemeSwitcher';
 import ZeevisualWatermark from '@/components/ZeevisualWatermark';
 
 const anton = Anton({
@@ -76,6 +77,7 @@ export default function RootLayout({
         <div className="relative z-10 min-h-screen flex flex-col">
           {children}
         </div>
+        <ThemeSwitcher />
         <ZeevisualWatermark />
       </body>
     </html>

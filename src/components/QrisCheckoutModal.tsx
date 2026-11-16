@@ -1,20 +1,11 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React from 'react';
 import { QrCode, X } from 'lucide-react';
-import {
-  createStudioSubscription,
-  fetchAllStudioSubscriptions,
-  generateLicenseCode,
-} from '@/lib/supabase';
-import { slugifyClientName } from '@/lib/drive-utils';
 import { StudioSubscription } from '@/types/difotoin';
-import { getQrisImageUrl, SUBSCRIPTION_PLANS } from '@/utils/pricing-plans';
+import { useQrisCheckout } from '@/hooks/useQrisCheckout';
 import QrisStudioFormStep from '@/components/QrisStudioFormStep';
 import { QrisActivatedStep, QrisPaymentStep } from '@/components/QrisPaymentSteps';
-
-const STUDIO_SESSION_KEY = 'difotoin_active_studio_session_v1';
 
 interface QrisCheckoutModalProps {
   isOpen: boolean;
@@ -29,127 +20,14 @@ export default function QrisCheckoutModal({
   onClose,
   onSuccessLogin,
 }: QrisCheckoutModalProps) {
-  const router = useRouter();
-  const [step, setStep] = useState<'form' | 'payment' | 'activated'>('form');
-  const [planId, setPlanId] = useState(initialPlanId || SUBSCRIPTION_PLANS[1].id);
-  const [studioName, setStudioName] = useState('');
-  const [studioSlug, setStudioSlug] = useState('');
-  const [ownerName, setOwnerName] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [accessCode, setAccessCode] = useState(() => generateLicenseCode('BKFT'));
-  const [uniqueCode, setUniqueCode] = useState(128);
-  const [payerName, setPayerName] = useState('');
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
-  const [qrisSrc, setQrisSrc] = useState('/qris-bukafoto.svg');
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
-  const [isActivating, setIsActivating] = useState(false);
-  const [activatedStudio, setActivatedStudio] = useState<StudioSubscription | null>(
-    null
-  );
-
-  useEffect(() => {
-    if (!isOpen) return;
-    setStep('form');
-    setPlanId(initialPlanId || SUBSCRIPTION_PLANS[1].id);
-    setQrisSrc(getQrisImageUrl());
-    setErrorMsg(null);
-    setActivatedStudio(null);
-  }, [isOpen, initialPlanId]);
-
-  useEffect(() => {
-    return () => {
-      if (proofUrl) URL.revokeObjectURL(proofUrl);
-    };
-  }, [proofUrl]);
-
-  const selectedPlan = useMemo(
-    () =>
-      SUBSCRIPTION_PLANS.find((p) => p.id === planId) || SUBSCRIPTION_PLANS[1],
-    [planId]
-  );
+  const c = useQrisCheckout({
+    isOpen,
+    initialPlanId,
+    onClose,
+    onSuccessLogin,
+  });
 
   if (!isOpen) return null;
-
-  async function handleGoToPayment(e: React.FormEvent) {
-    e.preventDefault();
-    setErrorMsg(null);
-    const cleanSlug = slugifyClientName(studioSlug || studioName);
-    if (!cleanSlug || cleanSlug.length < 3) {
-      setErrorMsg('Nama & slug studio minimal 3 karakter.');
-      return;
-    }
-    if (cleanSlug === 'zeevisual') {
-      setErrorMsg('Slug "zeevisual" khusus Super Admin. Gunakan nama studio Anda.');
-      return;
-    }
-    if (accessCode.trim().length < 4) {
-      setErrorMsg('Password / kode lisensi akses minimal 4 karakter.');
-      return;
-    }
-
-    setIsChecking(true);
-    try {
-      const existing = await fetchAllStudioSubscriptions();
-      if (existing.some((s) => s.studio_slug.toLowerCase() === cleanSlug)) {
-        setErrorMsg(`Slug "/${cleanSlug}" sudah dipakai. Tambahkan variasi nama.`);
-        return;
-      }
-      setStudioSlug(cleanSlug);
-      setUniqueCode(Math.floor(101 + Math.random() * 298));
-      setStep('payment');
-    } finally {
-      setIsChecking(false);
-    }
-  }
-
-  function handleProofUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (proofUrl) URL.revokeObjectURL(proofUrl);
-    setProofUrl(URL.createObjectURL(file));
-  }
-
-  async function handleActivateAccount(e: React.FormEvent) {
-    e.preventDefault();
-    if (!payerName.trim()) {
-      setErrorMsg('Masukkan nama pengirim / rekening / e-wallet pembayaran.');
-      return;
-    }
-    setErrorMsg(null);
-    setIsActivating(true);
-    try {
-      const created = await createStudioSubscription({
-        studio_slug: studioSlug,
-        studio_name: studioName.trim(),
-        owner_name: ownerName.trim() || studioName.trim(),
-        whatsapp_number: whatsapp.trim(),
-        access_code: accessCode.trim(),
-        plan_name: selectedPlan.plan_name,
-        max_galleries: selectedPlan.max_galleries,
-        duration_days: selectedPlan.duration_days,
-      });
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(STUDIO_SESSION_KEY, JSON.stringify(created));
-      }
-      setActivatedStudio(created);
-      setStep('activated');
-    } catch {
-      setErrorMsg('Gagal mengaktifkan akun. Silakan coba lagi.');
-    } finally {
-      setIsActivating(false);
-    }
-  }
-
-  function handleOpenDashboard() {
-    if (activatedStudio && onSuccessLogin) {
-      onSuccessLogin(activatedStudio);
-      onClose();
-      return;
-    }
-    onClose();
-    router.push('/studio/dashboard');
-  }
 
   return (
     <div
@@ -164,10 +42,10 @@ export default function QrisCheckoutModal({
           <div className="flex items-center gap-2 text-cyan-300 font-jakarta font-bold text-xs uppercase tracking-[0.16em]">
             <QrCode className="w-4 h-4" />
             <span>
-              {step === 'form'
+              {c.step === 'form'
                 ? '1. Data Studio & Paket'
-                : step === 'payment'
-                  ? '2. Scan Barcode QRIS & Bayar'
+                : c.step === 'payment'
+                  ? '2. Scan QRIS & Verifikasi Lunas'
                   : '3. Akun Aktif Otomatis'}
             </span>
           </div>
@@ -182,51 +60,54 @@ export default function QrisCheckoutModal({
         </div>
 
         <div className="p-5 sm:p-6 max-h-[82vh] overflow-y-auto">
-          {errorMsg && (
+          {c.errorMsg && (
             <div className="mb-4 p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 font-jakarta text-xs font-semibold">
-              {errorMsg}
+              {c.errorMsg}
             </div>
           )}
 
-          {step === 'form' && (
+          {c.step === 'form' && (
             <QrisStudioFormStep
-              planId={planId}
-              selectedPlan={selectedPlan}
-              onSelectPlan={setPlanId}
-              studioName={studioName}
-              onChangeStudioName={setStudioName}
-              studioSlug={studioSlug}
-              onChangeStudioSlug={setStudioSlug}
-              ownerName={ownerName}
-              onChangeOwnerName={setOwnerName}
-              whatsapp={whatsapp}
-              onChangeWhatsapp={setWhatsapp}
-              accessCode={accessCode}
-              onChangeAccessCode={setAccessCode}
-              isChecking={isChecking}
-              onSubmit={handleGoToPayment}
+              planId={c.planId}
+              selectedPlan={c.selectedPlan}
+              onSelectPlan={c.setPlanId}
+              studioName={c.studioName}
+              onChangeStudioName={c.setStudioName}
+              studioSlug={c.studioSlug}
+              onChangeStudioSlug={c.setStudioSlug}
+              ownerName={c.ownerName}
+              onChangeOwnerName={c.setOwnerName}
+              whatsapp={c.whatsapp}
+              onChangeWhatsapp={c.setWhatsapp}
+              accessCode={c.accessCode}
+              onChangeAccessCode={c.setAccessCode}
+              isChecking={c.isChecking}
+              onSubmit={c.handleGoToPayment}
             />
           )}
 
-          {step === 'payment' && (
+          {c.step === 'payment' && (
             <QrisPaymentStep
-              qrisSrc={qrisSrc}
-              selectedPlan={selectedPlan}
-              totalAmount={selectedPlan.price + uniqueCode}
-              payerName={payerName}
-              onChangePayerName={setPayerName}
-              proofUrl={proofUrl}
-              onProofUpload={handleProofUpload}
-              isActivating={isActivating}
-              onBack={() => setStep('form')}
-              onSubmit={handleActivateAccount}
+              qrisSrc={c.qrisSrc}
+              selectedPlan={c.selectedPlan}
+              totalAmount={c.selectedPlan.price + c.uniqueCode}
+              payerName={c.payerName}
+              onChangePayerName={c.setPayerName}
+              referenceId={c.referenceId}
+              onChangeReferenceId={c.setReferenceId}
+              proofUrl={c.proofUrl}
+              onProofUpload={c.handleProofUpload}
+              isVerifying={c.isVerifying}
+              isVerifiedPaid={c.isVerifiedPaid}
+              onBack={() => c.setStep('form')}
+              onSubmit={c.handleActivateSubmit}
             />
           )}
 
-          {step === 'activated' && activatedStudio && (
+          {c.step === 'activated' && c.activatedStudio && (
             <QrisActivatedStep
-              studio={activatedStudio}
-              onOpenDashboard={handleOpenDashboard}
+              studio={c.activatedStudio}
+              onOpenDashboard={() => c.handleOpenDashboard(c.activatedStudio)}
             />
           )}
         </div>
