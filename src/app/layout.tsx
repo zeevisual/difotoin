@@ -47,6 +47,9 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  verification: {
+    google: 'kih2mj3knG1LclUYiqpbVG5nbVzKqOGAJ54MbQZHHOE',
+  },
   openGraph: {
     type: 'website',
     siteName: 'Bukafoto by Zeevisual',
