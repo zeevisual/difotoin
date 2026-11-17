@@ -3,6 +3,15 @@ import { SUBSCRIPTION_PLANS } from '@/utils/pricing-plans';
 
 export const dynamic = 'force-dynamic';
 
+interface MidtransChargeResponse {
+  status_code?: string;
+  status_message?: string;
+  order_id?: string;
+  qr_string?: string;
+  expiry_time?: string;
+  actions?: Array<{ name?: string; url?: string }>;
+}
+
 export async function POST(request: NextRequest) {
   const serverKey = process.env.MIDTRANS_SERVER_KEY || '';
   if (!serverKey) {
@@ -23,8 +32,8 @@ export async function POST(request: NextRequest) {
 
     const isSandbox = serverKey.startsWith('SB-');
     const endpoint = isSandbox
-      ? 'https://app.sandbox.midtrans.com/snap/v1/transactions'
-      : 'https://app.midtrans.com/snap/v1/transactions';
+      ? 'https://api.sandbox.midtrans.com/v2/charge'
+      : 'https://api.midtrans.com/v2/charge';
 
     const orderId = `BKFT-${Date.now()}-${Math.floor(100 + Math.random() * 899)}`;
     const authHeader = `Basic ${Buffer.from(`${serverKey}:`).toString('base64')}`;
@@ -37,6 +46,8 @@ export async function POST(request: NextRequest) {
         Authorization: authHeader,
       },
       body: JSON.stringify({
+        payment_type: 'qris',
+        qris: { acquirer: 'gopay' },
         transaction_details: {
           order_id: orderId,
           gross_amount: selectedPlan.price,
@@ -57,18 +68,31 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    const data = (await midtransRes.json()) as {
-      token?: string;
-      redirect_url?: string;
-      error_messages?: string[];
-    };
+    const data = (await midtransRes.json()) as MidtransChargeResponse;
 
-    if (!midtransRes.ok || !data.redirect_url) {
+    if (
+      data.status_code === '402' ||
+      data.status_code === '406' ||
+      String(data.status_message || '')
+        .toLowerCase()
+        .includes('not activated')
+    ) {
+      return NextResponse.json({
+        configured: false,
+        midtransPendingReview: true,
+      });
+    }
+
+    const qrAction =
+      data.actions?.find((a) => a.name === 'generate-qr-code') ||
+      data.actions?.find((a) => a.name === 'generate-qr-code-v2');
+
+    if (data.status_code !== '201' || !qrAction?.url) {
       return NextResponse.json(
         {
           configured: true,
           error:
-            data.error_messages?.[0] || 'Gagal membuat transaksi Midtrans Snap.',
+            data.status_message || 'Gagal membuat QRIS dinamis dari Midtrans.',
         },
         { status: 502 }
       );
@@ -77,8 +101,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       configured: true,
       orderId,
-      token: data.token,
-      redirectUrl: data.redirect_url,
+      qrImageUrl: qrAction.url,
+      qrString: data.qr_string,
+      expiryTime: data.expiry_time,
       amount: selectedPlan.price,
       isSandbox,
     });

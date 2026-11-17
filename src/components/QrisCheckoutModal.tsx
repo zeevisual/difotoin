@@ -88,32 +88,43 @@ export default function QrisCheckoutModal({
           )}
 
           {c.step === 'payment' &&
-            (c.midtransRedirectUrl && c.midtransOrderId ? (
+            (c.midtransQrUrl && c.midtransOrderId ? (
               <MidtransPaymentPanel
                 selectedPlan={c.selectedPlan}
                 orderId={c.midtransOrderId}
-                redirectUrl={c.midtransRedirectUrl}
+                qrImageUrl={c.midtransQrUrl}
+                expiryTime={c.midtransExpiryTime}
+                isSandbox={c.midtransIsSandbox}
                 statusText={c.midtransStatusText}
                 isVerifiedPaid={c.isVerifiedPaid}
                 onRefreshStatus={() => void c.checkMidtransStatusOnce()}
                 onBack={() => c.setStep('form')}
               />
             ) : (
-              <QrisPaymentStep
-                qrisSrc={c.qrisSrc}
-                selectedPlan={c.selectedPlan}
-                totalAmount={c.selectedPlan.price + c.uniqueCode}
-                payerName={c.payerName}
-                onChangePayerName={c.setPayerName}
-                referenceId={c.referenceId}
-                onChangeReferenceId={c.setReferenceId}
-                proofUrl={c.proofUrl}
-                onProofUpload={c.handleProofUpload}
-                isVerifying={c.isVerifying}
-                isVerifiedPaid={c.isVerifiedPaid}
-                onBack={() => c.setStep('form')}
-                onSubmit={c.handleActivateSubmit}
-              />
+              <>
+                {c.midtransPendingReview && (
+                  <div className="mb-3 p-3 rounded-xl bg-amber-400/10 border border-amber-400/35 text-amber-200 font-jakarta text-[11px] leading-relaxed">
+                    Aktivasi otomatis QRIS Midtrans sedang dalam peninjauan bisnis.
+                    Sementara ini gunakan barcode QRIS berikut + unggah struk
+                    transfer resmi untuk aktivasi instan.
+                  </div>
+                )}
+                <QrisPaymentStep
+                  qrisSrc={c.qrisSrc}
+                  selectedPlan={c.selectedPlan}
+                  totalAmount={c.selectedPlan.price + c.uniqueCode}
+                  payerName={c.payerName}
+                  onChangePayerName={c.setPayerName}
+                  referenceId={c.referenceId}
+                  onChangeReferenceId={c.setReferenceId}
+                  proofUrl={c.proofUrl}
+                  onProofUpload={c.handleProofUpload}
+                  isVerifying={c.isVerifying}
+                  isVerifiedPaid={c.isVerifiedPaid}
+                  onBack={() => c.setStep('form')}
+                  onSubmit={c.handleActivateSubmit}
+                />
+              </>
             ))}
 
           {c.step === 'activated' && c.activatedStudio && (

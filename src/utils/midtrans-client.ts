@@ -1,7 +1,11 @@
 export interface MidtransInitResult {
   configured?: boolean;
+  midtransPendingReview?: boolean;
   orderId?: string;
-  redirectUrl?: string;
+  qrImageUrl?: string;
+  qrString?: string;
+  expiryTime?: string;
+  isSandbox?: boolean;
   error?: string;
 }
 

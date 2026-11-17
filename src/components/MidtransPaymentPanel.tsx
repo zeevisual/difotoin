@@ -3,7 +3,6 @@
 import React from 'react';
 import {
   CheckCircle2,
-  ExternalLink,
   Loader2,
   RefreshCw,
   ShieldCheck,
@@ -13,7 +12,9 @@ import { formatRupiah, PricingPlan } from '@/utils/pricing-plans';
 interface MidtransPaymentPanelProps {
   selectedPlan: PricingPlan;
   orderId: string;
-  redirectUrl: string;
+  qrImageUrl: string;
+  expiryTime?: string | null;
+  isSandbox?: boolean;
   statusText: string;
   isVerifiedPaid: boolean;
   onRefreshStatus: () => void;
@@ -23,7 +24,9 @@ interface MidtransPaymentPanelProps {
 export default function MidtransPaymentPanel({
   selectedPlan,
   orderId,
-  redirectUrl,
+  qrImageUrl,
+  expiryTime,
+  isSandbox = false,
   statusText,
   isVerifiedPaid,
   onRefreshStatus,
@@ -34,7 +37,7 @@ export default function MidtransPaymentPanel({
       <div className="flex flex-wrap items-center justify-between gap-2 bg-white/[0.04] border border-cyan-400/30 rounded-xl px-4 py-3">
         <div>
           <span className="font-mono text-[10px] uppercase tracking-widest text-cyan-300 block">
-            MIDTRANS QRIS OTOMATIS • {orderId}
+            MIDTRANS QRIS DINAMIS {isSandbox ? '(SANDBOX)' : ''} • {orderId}
           </span>
           <span className="font-jakarta font-bold text-sm text-white">
             {selectedPlan.title} —{' '}
@@ -53,7 +56,7 @@ export default function MidtransPaymentPanel({
           ) : (
             <>
               <Loader2 className="w-3 h-3 animate-spin" />
-              <span>Cek Otomatis ({statusText})</span>
+              <span>Menunggu Bayar ({statusText})</span>
             </>
           )}
         </div>
@@ -69,12 +72,32 @@ export default function MidtransPaymentPanel({
         </div>
       )}
 
-      <div className="w-full rounded-xl overflow-hidden border border-white/15 bg-white">
-        <iframe
-          src={redirectUrl}
-          title="Midtrans Pembayaran QRIS"
-          className="w-full h-[420px] sm:h-[460px] border-0"
-        />
+      <div className="flex flex-col sm:flex-row items-center gap-5 bg-white/[0.03] border border-white/15 rounded-xl p-5">
+        <div className="p-2.5 bg-white rounded-2xl border border-white/20 shrink-0 shadow-lg">
+          <img
+            src={qrImageUrl}
+            alt={`QRIS Midtrans ${orderId}`}
+            className="w-48 h-48 object-contain"
+          />
+        </div>
+        <div className="flex flex-col gap-2 text-center sm:text-left">
+          <span className="font-jakarta font-extrabold text-base text-white">
+            Scan QRIS Ini untuk Membayar
+          </span>
+          <span className="font-anton text-3xl text-cyan-300 tracking-wide">
+            {formatRupiah(selectedPlan.price)}
+          </span>
+          <p className="font-jakarta text-xs text-slate-300 leading-relaxed">
+            Mendukung semua aplikasi <strong>GoPay, OVO, DANA, ShopeePay</strong>
+            , serta Mobile Banking (<strong>BCA, BRI, Mandiri, BNI, BSI</strong>
+            ).
+          </p>
+          {expiryTime && (
+            <span className="font-mono text-[10px] text-slate-400">
+              Berlaku s/d: {expiryTime}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -87,33 +110,22 @@ export default function MidtransPaymentPanel({
           ← Ubah Data
         </button>
 
-        <div className="flex items-center gap-2">
-          <a
-            href={redirectUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-jakarta font-bold text-xs inline-flex items-center gap-1.5"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Tab Baru</span>
-          </a>
-          <button
-            type="button"
-            onClick={onRefreshStatus}
-            disabled={isVerifiedPaid}
-            className="px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-extrabold text-xs inline-flex items-center gap-1.5"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Cek Lunas Sekarang</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onRefreshStatus}
+          disabled={isVerifiedPaid}
+          className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-extrabold text-xs inline-flex items-center justify-center gap-1.5"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Saya Sudah Bayar • Cek Sekarang</span>
+        </button>
       </div>
 
-      <p className="font-jakarta text-[11px] text-slate-400 flex items-center gap-1.5 justify-center">
+      <p className="font-jakarta text-[11px] text-slate-400 flex items-center gap-1.5 justify-center text-center">
         <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
         <span>
-          Sistem memantau status lunas Midtrans setiap 3 detik dan langsung
-          membuka Dashboard Studio otomatis setelah Anda selesai bayar.
+          Begitu Anda selesai bayar, dalam ~3 detik akun langsung aktif otomatis
+          dan layar masuk ke Dashboard Studio tanpa perlu upload bukti.
         </span>
       </p>
     </div>

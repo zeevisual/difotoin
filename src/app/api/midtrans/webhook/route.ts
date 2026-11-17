@@ -24,14 +24,22 @@ export async function POST(request: NextRequest) {
     const grossAmount = String(body.gross_amount || '');
     const signatureKey = String(body.signature_key || '');
 
-    const expectedSig = crypto
-      .createHash('sha512')
-      .update(`${orderId}${statusCode}${grossAmount}${serverKey}`)
-      .digest('hex');
+    const expectedKeys = [
+      serverKey,
+      process.env.MIDTRANS_SIGNATURE_KEY || '',
+    ].filter(Boolean);
 
     const sigBuf = Buffer.from(signatureKey, 'utf8');
-    const expBuf = Buffer.from(expectedSig, 'utf8');
-    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+    const isValidSig = expectedKeys.some((secret) => {
+      const expectedSig = crypto
+        .createHash('sha512')
+        .update(`${orderId}${statusCode}${grossAmount}${secret}`)
+        .digest('hex');
+      const expBuf = Buffer.from(expectedSig, 'utf8');
+      return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+    });
+
+    if (!isValidSig) {
       return NextResponse.json({ ok: false, error: 'Invalid signature' }, { status: 403 });
     }
 

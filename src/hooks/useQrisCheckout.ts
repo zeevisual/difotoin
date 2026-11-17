@@ -49,7 +49,10 @@ export function useQrisCheckout({
   const [proofUrl, setProofUrl] = useState<string | null>(null);
   const [qrisSrc, setQrisSrc] = useState('/qris-bukafoto.svg');
   const [midtransOrderId, setMidtransOrderId] = useState<string | null>(null);
-  const [midtransRedirectUrl, setMidtransRedirectUrl] = useState<string | null>(null);
+  const [midtransQrUrl, setMidtransQrUrl] = useState<string | null>(null);
+  const [midtransExpiryTime, setMidtransExpiryTime] = useState<string | null>(null);
+  const [midtransIsSandbox, setMidtransIsSandbox] = useState(false);
+  const [midtransPendingReview, setMidtransPendingReview] = useState(false);
   const [midtransStatusText, setMidtransStatusText] = useState('pending');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
@@ -65,7 +68,10 @@ export function useQrisCheckout({
     setPlanId(initialPlanId || SUBSCRIPTION_PLANS[1].id);
     setQrisSrc(getQrisImageUrl());
     setMidtransOrderId(null);
-    setMidtransRedirectUrl(null);
+    setMidtransQrUrl(null);
+    setMidtransExpiryTime(null);
+    setMidtransIsSandbox(false);
+    setMidtransPendingReview(false);
     setMidtransStatusText('pending');
     setErrorMsg(null);
     setIsVerifiedPaid(false);
@@ -176,14 +182,18 @@ export function useQrisCheckout({
         ownerName: ownerName.trim() || studioName.trim(),
         whatsapp: whatsapp.trim(),
       });
-      if (txData.configured && txData.orderId && txData.redirectUrl) {
+      if (txData.configured && txData.orderId && txData.qrImageUrl) {
         setMidtransOrderId(txData.orderId);
-        setMidtransRedirectUrl(txData.redirectUrl);
+        setMidtransQrUrl(txData.qrImageUrl);
+        setMidtransExpiryTime(txData.expiryTime || null);
+        setMidtransIsSandbox(Boolean(txData.isSandbox));
+        setMidtransPendingReview(false);
         return setStep('payment');
       }
       if (txData.configured && txData.error) return setErrorMsg(txData.error);
       setMidtransOrderId(null);
-      setMidtransRedirectUrl(null);
+      setMidtransQrUrl(null);
+      setMidtransPendingReview(Boolean(txData.midtransPendingReview));
       setUniqueCode(Math.floor(101 + Math.random() * 298));
       setStep('payment');
     } finally {
@@ -217,25 +227,17 @@ export function useQrisCheckout({
     if (proofUrl) URL.revokeObjectURL(proofUrl);
     setProofFile(file);
     setProofUrl(URL.createObjectURL(file));
-    if (payerName.trim().length >= 3 && referenceId.trim().length >= 8) {
-      void verifyAndActivate(file);
-    }
+    if (payerName.trim().length >= 3 && referenceId.trim().length >= 8) void verifyAndActivate(file);
   }
 
-  async function handleActivateSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    await verifyAndActivate(proofFile);
-  }
+  async function handleActivateSubmit(e: React.FormEvent) { e.preventDefault(); await verifyAndActivate(proofFile); }
 
   return {
-    step, setStep, planId, setPlanId, selectedPlan,
-    studioName, setStudioName, studioSlug, setStudioSlug,
-    ownerName, setOwnerName, whatsapp, setWhatsapp,
-    accessCode, setAccessCode, uniqueCode,
-    payerName, setPayerName, referenceId, setReferenceId,
-    proofUrl, qrisSrc, midtransOrderId, midtransRedirectUrl,
-    midtransStatusText, errorMsg, isChecking, isVerifying, isVerifiedPaid,
-    activatedStudio, handleGoToPayment, handleProofUpload,
-    handleActivateSubmit, checkMidtransStatusOnce, handleOpenDashboard,
+    step, setStep, planId, setPlanId, selectedPlan, studioName, setStudioName, studioSlug, setStudioSlug,
+    ownerName, setOwnerName, whatsapp, setWhatsapp, accessCode, setAccessCode, uniqueCode,
+    payerName, setPayerName, referenceId, setReferenceId, proofUrl, qrisSrc, midtransOrderId, midtransQrUrl,
+    midtransExpiryTime, midtransIsSandbox, midtransPendingReview, midtransStatusText, errorMsg,
+    isChecking, isVerifying, isVerifiedPaid, activatedStudio, handleGoToPayment,
+    handleProofUpload, handleActivateSubmit, checkMidtransStatusOnce, handleOpenDashboard,
   };
 }
