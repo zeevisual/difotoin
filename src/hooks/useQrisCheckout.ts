@@ -2,21 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  createStudioSubscription,
-  fetchAllStudioSubscriptions,
-  generateLicenseCode,
-} from '@/lib/supabase';
+import { fetchAllStudioSubscriptions, generateLicenseCode } from '@/lib/supabase';
 import { slugifyClientName } from '@/lib/drive-utils';
 import { StudioSubscription } from '@/types/difotoin';
-import { getQrisImageUrl, SUBSCRIPTION_PLANS } from '@/utils/pricing-plans';
+import { DEFAULT_QRIS_IMAGE_URL, getQrisImageUrl, SUBSCRIPTION_PLANS } from '@/utils/pricing-plans';
+import { markQrisProofAsUsed, validateQrisPaymentProof } from '@/utils/qris-validator';
 import {
-  markQrisProofAsUsed,
-  validateQrisPaymentProof,
-} from '@/utils/qris-validator';
-import {
+  activateVerifiedMidtransStudio,
+  buildAdminConfirmWaUrl,
+  clearPendingMidtransDraft,
   fetchMidtransPaidStatus,
+  INITIAL_MIDTRANS_SESSION,
+  MidtransUiSession,
   requestMidtransTransaction,
+  savePendingMidtransDraft,
 } from '@/utils/midtrans-client';
 
 const STUDIO_SESSION_KEY = 'difotoin_active_studio_session_v1';
@@ -24,6 +23,7 @@ const STUDIO_SESSION_KEY = 'difotoin_active_studio_session_v1';
 interface UseQrisCheckoutOptions {
   isOpen: boolean;
   initialPlanId?: string;
+  renewStudio?: StudioSubscription | null;
   onClose: () => void;
   onSuccessLogin?: (studio: StudioSubscription) => void;
 }
@@ -31,10 +31,12 @@ interface UseQrisCheckoutOptions {
 export function useQrisCheckout({
   isOpen,
   initialPlanId,
+  renewStudio = null,
   onClose,
   onSuccessLogin,
 }: UseQrisCheckoutOptions) {
   const router = useRouter();
+  const isRenewal = Boolean(renewStudio);
   const [step, setStep] = useState<'form' | 'payment' | 'activated'>('form');
   const [planId, setPlanId] = useState(initialPlanId || SUBSCRIPTION_PLANS[1].id);
   const [studioName, setStudioName] = useState('');
@@ -47,19 +49,13 @@ export function useQrisCheckout({
   const [referenceId, setReferenceId] = useState('');
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofUrl, setProofUrl] = useState<string | null>(null);
-  const [qrisSrc, setQrisSrc] = useState('/qris-bukafoto.svg');
-  const [midtransOrderId, setMidtransOrderId] = useState<string | null>(null);
-  const [midtransQrUrl, setMidtransQrUrl] = useState<string | null>(null);
-  const [midtransExpiryTime, setMidtransExpiryTime] = useState<string | null>(null);
-  const [midtransIsSandbox, setMidtransIsSandbox] = useState(false);
-  const [midtransPendingReview, setMidtransPendingReview] = useState(false);
-  const [midtransStatusText, setMidtransStatusText] = useState('pending');
+  const [qrisSrc, setQrisSrc] = useState(DEFAULT_QRIS_IMAGE_URL);
+  const [mt, setMt] = useState<MidtransUiSession>(INITIAL_MIDTRANS_SESSION);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerifiedPaid, setIsVerifiedPaid] = useState(false);
-  const [activatedStudio, setActivatedStudio] =
-    useState<StudioSubscription | null>(null);
+  const [activatedStudio, setActivatedStudio] = useState<StudioSubscription | null>(null);
   const activatingRef = useRef(false);
 
   useEffect(() => {
@@ -67,23 +63,21 @@ export function useQrisCheckout({
     setStep('form');
     setPlanId(initialPlanId || SUBSCRIPTION_PLANS[1].id);
     setQrisSrc(getQrisImageUrl());
-    setMidtransOrderId(null);
-    setMidtransQrUrl(null);
-    setMidtransExpiryTime(null);
-    setMidtransIsSandbox(false);
-    setMidtransPendingReview(false);
-    setMidtransStatusText('pending');
+    setMt(INITIAL_MIDTRANS_SESSION);
     setErrorMsg(null);
     setIsVerifiedPaid(false);
     setActivatedStudio(null);
     activatingRef.current = false;
-  }, [isOpen, initialPlanId]);
+    if (renewStudio) {
+      setStudioName(renewStudio.studio_name);
+      setStudioSlug(renewStudio.studio_slug);
+      setOwnerName(renewStudio.owner_name);
+      setWhatsapp(renewStudio.whatsapp_number || '');
+      setAccessCode(renewStudio.access_code);
+    }
+  }, [isOpen, initialPlanId, renewStudio]);
 
-  useEffect(() => {
-    return () => {
-      if (proofUrl) URL.revokeObjectURL(proofUrl);
-    };
-  }, [proofUrl]);
+  useEffect(() => () => { if (proofUrl) URL.revokeObjectURL(proofUrl); }, [proofUrl]);
 
   const handleOpenDashboard = useCallback(
     (targetStudio: StudioSubscription | null = activatedStudio) => {
@@ -105,95 +99,108 @@ export function useQrisCheckout({
   }, [step, activatedStudio, handleOpenDashboard]);
 
   const selectedPlan = useMemo(
-    () =>
-      SUBSCRIPTION_PLANS.find((p) => p.id === planId) || SUBSCRIPTION_PLANS[1],
+    () => SUBSCRIPTION_PLANS.find((p) => p.id === planId) || SUBSCRIPTION_PLANS[1],
     [planId]
   );
 
-  const provisionPaidStudio = useCallback(async () => {
-    if (activatingRef.current) return;
-    activatingRef.current = true;
-    setIsVerifiedPaid(true);
-    try {
-      const created = await createStudioSubscription({
-        studio_slug: studioSlug,
-        studio_name: studioName.trim(),
-        owner_name: ownerName.trim() || studioName.trim(),
-        whatsapp_number: whatsapp.trim(),
-        access_code: accessCode.trim(),
-        plan_name: selectedPlan.plan_name,
-        max_galleries: selectedPlan.max_galleries,
-        duration_days: selectedPlan.duration_days,
-      });
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(STUDIO_SESSION_KEY, JSON.stringify(created));
+  const adminConfirmWaUrl = useMemo(
+    () =>
+      buildAdminConfirmWaUrl({
+        isRenewal, studioName, studioSlug, ownerName, whatsapp,
+        planTitle: selectedPlan.title, price: selectedPlan.price,
+        accessCode, payerName, referenceId,
+      }),
+    [isRenewal, studioName, studioSlug, ownerName, whatsapp, selectedPlan, accessCode, payerName, referenceId]
+  );
+
+  const provisionPaidStudio = useCallback(
+    async (orderIdOverride?: string, tokenOverride?: string) => {
+      const orderId = orderIdOverride || mt.orderId;
+      const checkoutToken = tokenOverride || mt.checkoutToken;
+      if (!orderId || !checkoutToken || activatingRef.current) return;
+
+      activatingRef.current = true;
+      setIsVerifiedPaid(true);
+      try {
+        const res = await activateVerifiedMidtransStudio({
+          orderId, checkoutToken, planId: selectedPlan.id, studioSlug,
+          studioName: studioName.trim(), ownerName: ownerName.trim() || studioName.trim(),
+          whatsapp: whatsapp.trim(), accessCode: accessCode.trim(),
+          mode: isRenewal ? 'renew' : 'signup',
+        });
+        if (!res.ok || !res.studio) throw new Error(res.error || 'Gagal verifikasi transaksi.');
+        clearPendingMidtransDraft();
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(STUDIO_SESSION_KEY, JSON.stringify(res.studio));
+        }
+        setActivatedStudio(res.studio);
+        setStep('activated');
+      } catch (err) {
+        activatingRef.current = false;
+        setIsVerifiedPaid(false);
+        setErrorMsg(err instanceof Error ? err.message : 'Gagal membuat akun di server.');
       }
-      setActivatedStudio(created);
-      setStep('activated');
-    } catch {
-      activatingRef.current = false;
-      setIsVerifiedPaid(false);
-      setErrorMsg('Gagal membuat akun di server. Coba cek ulang.');
-    }
-  }, [studioSlug, studioName, ownerName, whatsapp, accessCode, selectedPlan]);
+    },
+    [mt.orderId, mt.checkoutToken, selectedPlan.id, studioSlug, studioName, ownerName, whatsapp, accessCode, isRenewal]
+  );
 
   const checkMidtransStatusOnce = useCallback(async () => {
-    if (!midtransOrderId || activatingRef.current) return false;
-    const data = await fetchMidtransPaidStatus(midtransOrderId);
+    if (!mt.orderId || activatingRef.current) return false;
+    const data = await fetchMidtransPaidStatus(mt.orderId);
     if (!data) return false;
-    if (data.transactionStatus) setMidtransStatusText(data.transactionStatus);
+    if (data.transactionStatus) {
+      setMt((prev) => ({ ...prev, statusText: data.transactionStatus! }));
+    }
     if (data.paid) {
-      await provisionPaidStudio();
+      await provisionPaidStudio(mt.orderId, mt.checkoutToken || undefined);
       return true;
     }
     return false;
-  }, [midtransOrderId, provisionPaidStudio]);
+  }, [mt.orderId, mt.checkoutToken, provisionPaidStudio]);
 
   useEffect(() => {
-    if (step !== 'payment' || !midtransOrderId || isVerifiedPaid) return;
+    if (step !== 'payment' || !mt.orderId || isVerifiedPaid) return;
     const interval = setInterval(() => void checkMidtransStatusOnce(), 3000);
     return () => clearInterval(interval);
-  }, [step, midtransOrderId, isVerifiedPaid, checkMidtransStatusOnce]);
+  }, [step, mt.orderId, isVerifiedPaid, checkMidtransStatusOnce]);
 
   async function handleGoToPayment(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
     const cleanSlug = slugifyClientName(studioSlug || studioName);
-    if (!cleanSlug || cleanSlug.length < 3) {
-      return setErrorMsg('Nama & slug studio minimal 3 karakter.');
-    }
-    if (cleanSlug === 'zeevisual') {
-      return setErrorMsg('Slug "zeevisual" khusus Super Admin. Gunakan nama studio Anda.');
-    }
-    if (accessCode.trim().length < 4) {
-      return setErrorMsg('Password / kode lisensi akses minimal 4 karakter.');
-    }
+    if (!cleanSlug || cleanSlug.length < 3) return setErrorMsg('Nama & slug studio minimal 3 karakter.');
+    if (cleanSlug === 'zeevisual') return setErrorMsg('Slug "zeevisual" khusus Super Admin.');
+    if (accessCode.trim().length < 4) return setErrorMsg('Password / kode lisensi akses minimal 4 karakter.');
 
     setIsChecking(true);
     try {
-      const existing = await fetchAllStudioSubscriptions();
-      if (existing.some((s) => s.studio_slug.toLowerCase() === cleanSlug)) {
-        return setErrorMsg(`Slug "/${cleanSlug}" sudah dipakai. Tambahkan variasi nama.`);
+      if (!isRenewal) {
+        const existing = await fetchAllStudioSubscriptions();
+        if (existing.some((s) => s.studio_slug.toLowerCase() === cleanSlug)) {
+          return setErrorMsg(`Slug "/${cleanSlug}" sudah dipakai. Tambahkan variasi nama.`);
+        }
       }
       setStudioSlug(cleanSlug);
-      const txData = await requestMidtransTransaction({
-        planId: selectedPlan.id,
-        studioSlug: cleanSlug,
-        ownerName: ownerName.trim() || studioName.trim(),
-        whatsapp: whatsapp.trim(),
+      const tx = await requestMidtransTransaction({
+        planId: selectedPlan.id, studioSlug: cleanSlug,
+        ownerName: ownerName.trim() || studioName.trim(), whatsapp: whatsapp.trim(),
       });
-      if (txData.configured && txData.orderId && txData.qrImageUrl) {
-        setMidtransOrderId(txData.orderId);
-        setMidtransQrUrl(txData.qrImageUrl);
-        setMidtransExpiryTime(txData.expiryTime || null);
-        setMidtransIsSandbox(Boolean(txData.isSandbox));
-        setMidtransPendingReview(false);
+      if (tx.configured && tx.orderId && tx.checkoutToken && tx.qrImageUrl) {
+        savePendingMidtransDraft({
+          orderId: tx.orderId, checkoutToken: tx.checkoutToken, planId: selectedPlan.id,
+          studioSlug: cleanSlug, studioName: studioName.trim(),
+          ownerName: ownerName.trim() || studioName.trim(), whatsapp: whatsapp.trim(),
+          accessCode: accessCode.trim(), mode: isRenewal ? 'renew' : 'signup',
+        });
+        setMt({
+          orderId: tx.orderId, checkoutToken: tx.checkoutToken, qrUrl: tx.qrImageUrl,
+          expiryTime: tx.expiryTime || null, isSandbox: Boolean(tx.isSandbox),
+          pendingReview: false, statusText: 'pending',
+        });
         return setStep('payment');
       }
-      if (txData.configured && txData.error) return setErrorMsg(txData.error);
-      setMidtransOrderId(null);
-      setMidtransQrUrl(null);
-      setMidtransPendingReview(Boolean(txData.midtransPendingReview));
+      if (tx.configured && tx.error) return setErrorMsg(tx.error);
+      setMt({ ...INITIAL_MIDTRANS_SESSION, pendingReview: Boolean(tx.midtransPendingReview) });
       setUniqueCode(Math.floor(101 + Math.random() * 298));
       setStep('payment');
     } finally {
@@ -206,16 +213,12 @@ export function useQrisCheckout({
     setIsVerifying(true);
     try {
       const check = await validateQrisPaymentProof({
-        file: fileToCheck,
-        referenceId,
-        payerName,
-        expectedAmount: selectedPlan.price + uniqueCode,
+        file: fileToCheck, referenceId, payerName, expectedAmount: selectedPlan.price + uniqueCode,
       });
-      if (!check.ok || !check.receiptHash) {
-        return setErrorMsg(check.error || 'Bukti pembayaran QRIS belum valid.');
-      }
+      if (!check.ok || !check.receiptHash) return setErrorMsg(check.error || 'Bukti pembayaran belum valid.');
       markQrisProofAsUsed(referenceId, check.receiptHash);
-      await provisionPaidStudio();
+      setIsVerifiedPaid(true);
+      if (typeof window !== 'undefined') window.open(adminConfirmWaUrl, '_blank', 'noopener,noreferrer');
     } finally {
       setIsVerifying(false);
     }
@@ -227,17 +230,18 @@ export function useQrisCheckout({
     if (proofUrl) URL.revokeObjectURL(proofUrl);
     setProofFile(file);
     setProofUrl(URL.createObjectURL(file));
-    if (payerName.trim().length >= 3 && referenceId.trim().length >= 8) void verifyAndActivate(file);
   }
 
   async function handleActivateSubmit(e: React.FormEvent) { e.preventDefault(); await verifyAndActivate(proofFile); }
 
   return {
     step, setStep, planId, setPlanId, selectedPlan, studioName, setStudioName, studioSlug, setStudioSlug,
-    ownerName, setOwnerName, whatsapp, setWhatsapp, accessCode, setAccessCode, uniqueCode,
-    payerName, setPayerName, referenceId, setReferenceId, proofUrl, qrisSrc, midtransOrderId, midtransQrUrl,
-    midtransExpiryTime, midtransIsSandbox, midtransPendingReview, midtransStatusText, errorMsg,
-    isChecking, isVerifying, isVerifiedPaid, activatedStudio, handleGoToPayment,
-    handleProofUpload, handleActivateSubmit, checkMidtransStatusOnce, handleOpenDashboard,
+    ownerName, setOwnerName, whatsapp, setWhatsapp, accessCode, setAccessCode, uniqueCode, isRenewal,
+    payerName, setPayerName, referenceId, setReferenceId, proofUrl, qrisSrc,
+    isPlaceholderQris: qrisSrc === DEFAULT_QRIS_IMAGE_URL, adminConfirmWaUrl,
+    midtransOrderId: mt.orderId, midtransQrUrl: mt.qrUrl, midtransExpiryTime: mt.expiryTime,
+    midtransIsSandbox: mt.isSandbox, midtransPendingReview: mt.pendingReview, midtransStatusText: mt.statusText,
+    errorMsg, isChecking, isVerifying, isVerifiedPaid, activatedStudio,
+    handleGoToPayment, handleProofUpload, handleActivateSubmit, checkMidtransStatusOnce, handleOpenDashboard,
   };
 }

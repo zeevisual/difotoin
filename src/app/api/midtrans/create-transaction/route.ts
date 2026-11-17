@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SUBSCRIPTION_PLANS } from '@/utils/pricing-plans';
+import {
+  findPricingPlan,
+  getMidtransConfig,
+  signCheckoutToken,
+} from '@/utils/midtrans-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +17,8 @@ interface MidtransChargeResponse {
 }
 
 export async function POST(request: NextRequest) {
-  const serverKey = process.env.MIDTRANS_SERVER_KEY || '';
-  if (!serverKey) {
+  const cfg = getMidtransConfig();
+  if (!cfg.serverKey) {
     return NextResponse.json({ configured: false });
   }
 
@@ -26,24 +30,19 @@ export async function POST(request: NextRequest) {
       whatsapp?: string;
     };
 
-    const selectedPlan =
-      SUBSCRIPTION_PLANS.find((p) => p.id === body.planId) ||
-      SUBSCRIPTION_PLANS[1];
-
-    const isSandbox = serverKey.startsWith('SB-');
-    const endpoint = isSandbox
-      ? 'https://api.sandbox.midtrans.com/v2/charge'
-      : 'https://api.midtrans.com/v2/charge';
-
+    const selectedPlan = findPricingPlan(body.planId);
+    const cleanSlug = String(body.studioSlug || 'studio')
+      .trim()
+      .toLowerCase();
+    const endpoint = `${cfg.baseUrl}/v2/charge`;
     const orderId = `BKFT-${Date.now()}-${Math.floor(100 + Math.random() * 899)}`;
-    const authHeader = `Basic ${Buffer.from(`${serverKey}:`).toString('base64')}`;
 
     const midtransRes = await fetch(endpoint, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        Authorization: authHeader,
+        Authorization: cfg.authHeader,
       },
       body: JSON.stringify({
         payment_type: 'qris',
@@ -98,14 +97,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const checkoutToken = signCheckoutToken(
+      {
+        orderId,
+        planId: selectedPlan.id,
+        studioSlug: cleanSlug,
+        amount: selectedPlan.price,
+      },
+      cfg.serverKey
+    );
+
     return NextResponse.json({
       configured: true,
       orderId,
+      checkoutToken,
       qrImageUrl: qrAction.url,
       qrString: data.qr_string,
       expiryTime: data.expiry_time,
       amount: selectedPlan.price,
-      isSandbox,
+      isSandbox: cfg.isSandbox,
     });
   } catch {
     return NextResponse.json(

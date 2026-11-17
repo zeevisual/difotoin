@@ -24,6 +24,7 @@ interface QrisStudioFormStepProps {
   accessCode: string;
   onChangeAccessCode: (v: string) => void;
   isChecking: boolean;
+  isRenewal?: boolean;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -42,6 +43,7 @@ export default function QrisStudioFormStep({
   accessCode,
   onChangeAccessCode,
   isChecking,
+  isRenewal = false,
   onSubmit,
 }: QrisStudioFormStepProps) {
   return (
@@ -80,21 +82,24 @@ export default function QrisStudioFormStep({
         <input
           type="text"
           required
+          readOnly={isRenewal}
           value={studioName}
           onChange={(e) => {
+            if (isRenewal) return;
             onChangeStudioName(e.target.value);
             onChangeStudioSlug(slugifyClientName(e.target.value));
           }}
           placeholder="Nama Studio (cth: Zee Studio)"
-          className="bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta text-xs font-semibold focus:outline-none focus:border-cyan-400"
+          className="bg-white/[0.04] text-white placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-jakarta text-xs font-semibold focus:outline-none focus:border-cyan-400 read-only:opacity-70"
         />
         <input
           type="text"
           required
+          readOnly={isRenewal}
           value={studioSlug}
-          onChange={(e) => onChangeStudioSlug(slugifyClientName(e.target.value))}
+          onChange={(e) => !isRenewal && onChangeStudioSlug(slugifyClientName(e.target.value))}
           placeholder="Slug URL (cth: zeestudio)"
-          className="bg-white/[0.03] text-cyan-300 placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono text-xs font-bold focus:outline-none focus:border-cyan-400"
+          className="bg-white/[0.03] text-cyan-300 placeholder:text-slate-500 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono text-xs font-bold focus:outline-none focus:border-cyan-400 read-only:opacity-70"
         />
       </div>
 
@@ -124,10 +129,11 @@ export default function QrisStudioFormStep({
         <input
           type="text"
           required
+          readOnly={isRenewal}
           minLength={4}
           value={accessCode}
-          onChange={(e) => onChangeAccessCode(e.target.value)}
-          className="bg-white/[0.03] text-cyan-300 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono text-xs font-bold tracking-wider focus:outline-none focus:border-cyan-400"
+          onChange={(e) => !isRenewal && onChangeAccessCode(e.target.value)}
+          className="bg-white/[0.03] text-cyan-300 px-3.5 py-2.5 rounded-xl border border-white/15 font-mono text-xs font-bold tracking-wider focus:outline-none focus:border-cyan-400 read-only:opacity-70"
         />
       </div>
 

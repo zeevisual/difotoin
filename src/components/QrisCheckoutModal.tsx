@@ -6,11 +6,13 @@ import { StudioSubscription } from '@/types/difotoin';
 import { useQrisCheckout } from '@/hooks/useQrisCheckout';
 import QrisStudioFormStep from '@/components/QrisStudioFormStep';
 import MidtransPaymentPanel from '@/components/MidtransPaymentPanel';
-import { QrisActivatedStep, QrisPaymentStep } from '@/components/QrisPaymentSteps';
+import QrisActivatedStep from '@/components/QrisActivatedStep';
+import { QrisPaymentStep } from '@/components/QrisPaymentSteps';
 
 interface QrisCheckoutModalProps {
   isOpen: boolean;
   initialPlanId?: string;
+  renewStudio?: StudioSubscription | null;
   onClose: () => void;
   onSuccessLogin?: (studio: StudioSubscription) => void;
 }
@@ -18,12 +20,14 @@ interface QrisCheckoutModalProps {
 export default function QrisCheckoutModal({
   isOpen,
   initialPlanId,
+  renewStudio = null,
   onClose,
   onSuccessLogin,
 }: QrisCheckoutModalProps) {
   const c = useQrisCheckout({
     isOpen,
     initialPlanId,
+    renewStudio,
     onClose,
     onSuccessLogin,
   });
@@ -83,6 +87,7 @@ export default function QrisCheckoutModal({
               accessCode={c.accessCode}
               onChangeAccessCode={c.setAccessCode}
               isChecking={c.isChecking}
+              isRenewal={c.isRenewal}
               onSubmit={c.handleGoToPayment}
             />
           )}
@@ -102,15 +107,16 @@ export default function QrisCheckoutModal({
               />
             ) : (
               <>
-                {c.midtransPendingReview && (
+                {c.midtransPendingReview && !c.isPlaceholderQris && (
                   <div className="mb-3 p-3 rounded-xl bg-amber-400/10 border border-amber-400/35 text-amber-200 font-jakarta text-[11px] leading-relaxed">
                     Aktivasi otomatis QRIS Midtrans sedang dalam peninjauan bisnis.
-                    Sementara ini gunakan barcode QRIS berikut + unggah struk
-                    transfer resmi untuk aktivasi instan.
+                    Scan barcode QRIS di bawah lalu kirim bukti transfer ke Admin.
                   </div>
                 )}
                 <QrisPaymentStep
                   qrisSrc={c.qrisSrc}
+                  isPlaceholderQris={c.isPlaceholderQris}
+                  adminConfirmWaUrl={c.adminConfirmWaUrl}
                   selectedPlan={c.selectedPlan}
                   totalAmount={c.selectedPlan.price + c.uniqueCode}
                   payerName={c.payerName}

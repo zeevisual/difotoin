@@ -51,7 +51,7 @@ export function GiantFooter({
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-5 text-slate-300 uppercase tracking-widest text-[11px]">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-slate-300 uppercase tracking-widest text-[11px]">
             <Link
               href="/studio/dashboard"
               className="hover:text-cyan-400 transition-colors"
@@ -65,10 +65,22 @@ export function GiantFooter({
               Proofing
             </Link>
             <Link
-              href="/aida-fitri-harahab?t=mhttesqg7rjx"
+              href="/terms"
               className="hover:text-cyan-400 transition-colors"
             >
-              Album
+              Syarat
+            </Link>
+            <Link
+              href="/privacy"
+              className="hover:text-cyan-400 transition-colors"
+            >
+              Privasi
+            </Link>
+            <Link
+              href="/refund"
+              className="hover:text-cyan-400 transition-colors"
+            >
+              Refund &amp; Kontak
             </Link>
           </div>
         </div>

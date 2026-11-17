@@ -26,6 +26,7 @@ import {
   Users,
 } from 'lucide-react';
 import GiantFooter from '@/components/GiantFooter';
+import MidtransReturnHandler from '@/components/MidtransReturnHandler';
 import QrisCheckoutModal from '@/components/QrisCheckoutModal';
 import SuperAdminQrisCard from '@/components/SuperAdminQrisCard';
 import {
@@ -78,6 +79,7 @@ export default function StudioDashboardPage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [qrisSignupOpen, setQrisSignupOpen] = useState(false);
+  const [qrisRenewOpen, setQrisRenewOpen] = useState(false);
 
   // Dashboard Tab ('galleries' | 'subscriptions')
   const [activeTab, setActiveTab] = useState<'galleries' | 'subscriptions'>(
@@ -271,6 +273,14 @@ export default function StudioDashboardPage() {
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(STUDIO_SESSION_KEY);
     }
+  }
+
+  function handleStudioAuthSuccess(studio: StudioSubscription) {
+    setLoggedStudio(studio);
+    setStudioSlug(studio.studio_slug);
+    setStudioBrandName(studio.studio_name);
+    setStudioWhatsapp(studio.whatsapp_number || '');
+    void loadDashboardData(studio);
   }
 
   function handleClientNameChange(value: string) {
@@ -779,13 +789,9 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
         <QrisCheckoutModal
           isOpen={qrisSignupOpen}
           onClose={() => setQrisSignupOpen(false)}
-          onSuccessLogin={(studio) => {
-            setLoggedStudio(studio);
-            setStudioSlug(studio.studio_slug);
-            setStudioBrandName(studio.studio_name);
-            setStudioWhatsapp(studio.whatsapp_number || '');
-          }}
+          onSuccessLogin={handleStudioAuthSuccess}
         />
+        <MidtransReturnHandler onActivated={handleStudioAuthSuccess} />
 
         <GiantFooter />
       </div>
@@ -959,9 +965,18 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
                   <span className="font-jakarta font-semibold text-[11px] text-emerald-300 uppercase tracking-wider">
                     Status Lisensi
                   </span>
-                  <span className="font-anton text-2xl text-emerald-200 leading-tight mt-0.5">
-                    AKTIF
-                  </span>
+                  <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <span className="font-anton text-2xl text-emerald-200 leading-tight">
+                      AKTIF
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQrisRenewOpen(true)}
+                      className="px-2 py-0.5 rounded bg-cyan-400/20 hover:bg-cyan-400 hover:text-slate-950 text-cyan-200 border border-cyan-400/40 font-jakarta font-bold text-[10px] transition-colors"
+                    >
+                      Upgrade / Perpanjang
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -2076,6 +2091,14 @@ Sekarang kamu bisa langsung paste link folder Google Drive klien dan bagikan hal
           </>
         )}
       </main>
+
+      <QrisCheckoutModal
+        isOpen={qrisRenewOpen}
+        renewStudio={loggedStudio}
+        onClose={() => setQrisRenewOpen(false)}
+        onSuccessLogin={handleStudioAuthSuccess}
+      />
+      <MidtransReturnHandler onActivated={handleStudioAuthSuccess} />
 
       <GiantFooter
         studioName={

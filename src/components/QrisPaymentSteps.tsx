@@ -4,15 +4,16 @@ import React, { useState } from 'react';
 import {
   CheckCircle2,
   Copy,
+  MessageCircle,
   ShieldCheck,
-  Sparkles,
   Upload,
 } from 'lucide-react';
-import { StudioSubscription } from '@/types/difotoin';
 import { formatRupiah, PricingPlan } from '@/utils/pricing-plans';
 
 interface QrisPaymentStepProps {
   qrisSrc: string;
+  isPlaceholderQris: boolean;
+  adminConfirmWaUrl: string;
   selectedPlan: PricingPlan;
   totalAmount: number;
   payerName: string;
@@ -29,6 +30,8 @@ interface QrisPaymentStepProps {
 
 export function QrisPaymentStep({
   qrisSrc,
+  isPlaceholderQris,
+  adminConfirmWaUrl,
   selectedPlan,
   totalAmount,
   payerName,
@@ -43,6 +46,44 @@ export function QrisPaymentStep({
   onSubmit,
 }: QrisPaymentStepProps) {
   const [copiedNominal, setCopiedNominal] = useState(false);
+
+  if (isPlaceholderQris) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="p-4 rounded-xl bg-amber-400/10 border border-amber-400/35 flex flex-col gap-2">
+          <div className="font-jakarta font-bold text-xs uppercase tracking-[0.14em] text-amber-300">
+            Aktivasi Resmi Terverifikasi (Anti-Pembayaran Palsu)
+          </div>
+          <p className="font-jakarta text-xs text-slate-200 leading-relaxed">
+            QRIS otomatis Midtrans sedang menunggu persetujuan peninjauan bisnis (Merchant <strong>bukafoto</strong>). Demi keamanan dan mencegah pembayaran palsu, aktivasi paket sementara diproses langsung oleh Admin Zeevisual.
+          </p>
+          <div className="mt-1 pt-2 border-t border-white/10 flex items-center justify-between text-xs">
+            <span className="text-slate-400 font-jakarta">Paket: <strong className="text-white">{selectedPlan.title}</strong></span>
+            <span className="font-anton text-2xl text-cyan-300">{formatRupiah(selectedPlan.price)}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-jakarta font-semibold text-xs text-slate-300"
+          >
+            ← Kembali
+          </button>
+          <a
+            href={adminConfirmWaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 bg-emerald-400 hover:bg-emerald-300 text-slate-950 py-3 px-5 rounded-xl font-jakarta font-extrabold text-xs uppercase tracking-[0.12em] flex items-center justify-center gap-2"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>Bayar &amp; Aktivasi Resmi via WhatsApp Admin →</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
@@ -77,8 +118,7 @@ export function QrisPaymentStep({
             </button>
           </div>
           <p className="font-jakarta text-[11px] text-slate-400 leading-snug">
-            Scan QRIS via GoPay, OVO, DANA, ShopeePay, atau m-Banking lalu
-            unggah screenshot struk lunas di bawah ini.
+            Scan QRIS di atas, unggah screenshot struk lunas + No. Referensi, lalu kirim verifikasi ke Admin agar akun segera diaktifkan.
           </p>
         </div>
       </div>
@@ -86,10 +126,7 @@ export function QrisPaymentStep({
       {isVerifiedPaid && (
         <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-jakarta text-xs font-bold flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
-          <span>
-            ✓ Pembayaran QRIS Terverifikasi Lunas — Mengalihkan Otomatis ke
-            Halaman Berikutnya...
-          </span>
+          <span>Data struk valid! Mengarahkan ke WhatsApp Admin untuk aktivasi final...</span>
         </div>
       )}
 
@@ -121,111 +158,30 @@ export function QrisPaymentStep({
       >
         <span className="inline-flex items-center gap-2 font-jakarta text-xs text-slate-200">
           <Upload className="w-4 h-4 text-cyan-400 shrink-0" />
-          {proofUrl
-            ? '✓ Screenshot Struk QRIS Terlampir'
-            : 'Wajib Upload Screenshot Bukti Struk QRIS Lunas *'}
+          {proofUrl ? '✓ Screenshot Struk QRIS Terlampir' : 'Wajib Upload Screenshot Bukti Struk QRIS Lunas *'}
         </span>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={onProofUpload}
-          className="hidden"
-        />
-        {proofUrl && (
-          <img src={proofUrl} alt="Bukti" className="w-9 h-9 object-cover rounded" />
-        )}
+        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onProofUpload} className="hidden" />
+        {proofUrl && <img src={proofUrl} alt="Bukti" className="w-9 h-9 object-cover rounded" />}
       </label>
 
       <div className="flex items-center gap-2.5">
         <button
           type="button"
           onClick={onBack}
-          disabled={isVerifying || isVerifiedPaid}
+          disabled={isVerifying}
           className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 font-jakarta font-semibold text-xs text-slate-300 disabled:opacity-50"
         >
           ← Kembali
         </button>
         <button
           type="submit"
-          disabled={isVerifying || isVerifiedPaid}
+          disabled={isVerifying}
           className="flex-1 bg-cyan-400 hover:bg-cyan-300 text-slate-950 py-3 px-5 rounded-xl font-jakarta font-extrabold text-xs uppercase tracking-[0.14em] flex items-center justify-center gap-2 shadow-[0_0_24px_rgba(34,211,238,0.3)] disabled:opacity-60"
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>
-            {isVerifying
-              ? 'Memverifikasi Struk & RRN...'
-              : 'Verifikasi Lunas & Masuk Otomatis'}
-          </span>
+          <span>{isVerifying ? 'Memvalidasi Struk...' : 'Kirim Bukti & Aktifkan Akun →'}</span>
         </button>
       </div>
     </form>
-  );
-}
-
-export function QrisActivatedStep({
-  studio,
-  onOpenDashboard,
-}: {
-  studio: StudioSubscription;
-  onOpenDashboard: () => void;
-}) {
-  const [copiedCreds, setCopiedCreds] = useState(false);
-
-  return (
-    <div className="flex flex-col gap-4 text-center items-center">
-      <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center">
-        <CheckCircle2 className="w-6 h-6" />
-      </div>
-      <div>
-        <h3 className="font-fraunces font-bold text-2xl text-white">
-          Lunas! Akun Anda Langsung Aktif
-        </h3>
-        <p className="font-jakarta text-xs text-emerald-300 mt-1">
-          Pembayaran QRIS terverifikasi. Otomatis masuk ke Dashboard Studio...
-        </p>
-      </div>
-
-      <div className="w-full bg-white/[0.04] border border-cyan-400/30 rounded-xl p-4 text-left font-mono text-xs flex flex-col gap-1.5">
-        <div className="flex justify-between">
-          <span className="text-slate-400">Slug Studio:</span>
-          <strong className="text-cyan-300">{studio.studio_slug}</strong>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-slate-400">Kode Lisensi / Pass:</span>
-          <strong className="text-white">{studio.access_code}</strong>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-slate-400">Kuota &amp; Paket:</span>
-          <span className="text-emerald-300">
-            {studio.plan_name} ({studio.max_galleries} Galeri)
-          </span>
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-2.5 w-full">
-        <button
-          type="button"
-          onClick={async () => {
-            await navigator.clipboard.writeText(
-              `Login Bukafoto\nSlug: ${studio.studio_slug}\nKode Lisensi: ${studio.access_code}`
-            );
-            setCopiedCreds(true);
-            setTimeout(() => setCopiedCreds(false), 2000);
-          }}
-          className="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white font-jakarta font-bold text-xs inline-flex items-center justify-center gap-1.5"
-        >
-          <Copy className="w-3.5 h-3.5" />
-          <span>{copiedCreds ? 'Tersalin!' : 'Salin Data Login'}</span>
-        </button>
-        <button
-          type="button"
-          onClick={onOpenDashboard}
-          className="flex-1 py-3 px-5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-jakarta font-extrabold text-xs uppercase tracking-[0.14em] inline-flex items-center justify-center gap-2"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Masuk ke Dashboard Studio →</span>
-        </button>
-      </div>
-    </div>
   );
 }
