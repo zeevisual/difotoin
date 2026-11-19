@@ -5,9 +5,11 @@ import { formatRupiah } from '@/utils/pricing-plans';
 export const PENDING_MIDTRANS_DRAFT_KEY = 'bukafoto_pending_midtrans_checkout_v1';
 
 export interface MidtransUiSession {
+  provider: 'mayar' | 'midtrans';
   orderId: string | null;
   checkoutToken: string | null;
   qrUrl: string | null;
+  paymentUrl: string | null;
   expiryTime: string | null;
   isSandbox: boolean;
   pendingReview: boolean;
@@ -15,9 +17,11 @@ export interface MidtransUiSession {
 }
 
 export const INITIAL_MIDTRANS_SESSION: MidtransUiSession = {
+  provider: 'midtrans',
   orderId: null,
   checkoutToken: null,
   qrUrl: null,
+  paymentUrl: null,
   expiryTime: null,
   isSandbox: false,
   pendingReview: false,
@@ -51,10 +55,12 @@ export function buildAdminConfirmWaUrl(params: {
 
 export interface MidtransInitResult {
   configured?: boolean;
+  provider?: 'mayar' | 'midtrans';
   midtransPendingReview?: boolean;
   orderId?: string;
   checkoutToken?: string;
   qrImageUrl?: string;
+  paymentUrl?: string;
   qrString?: string;
   expiryTime?: string;
   isSandbox?: boolean;
@@ -67,6 +73,7 @@ export interface MidtransStatusResult {
 }
 
 export interface PendingMidtransDraft {
+  provider?: 'mayar' | 'midtrans';
   orderId: string;
   checkoutToken: string;
   planId: string;
@@ -93,11 +100,13 @@ export async function requestMidtransTransaction(payload: {
 }
 
 export async function fetchMidtransPaidStatus(
-  orderId: string
+  orderId: string,
+  provider?: 'mayar' | 'midtrans'
 ): Promise<MidtransStatusResult | null> {
   try {
+    const qs = provider ? `?provider=${encodeURIComponent(provider)}` : '';
     const res = await fetch(
-      `/api/midtrans/status/${encodeURIComponent(orderId)}`,
+      `/api/midtrans/status/${encodeURIComponent(orderId)}${qs}`,
       { cache: 'no-store' }
     );
     if (!res.ok) return null;

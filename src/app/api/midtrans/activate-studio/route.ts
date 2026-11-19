@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { StudioSubscription } from '@/types/difotoin';
 import {
-  fetchMidtransTransactionStatus,
+  fetchProviderOrderStatus,
   findPricingPlan,
-  getMidtransConfig,
+  getProviderSecret,
+  PaymentProvider,
   verifyCheckoutToken,
 } from '@/utils/midtrans-server';
 
@@ -14,6 +15,7 @@ export const dynamic = 'force-dynamic';
 const redeemedOrders = new Map<string, string>();
 
 interface ActivateBody {
+  provider?: PaymentProvider;
   orderId?: string;
   checkoutToken?: string;
   planId?: string;
@@ -26,14 +28,21 @@ interface ActivateBody {
 }
 
 export async function POST(request: NextRequest) {
-  const cfg = getMidtransConfig();
-  if (!cfg.serverKey) {
-    return NextResponse.json({ ok: false, error: 'Midtrans belum terkonfigurasi.' }, { status: 503 });
-  }
-
   try {
     const body = (await request.json()) as ActivateBody;
     const orderId = String(body.orderId || '').trim();
+    const provider: PaymentProvider =
+      body.provider === 'mayar' || (!body.provider && !orderId.startsWith('BKFT-'))
+        ? 'mayar'
+        : 'midtrans';
+    const secret = getProviderSecret(provider);
+    if (!secret) {
+      return NextResponse.json(
+        { ok: false, error: `Gateway ${provider} belum terkonfigurasi.` },
+        { status: 503 }
+      );
+    }
+
     const checkoutToken = String(body.checkoutToken || '').trim();
     const studioSlug = String(body.studioSlug || '').trim().toLowerCase();
     const selectedPlan = findPricingPlan(body.planId);
@@ -44,15 +53,21 @@ export async function POST(request: NextRequest) {
     }
 
     const tokenValid = verifyCheckoutToken(
-      { orderId, planId: selectedPlan.id, studioSlug, amount: selectedPlan.price },
+      {
+        provider: provider === 'mayar' ? 'mayar' : undefined,
+        orderId,
+        planId: selectedPlan.id,
+        studioSlug,
+        amount: selectedPlan.price,
+      },
       checkoutToken,
-      cfg.serverKey
+      secret
     );
     if (!tokenValid) {
       return NextResponse.json({ ok: false, error: 'Tanda tangan checkout tidak sah.' }, { status: 403 });
     }
 
-    const tx = await fetchMidtransTransactionStatus(orderId, cfg);
+    const { status: tx } = await fetchProviderOrderStatus(orderId, provider);
     if (!tx.paid || tx.grossAmount < selectedPlan.price) {
       return NextResponse.json(
         { ok: false, error: `Pembayaran belum lunas (${tx.transactionStatus}).` },

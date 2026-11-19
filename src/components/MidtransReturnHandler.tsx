@@ -24,6 +24,7 @@ export default function MidtransReturnHandler({
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const urlOrderId = params.get('order_id');
+    const isMayarReturn = params.get('mayar_return') === '1';
     const draft = readPendingMidtransDraft();
     if (!draft) return;
     if (urlOrderId && urlOrderId !== draft.orderId) return;
@@ -31,7 +32,7 @@ export default function MidtransReturnHandler({
     let cancelled = false;
     async function verifyReturn() {
       if (!draft) return;
-      setStatusMessage('Memverifikasi status pembayaran QRIS Anda di server Midtrans...');
+      setStatusMessage('Memverifikasi status pembayaran di server...');
       const res = await activateVerifiedMidtransStudio(draft);
       if (cancelled) return;
       if (res.ok && res.studio) {
@@ -45,7 +46,7 @@ export default function MidtransReturnHandler({
       }
     }
 
-    if (urlOrderId) void verifyReturn();
+    if (urlOrderId || isMayarReturn) void verifyReturn();
     return () => {
       cancelled = true;
     };

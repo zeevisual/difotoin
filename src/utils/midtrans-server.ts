@@ -1,5 +1,8 @@
 import crypto from 'crypto';
 import { SUBSCRIPTION_PLANS, PricingPlan } from '@/utils/pricing-plans';
+import { fetchMayarInvoiceStatus, getMayarConfig } from '@/utils/mayar-server';
+
+export type PaymentProvider = 'mayar' | 'midtrans';
 
 export interface MidtransConfig {
   serverKey: string;
@@ -10,13 +13,14 @@ export interface MidtransConfig {
 }
 
 export interface CheckoutTokenPayload {
+  provider?: PaymentProvider;
   orderId: string;
   planId: string;
   studioSlug: string;
   amount: number;
 }
 
-export interface MidtransStatusSummary {
+export interface PaymentStatusSummary {
   found: boolean;
   paid: boolean;
   transactionStatus: string;
@@ -45,7 +49,8 @@ export function signCheckoutToken(
   payload: CheckoutTokenPayload,
   secret: string
 ): string {
-  const msg = `${payload.orderId}|${payload.planId}|${payload.studioSlug}|${payload.amount}`;
+  const prefix = payload.provider === 'mayar' ? 'mayar|' : '';
+  const msg = `${prefix}${payload.orderId}|${payload.planId}|${payload.studioSlug}|${payload.amount}`;
   return crypto.createHmac('sha256', secret).update(msg).digest('hex');
 }
 
@@ -64,7 +69,7 @@ export function verifyCheckoutToken(
 export async function fetchMidtransTransactionStatus(
   orderId: string,
   cfg: MidtransConfig
-): Promise<MidtransStatusSummary> {
+): Promise<PaymentStatusSummary> {
   if (!cfg.serverKey || !orderId.trim()) {
     return { found: false, paid: false, transactionStatus: 'unconfigured', grossAmount: 0 };
   }
@@ -96,4 +101,34 @@ export async function fetchMidtransTransactionStatus(
     grossAmount: Number(data.gross_amount || 0),
     statusCode: data.status_code,
   };
+}
+
+export function getProviderSecret(provider: PaymentProvider): string {
+  return provider === 'mayar'
+    ? getMayarConfig().apiKey
+    : getMidtransConfig().serverKey;
+}
+
+export async function fetchProviderOrderStatus(
+  orderId: string,
+  provider?: PaymentProvider | null
+): Promise<{ configured: boolean; status: PaymentStatusSummary }> {
+  const resolved: PaymentProvider =
+    provider === 'mayar' || (!provider && !orderId.startsWith('BKFT-'))
+      ? 'mayar'
+      : 'midtrans';
+
+  if (resolved === 'mayar') {
+    const cfg = getMayarConfig();
+    if (!cfg.apiKey) {
+      return { configured: false, status: { found: false, paid: false, transactionStatus: 'unconfigured', grossAmount: 0 } };
+    }
+    return { configured: true, status: await fetchMayarInvoiceStatus(orderId, cfg) };
+  }
+
+  const cfg = getMidtransConfig();
+  if (!cfg.serverKey) {
+    return { configured: false, status: { found: false, paid: false, transactionStatus: 'unconfigured', grossAmount: 0 } };
+  }
+  return { configured: true, status: await fetchMidtransTransactionStatus(orderId, cfg) };
 }

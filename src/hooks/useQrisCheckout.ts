@@ -123,16 +123,13 @@ export function useQrisCheckout({
       setIsVerifiedPaid(true);
       try {
         const res = await activateVerifiedMidtransStudio({
-          orderId, checkoutToken, planId: selectedPlan.id, studioSlug,
+          provider: mt.provider, orderId, checkoutToken, planId: selectedPlan.id, studioSlug,
           studioName: studioName.trim(), ownerName: ownerName.trim() || studioName.trim(),
-          whatsapp: whatsapp.trim(), accessCode: accessCode.trim(),
-          mode: isRenewal ? 'renew' : 'signup',
+          whatsapp: whatsapp.trim(), accessCode: accessCode.trim(), mode: isRenewal ? 'renew' : 'signup',
         });
         if (!res.ok || !res.studio) throw new Error(res.error || 'Gagal verifikasi transaksi.');
         clearPendingMidtransDraft();
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(STUDIO_SESSION_KEY, JSON.stringify(res.studio));
-        }
+        if (typeof window !== 'undefined') window.localStorage.setItem(STUDIO_SESSION_KEY, JSON.stringify(res.studio));
         setActivatedStudio(res.studio);
         setStep('activated');
       } catch (err) {
@@ -141,22 +138,20 @@ export function useQrisCheckout({
         setErrorMsg(err instanceof Error ? err.message : 'Gagal membuat akun di server.');
       }
     },
-    [mt.orderId, mt.checkoutToken, selectedPlan.id, studioSlug, studioName, ownerName, whatsapp, accessCode, isRenewal]
+    [mt.provider, mt.orderId, mt.checkoutToken, selectedPlan.id, studioSlug, studioName, ownerName, whatsapp, accessCode, isRenewal]
   );
 
   const checkMidtransStatusOnce = useCallback(async () => {
     if (!mt.orderId || activatingRef.current) return false;
-    const data = await fetchMidtransPaidStatus(mt.orderId);
+    const data = await fetchMidtransPaidStatus(mt.orderId, mt.provider);
     if (!data) return false;
-    if (data.transactionStatus) {
-      setMt((prev) => ({ ...prev, statusText: data.transactionStatus! }));
-    }
+    if (data.transactionStatus) setMt((prev) => ({ ...prev, statusText: data.transactionStatus! }));
     if (data.paid) {
       await provisionPaidStudio(mt.orderId, mt.checkoutToken || undefined);
       return true;
     }
     return false;
-  }, [mt.orderId, mt.checkoutToken, provisionPaidStudio]);
+  }, [mt.orderId, mt.provider, mt.checkoutToken, provisionPaidStudio]);
 
   useEffect(() => {
     if (step !== 'payment' || !mt.orderId || isVerifiedPaid) return;
@@ -185,15 +180,17 @@ export function useQrisCheckout({
         planId: selectedPlan.id, studioSlug: cleanSlug,
         ownerName: ownerName.trim() || studioName.trim(), whatsapp: whatsapp.trim(),
       });
-      if (tx.configured && tx.orderId && tx.checkoutToken && tx.qrImageUrl) {
+      if (tx.configured && tx.orderId && tx.checkoutToken && (tx.qrImageUrl || tx.paymentUrl)) {
+        const provider = tx.provider || 'midtrans';
         savePendingMidtransDraft({
-          orderId: tx.orderId, checkoutToken: tx.checkoutToken, planId: selectedPlan.id,
+          provider, orderId: tx.orderId, checkoutToken: tx.checkoutToken, planId: selectedPlan.id,
           studioSlug: cleanSlug, studioName: studioName.trim(),
           ownerName: ownerName.trim() || studioName.trim(), whatsapp: whatsapp.trim(),
           accessCode: accessCode.trim(), mode: isRenewal ? 'renew' : 'signup',
         });
         setMt({
-          orderId: tx.orderId, checkoutToken: tx.checkoutToken, qrUrl: tx.qrImageUrl,
+          provider, orderId: tx.orderId, checkoutToken: tx.checkoutToken,
+          qrUrl: tx.qrImageUrl || null, paymentUrl: tx.paymentUrl || null,
           expiryTime: tx.expiryTime || null, isSandbox: Boolean(tx.isSandbox),
           pendingReview: false, statusText: 'pending',
         });
@@ -239,7 +236,8 @@ export function useQrisCheckout({
     ownerName, setOwnerName, whatsapp, setWhatsapp, accessCode, setAccessCode, uniqueCode, isRenewal,
     payerName, setPayerName, referenceId, setReferenceId, proofUrl, qrisSrc,
     isPlaceholderQris: qrisSrc === DEFAULT_QRIS_IMAGE_URL, adminConfirmWaUrl,
-    midtransOrderId: mt.orderId, midtransQrUrl: mt.qrUrl, midtransExpiryTime: mt.expiryTime,
+    midtransProvider: mt.provider, midtransOrderId: mt.orderId, midtransQrUrl: mt.qrUrl,
+    midtransPaymentUrl: mt.paymentUrl, midtransExpiryTime: mt.expiryTime,
     midtransIsSandbox: mt.isSandbox, midtransPendingReview: mt.pendingReview, midtransStatusText: mt.statusText,
     errorMsg, isChecking, isVerifying, isVerifiedPaid, activatedStudio,
     handleGoToPayment, handleProofUpload, handleActivateSubmit, checkMidtransStatusOnce, handleOpenDashboard,

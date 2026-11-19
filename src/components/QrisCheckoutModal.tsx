@@ -93,11 +93,13 @@ export default function QrisCheckoutModal({
           )}
 
           {c.step === 'payment' &&
-            (c.midtransQrUrl && c.midtransOrderId ? (
+            ((c.midtransQrUrl || c.midtransPaymentUrl) && c.midtransOrderId ? (
               <MidtransPaymentPanel
+                provider={c.midtransProvider}
                 selectedPlan={c.selectedPlan}
                 orderId={c.midtransOrderId}
                 qrImageUrl={c.midtransQrUrl}
+                paymentUrl={c.midtransPaymentUrl}
                 expiryTime={c.midtransExpiryTime}
                 isSandbox={c.midtransIsSandbox}
                 statusText={c.midtransStatusText}
